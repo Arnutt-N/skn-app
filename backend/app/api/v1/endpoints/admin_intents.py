@@ -1,0 +1,165 @@
+from fastapi import APIRouter, HTTPException, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
+from typing import List
+
+from app.api.deps import get_db
+from app.models.intent import IntentCategory, IntentKeyword, IntentResponse, MatchType, ReplyType
+from app.schemas.intent import (
+    IntentCategoryCreate, IntentCategoryUpdate, IntentCategoryResponse, IntentCategoryDetailResponse,
+    IntentKeywordCreate, IntentKeywordUpdate, IntentKeywordResponse,
+    IntentResponseCreate, IntentResponseUpdate, IntentResponseResponse
+)
+
+router = APIRouter()
+
+# --- Categories ---
+@router.get("/categories", response_model=List[IntentCategoryResponse])
+async def list_categories(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db)
+):
+    """List all intent categories with row counts."""
+    # We use a subquery or separate counts for simplicity in async
+    stmt = select(IntentCategory).order_by(IntentCategory.name).offset(skip).limit(limit)
+    result = await db.execute(stmt)
+    categories = result.scalars().all()
+    
+    # Enrich with counts and keywords preview
+    out = []
+    for cat in categories:
+        k_count = await db.scalar(select(func.count(IntentKeyword.id)).filter(IntentKeyword.category_id == cat.id))
+        r_count = await db.scalar(select(func.count(IntentResponse.id)).filter(IntentResponse.category_id == cat.id))
+        
+        # Fetch first 5 keywords for preview
+        kw_stmt = select(IntentKeyword.keyword).filter(IntentKeyword.category_id == cat.id).limit(5)
+        kw_result = await db.execute(kw_stmt)
+        keywords_preview = [kw for kw in kw_result.scalars().all()]
+        
+        resp = IntentCategoryResponse.model_validate(cat)
+        resp.keyword_count = k_count
+        resp.response_count = r_count
+        resp.keywords_preview = keywords_preview
+        out.append(resp)
+        
+    return out
+
+@router.post("/categories", response_model=IntentCategoryResponse, status_code=status.HTTP_201_CREATED)
+async def create_category(data: IntentCategoryCreate, db: AsyncSession = Depends(get_db)):
+    # Check uniqueness
+    existing = await db.execute(select(IntentCategory).filter(IntentCategory.name == data.name))
+    if existing.scalars().first():
+        raise HTTPException(status_code=400, detail="Category name already exists")
+    
+    cat = IntentCategory(**data.model_dump())
+    db.add(cat)
+    await db.commit()
+    await db.refresh(cat)
+    return cat
+
+@router.get("/categories/{cat_id}", response_model=IntentCategoryDetailResponse)
+async def get_category(cat_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = select(IntentCategory).options(
+        selectinload(IntentCategory.keywords),
+        selectinload(IntentCategory.responses)
+    ).filter(IntentCategory.id == cat_id)
+    result = await db.execute(stmt)
+    cat = result.scalars().first()
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return cat
+
+@router.put("/categories/{cat_id}", response_model=IntentCategoryResponse)
+async def update_category(cat_id: int, data: IntentCategoryUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(IntentCategory).filter(IntentCategory.id == cat_id))
+    cat = result.scalars().first()
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(cat, field, value)
+    
+    await db.commit()
+    await db.refresh(cat)
+    return cat
+
+@router.delete("/categories/{cat_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_category(cat_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(IntentCategory).filter(IntentCategory.id == cat_id))
+    cat = result.scalars().first()
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    await db.delete(cat)
+    await db.commit()
+    return None
+
+# --- Keywords ---
+@router.post("/keywords", response_model=IntentKeywordResponse, status_code=status.HTTP_201_CREATED)
+async def create_keyword(data: IntentKeywordCreate, db: AsyncSession = Depends(get_db)):
+    keyword = IntentKeyword(**data.model_dump())
+    db.add(keyword)
+    await db.commit()
+    await db.refresh(keyword)
+    return keyword
+
+@router.put("/keywords/{k_id}", response_model=IntentKeywordResponse)
+async def update_keyword(k_id: int, data: IntentKeywordUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(IntentKeyword).filter(IntentKeyword.id == k_id))
+    kw = result.scalars().first()
+    if not kw:
+        raise HTTPException(status_code=404, detail="Keyword not found")
+    
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(kw, field, value)
+    
+    await db.commit()
+    await db.refresh(kw)
+    return kw
+
+@router.delete("/keywords/{k_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_keyword(k_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(IntentKeyword).filter(IntentKeyword.id == k_id))
+    kw = result.scalars().first()
+    if not kw:
+        raise HTTPException(status_code=404, detail="Keyword not found")
+    
+    await db.delete(kw)
+    await db.commit()
+    return None
+
+# --- Responses ---
+@router.post("/responses", response_model=IntentResponseResponse, status_code=status.HTTP_201_CREATED)
+async def create_intent_response(data: IntentResponseCreate, db: AsyncSession = Depends(get_db)):
+    res = IntentResponse(**data.model_dump())
+    db.add(res)
+    await db.commit()
+    await db.refresh(res)
+    return res
+
+@router.put("/responses/{r_id}", response_model=IntentResponseResponse)
+async def update_intent_response(r_id: int, data: IntentResponseUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(IntentResponse).filter(IntentResponse.id == r_id))
+    res = result.scalars().first()
+    if not res:
+        raise HTTPException(status_code=404, detail="Response not found")
+    
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(res, field, value)
+    
+    await db.commit()
+    await db.refresh(res)
+    return res
+
+@router.delete("/responses/{r_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_intent_response(r_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(IntentResponse).filter(IntentResponse.id == r_id))
+    res = result.scalars().first()
+    if not res:
+        raise HTTPException(status_code=404, detail="Response not found")
+    
+    await db.delete(res)
+    await db.commit()
+    return None

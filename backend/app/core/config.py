@@ -1,0 +1,37 @@
+from typing import List, Union
+from pydantic import AnyHttpUrl, PostgresDsn, computed_field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "SknApp"
+    API_V1_STR: str = "/api/v1"
+    
+    # CORS
+    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+
+    # Database
+    DATABASE_URL: PostgresDsn
+
+    # Security
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    # LINE Messaging API
+    LINE_CHANNEL_ACCESS_TOKEN: str = ""
+    LINE_CHANNEL_SECRET: str = ""
+    
+    # LINE Login (LIFF)
+    LINE_LOGIN_CHANNEL_ID: str = ""
+    
+    # Server Base URL (for LINE media URLs - must be HTTPS)
+    # Set this to your ngrok/public domain, e.g., "https://abc123.ngrok.io"
+    SERVER_BASE_URL: str = ""
+
+    model_config = SettingsConfigDict(
+        env_file=".env", 
+        env_ignore_empty=True,
+        extra="ignore"
+    )
+
+settings = Settings()
