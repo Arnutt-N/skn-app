@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="th" suppressHydrationWarning className={`${notoThai.variable}`}>
-            <body className="font-sans antialiased text-foreground bg-background">{children}</body>
+            <body suppressHydrationWarning className="font-sans antialiased text-foreground bg-background">{children}</body>
         </html>
     )
 }

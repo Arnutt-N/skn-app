@@ -44,18 +44,22 @@ class MonthlyStats(BaseModel):
 @router.get("/stats/monthly", response_model=List[MonthlyStats])
 async def get_monthly_stats(db: AsyncSession = Depends(get_db)):
     """Get request counts grouped by month (last 12 months)."""
+    # Using a subquery or direct grouping with to_char
+    # Sorting by month ensures the graph displays correctly
     query = (
         select(
             func.to_char(ServiceRequest.created_at, 'YYYY-MM').label('month'),
             func.count(ServiceRequest.id).label('count')
         )
-        .group_by("month")
-        .order_by("month")
+        .group_by(func.to_char(ServiceRequest.created_at, 'YYYY-MM'))
+        .order_by(func.to_char(ServiceRequest.created_at, 'YYYY-MM').desc())
         .limit(12)
     )
     
     result = await db.execute(query)
-    return [MonthlyStats(month=row.month, count=row.count) for row in result.all()]
+    # Reverse to get chronological order (oldest to newest) for chart
+    stats = [MonthlyStats(month=row.month, count=row.count) for row in result.all()]
+    return stats[::-1]
 
 class WorkloadStats(BaseModel):
     agent_name: str

@@ -8,27 +8,43 @@ async function getRequestData() {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
     try {
-        const timeout = 5000; // 5 seconds timeout
+        const timeout = 15000; // Increased to 15 seconds for stability
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
 
         const [statsRes, monthlyRes] = await Promise.all([
-            fetch(`${API_BASE}/admin/requests/stats`, { cache: 'no-store', signal: controller.signal }),
-            fetch(`${API_BASE}/admin/requests/stats/monthly`, { cache: 'no-store', signal: controller.signal })
+            fetch(`${API_BASE}/admin/requests/stats`, { 
+                cache: 'no-store', 
+                signal: controller.signal,
+                headers: { 'Accept': 'application/json' }
+            }),
+            fetch(`${API_BASE}/admin/requests/stats/monthly`, { 
+                cache: 'no-store', 
+                signal: controller.signal,
+                headers: { 'Accept': 'application/json' }
+            })
         ]);
         clearTimeout(id);
 
+        if (!statsRes.ok || !monthlyRes.ok) {
+            throw new Error(`Backend error: ${statsRes.status} / ${monthlyRes.status}`);
+        }
+
         return {
-            requestStats: statsRes.ok ? await statsRes.json() : null,
-            monthlyData: monthlyRes.ok ? await monthlyRes.json() : [],
+            requestStats: await statsRes.json(),
+            monthlyData: await monthlyRes.json(),
             error: null
         };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Service Dashboard Fetch Error:', error);
+        const errorMessage = error.name === 'AbortError' 
+            ? 'Request timed out. The server is taking too long to respond.' 
+            : 'Failed to load service data. Please check if the backend is running.';
+            
         return {
             requestStats: null,
             monthlyData: [],
-            error: 'Failed to load service data'
+            error: errorMessage
         };
     }
 }
