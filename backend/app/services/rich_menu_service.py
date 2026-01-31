@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Dict, Any, Optional
 import httpx
+from datetime import datetime
 from app.models.rich_menu import RichMenu, RichMenuStatus
 from app.services.settings_service import SettingsService
 import os
@@ -20,6 +21,7 @@ class RichMenuService:
 
     @staticmethod
     async def create_on_line(db: AsyncSession, rich_menu_config: Dict[str, Any]) -> str:
+        """Create rich menu on LINE and return the rich menu ID."""
         headers = await RichMenuService.get_client_headers(db)
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -32,6 +34,7 @@ class RichMenuService:
 
     @staticmethod
     async def upload_image_to_line(db: AsyncSession, line_rich_menu_id: str, image_bytes: bytes, content_type: str):
+        """Upload rich menu image to LINE."""
         headers = await RichMenuService.get_client_headers(db)
         headers["Content-Type"] = content_type
         async with httpx.AsyncClient() as client:
@@ -45,6 +48,7 @@ class RichMenuService:
 
     @staticmethod
     async def set_default_on_line(db: AsyncSession, line_rich_menu_id: str):
+        """Set rich menu as default for all users."""
         headers = await RichMenuService.get_client_headers(db)
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -56,6 +60,7 @@ class RichMenuService:
 
     @staticmethod
     async def delete_from_line(db: AsyncSession, line_rich_menu_id: str):
+        """Delete rich menu from LINE."""
         headers = await RichMenuService.get_client_headers(db)
         async with httpx.AsyncClient() as client:
             response = await client.delete(
@@ -69,6 +74,7 @@ class RichMenuService:
 
     @staticmethod
     async def list_from_line(db: AsyncSession) -> List[Dict[str, Any]]:
+        """List all rich menus from LINE."""
         headers = await RichMenuService.get_client_headers(db)
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -77,3 +83,123 @@ class RichMenuService:
             )
             response.raise_for_status()
             return response.json().get("richmenus", [])
+
+    @staticmethod
+    async def get_from_line(db: AsyncSession, line_rich_menu_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific rich menu from LINE by ID."""
+        headers = await RichMenuService.get_client_headers(db)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{RichMenuService.API_BASE}/richmenu/{line_rich_menu_id}",
+                headers=headers
+            )
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            return response.json()
+
+    @staticmethod
+    async def update_sync_status(
+        db: AsyncSession,
+        rich_menu: RichMenu,
+        status: str,
+        error: Optional[str] = None
+    ):
+        """Update the sync status of a rich menu."""
+        rich_menu.sync_status = status
+        rich_menu.last_synced_at = datetime.utcnow()
+        rich_menu.last_sync_error = error
+        await db.commit()
+
+    @staticmethod
+    async def sync_with_idempotency(
+        db: AsyncSession,
+        rich_menu_id: int
+    ) -> Dict[str, Any]:
+        """
+        Sync rich menu to LINE with idempotency.
+        If already synced (line_rich_menu_id exists), verify existence on LINE.
+        If not synced, create on LINE and store the ID.
+        """
+        from sqlalchemy import select
+
+        # Get rich menu from database
+        result = await db.execute(select(RichMenu).where(RichMenu.id == rich_menu_id))
+        rich_menu = result.scalar_one_or_none()
+
+        if not rich_menu:
+            return {"success": False, "message": "Rich menu not found"}
+
+        # If already has LINE ID, verify it exists on LINE
+        if rich_menu.line_rich_menu_id:
+            line_menu = await RichMenuService.get_from_line(db, rich_menu.line_rich_menu_id)
+            if line_menu:
+                # Already exists on LINE - no need to recreate
+                await RichMenuService.update_sync_status(db, rich_menu, "SYNCED")
+                return {
+                    "success": True,
+                    "message": "Already synced with LINE",
+                    "line_rich_menu_id": rich_menu.line_rich_menu_id,
+                    "sync_status": "SYNCED"
+                }
+            else:
+                # LINE ID exists but menu was deleted on LINE
+                await RichMenuService.update_sync_status(
+                    db, rich_menu, "FAILED",
+                    f"Rich menu with ID {rich_menu.line_rich_menu_id} not found on LINE"
+                )
+                return {
+                    "success": False,
+                    "message": "LINE ID exists but menu not found on LINE",
+                    "sync_status": "FAILED",
+                    "error": rich_menu.last_sync_error
+                }
+
+        # Not synced yet - create on LINE
+        try:
+            line_id = await RichMenuService.create_on_line(db, rich_menu.config)
+            rich_menu.line_rich_menu_id = line_id
+            await RichMenuService.update_sync_status(db, rich_menu, "SYNCED")
+            await db.refresh(rich_menu)
+            return {
+                "success": True,
+                "message": "Created on LINE successfully",
+                "line_rich_menu_id": line_id,
+                "sync_status": "SYNCED"
+            }
+        except httpx.HTTPStatusError as e:
+            error_msg = f"LINE API error: {e.response.status_code} - {e.response.text}"
+            await RichMenuService.update_sync_status(db, rich_menu, "FAILED", error_msg)
+            return {
+                "success": False,
+                "message": error_msg,
+                "sync_status": "FAILED",
+                "error": error_msg
+            }
+        except Exception as e:
+            error_msg = f"Sync failed: {str(e)}"
+            await RichMenuService.update_sync_status(db, rich_menu, "FAILED", error_msg)
+            return {
+                "success": False,
+                "message": error_msg,
+                "sync_status": "FAILED",
+                "error": error_msg
+            }
+
+    @staticmethod
+    async def get_sync_status(db: AsyncSession, rich_menu_id: int) -> Dict[str, Any]:
+        """Get the current sync status of a rich menu."""
+        from sqlalchemy import select
+
+        result = await db.execute(select(RichMenu).where(RichMenu.id == rich_menu_id))
+        rich_menu = result.scalar_one_or_none()
+
+        if not rich_menu:
+            return {"success": False, "message": "Rich menu not found"}
+
+        return {
+            "sync_status": rich_menu.sync_status,
+            "last_synced_at": rich_menu.last_synced_at.isoformat() if rich_menu.last_synced_at else None,
+            "last_sync_error": rich_menu.last_sync_error,
+            "line_rich_menu_id": rich_menu.line_rich_menu_id
+        }

@@ -1,6 +1,7 @@
-
 import Link from 'next/link';
 import StatsCard from '../components/StatsCard';
+
+export const dynamic = 'force-dynamic';
 
 async function getChatbotData() {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
@@ -46,7 +47,7 @@ export default async function ChatbotDashboard() {
                     <p className="text-slate-500 text-sm">Manage LINE OA auto-replies and rich messages</p>
                 </div>
                 <div className="text-sm text-slate-400">
-                    SKN Chatbot System
+                    JSK Chatbot System
                 </div>
             </div>
 

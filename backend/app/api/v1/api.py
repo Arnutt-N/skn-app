@@ -13,7 +13,9 @@ from app.api.v1.endpoints import (
     admin_requests,
     admin_users,
     rich_menus,
-    settings
+    settings,
+    admin_live_chat,
+    ws_live_chat
 )
 
 api_router.include_router(webhook.router, prefix="/line", tags=["line"])
@@ -29,4 +31,6 @@ api_router.include_router(admin_requests.router, prefix="/admin/requests", tags=
 api_router.include_router(admin_users.router, prefix="/admin/users", tags=["admin"])
 api_router.include_router(rich_menus.router, prefix="/admin/rich-menus", tags=["admin"])
 api_router.include_router(settings.router, prefix="/admin/settings", tags=["admin"])
+api_router.include_router(admin_live_chat.router, prefix="/admin/live-chat", tags=["admin"])
+api_router.include_router(ws_live_chat.router, tags=["websocket"])
 

@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+interface MenuItem {
+    name: string;
+    href: string;
+    icon: string;
+    external?: boolean;
+    openInNewTab?: boolean;
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -23,7 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const menuGroups = [
+    const menuGroups: { title: string; items: MenuItem[] }[] = [
         {
             title: 'Service Requests',
             items: [
@@ -53,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 { name: 'Reports', href: '/admin/reports', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
                 { name: 'System Logs', href: '/admin/logs', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
                 { name: 'LINE Credentials', href: '/admin/settings/line', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
-                { name: 'API Docs', href: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/docs`, icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', external: true },
+                { name: 'API Docs', href: `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/docs`, icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', external: true },
                 { name: 'Settings', href: '/admin/settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
             ]
         }
@@ -61,11 +69,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
 
+    const isLiveChat = pathname.includes('/admin/live-chat');
+
+    // Standalone mode for live-chat - skip admin sidebar entirely
+    if (isLiveChat) {
+        return <>{children}</>;
+    }
+
     return (
-        <div className="flex min-h-screen bg-[#f8f7fa] text-slate-600 font-sans">
+        <div className="flex h-screen bg-[#f8f7fa] text-slate-600 font-sans">
             {/* Sidebar */}
             <aside
-                className={`fixed left-0 top-0 z-50 h-full bg-[#2f3349] text-white shadow-xl transition-all duration-300 ease-in-out flex flex-col overflow-x-hidden ${isSidebarCollapsed ? 'w-20' : 'w-64'
+                className={`admin-sidebar fixed left-0 top-0 z-50 h-full bg-[#2f3349] text-white shadow-xl transition-all duration-300 ease-in-out flex flex-col overflow-x-hidden ${isSidebarCollapsed ? 'w-20' : 'w-64'
                     } ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
             >
                 {/* Sidebar Logo & Toggle */}
@@ -77,43 +92,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 className="flex items-center justify-center w-9 h-9 rounded-md bg-indigo-500 text-white font-bold text-xs cursor-pointer ring-4 ring-indigo-500/10 hover:ring-indigo-500/30 hover:scale-110 active:scale-95 transition-all duration-300 shadow-lg shadow-indigo-500/20"
                                 title="Expand Sidebar"
                             >
-                                SK
+                                JS
                             </button>
                         ) : (
-                            <>
-                                <Link href="/admin" className="flex items-center gap-2 group/logo relative">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded-md bg-indigo-500 text-white font-bold text-xs ring-2 ring-indigo-500/20 group-hover/logo:ring-indigo-500/40 transition-all duration-300">
-                                        SK
-                                    </div>
-                                    <span className="font-bold text-lg tracking-tight text-white/90 animate-in fade-in slide-in-from-left-2 duration-300">
-                                        SKN Admin
-                                    </span>
+                            <div className="flex items-center w-full relative">
+                                <Link href="/admin" className="flex items-center justify-center w-8 h-8 rounded-md bg-indigo-500 text-white font-bold text-xs ring-2 ring-indigo-500/30 hover:ring-indigo-500/50 transition-all duration-300 shadow-lg shadow-indigo-500/20 flex-shrink-0 z-10">
+                                    JS
                                 </Link>
+
+                                <span className="absolute inset-0 flex items-center justify-center font-bold text-lg tracking-tight text-white/90 pointer-events-none">
+                                    JSK Admin
+                                </span>
 
                                 <button
                                     onClick={toggleSidebar}
-                                    className="p-1.5 rounded-md hover:bg-[#3a3f5b] text-slate-400 hover:text-white cursor-pointer transition-all duration-300 ml-2"
+                                    className="p-1.5 rounded-md hover:bg-[#3a3f5b] text-slate-400 hover:text-white cursor-pointer transition-all duration-300 flex-shrink-0 ml-auto z-10"
                                     title="Collapse Sidebar"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>
 
                 {/* Sidebar Nav - Scrollable */}
                 <nav className="flex-1 px-3 space-y-4 overflow-y-auto overflow-x-hidden custom-scrollbar pt-2 pb-10">
-                    {menuGroups.map((group) => {
-                        // Find the "best" active item for the whole sidebar to ensure only one highlights
+                    {(() => {
                         const allItems = menuGroups.flatMap(g => g.items);
                         const activeItem = allItems
                             .filter(item => !item.external && (pathname === item.href || pathname.startsWith(item.href + '/')))
                             .sort((a, b) => b.href.length - a.href.length)[0];
 
-                        return (
+                        return menuGroups.map((group) => (
                             <div key={group.title} className="space-y-1">
                                 {!isSidebarCollapsed && (
                                     <h3 className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500/80 border-t border-slate-700/30 pt-4 mt-2 first:border-0 first:pt-0 first:mt-0">
@@ -152,16 +165,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     })}
                                 </div>
                             </div>
-                        );
-                    })}
+                        ));
+                    })()}
                 </nav>
             </aside>
 
             {/* Main Content Area */}
-            <div className={`flex flex-col flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
+            <div className={`admin-content flex flex-col flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
 
                 {/* Navbar (Floating Style) */}
-                <header className="sticky top-0 z-40 px-6 py-4">
+                <header className="sticky top-0 z-40 px-6 pt-4 pb-2">
                     <div className="bg-white/80 backdrop-blur-md rounded-xl shadow-sm border border-slate-200/50 px-6 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <button
@@ -209,8 +222,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
                 </header>
 
-                {/* Page Content */}
-                <main className="px-6 pb-6 flex-1 overflow-x-hidden">
+                {/* Page content */}
+                <main className={`flex-1 ${isLiveChat ? 'overflow-hidden' : 'overflow-x-hidden overflow-y-auto px-6 pb-6'}`}>
                     {children}
                 </main>
             </div>

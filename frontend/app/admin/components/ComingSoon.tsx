@@ -31,7 +31,7 @@ export default function ComingSoonPage() {
                 </div>
 
                 <p className="text-slate-500 text-sm md:text-base leading-relaxed max-w-sm mx-auto font-medium">
-                    เรากำลังดำเนินการเพิ่มฟีเจอร์นี้เพื่อให้ระบบ SKN Admin ทำงานได้ครบวงจรยิ่งขึ้น คอยพบกับการอัปเดตในเวอร์ชั่นถัดไป
+                    เรากำลังดำเนินการเพิ่มฟีเจอร์นี้เพื่อให้ระบบ JSK Admin ทำงานได้ครบวงจรยิ่งขึ้น คอยพบกับการอัปเดตในเวอร์ชั่นถัดไป
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">

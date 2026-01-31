@@ -6,13 +6,20 @@ from linebot.v3.messaging import (
     FlexContainer,
     ShowLoadingAnimationRequest
 )
-from app.core.line_client import line_bot_api
+from app.core.line_client import get_line_bot_api
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.message import Message, MessageDirection
 
 class LineService:
-    def __init__(self, api: AsyncMessagingApi):
-        self.api = api
+    def __init__(self):
+        self._api = None
+
+    @property
+    def api(self) -> AsyncMessagingApi:
+        """Lazy initialization of LINE API client"""
+        if self._api is None:
+            self._api = get_line_bot_api()
+        return self._api
 
     async def reply_text(self, reply_token: str, text: str):
         await self.api.reply_message(
@@ -73,4 +80,4 @@ class LineService:
         return message
 
 # Singleton instance
-line_service = LineService(line_bot_api)
+line_service = LineService()

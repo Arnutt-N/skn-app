@@ -3,7 +3,7 @@ from pydantic import AnyHttpUrl, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "SknApp"
+    PROJECT_NAME: str = "JskApp"
     API_V1_STR: str = "/api/v1"
     
     # CORS
@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     # Server Base URL (for LINE media URLs - must be HTTPS)
     # Set this to your ngrok/public domain, e.g., "https://abc123.ngrok.io"
     SERVER_BASE_URL: str = ""
+
+    # WebSocket Rate Limiting
+    WS_RATE_LIMIT_MESSAGES: int = 30   # Max messages per window
+    WS_RATE_LIMIT_WINDOW: int = 60     # Window in seconds
+    WS_MAX_MESSAGE_LENGTH: int = 5000  # Max message content length
 
     model_config = SettingsConfigDict(
         env_file=".env", 

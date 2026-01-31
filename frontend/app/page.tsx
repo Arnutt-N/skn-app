@@ -10,11 +10,12 @@ export default function Home() {
             <Card glass className="w-full max-w-2xl text-center">
                 <CardContent className="pt-12 pb-12">
                     <div className="mb-6 flex justify-center">
-                        <Badge variant="primary" outline className="px-4 py-1.5 text-sm shadow-sm">SKN 4.0 Platform</Badge>
+                        <Badge variant="primary" outline className="px-4 py-1.5 text-sm shadow-sm">JSK 4.0 Platform</Badge>
                     </div>
 
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-800 tracking-tight">
-                        ยินดีต้อนรับสู่ <span className="text-primary">SKN 4.0</span>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-800 tracking-tight flex items-center justify-center gap-3">
+                        <span>ยินดีต้อนรับสู่</span>
+                        <span className="text-primary">JSK 4.0</span>
                     </h1>
 
                     <p className="text-lg text-gray-600 mb-10 max-w-lg mx-auto leading-relaxed">

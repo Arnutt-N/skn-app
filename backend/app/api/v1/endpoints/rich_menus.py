@@ -117,37 +117,47 @@ async def upload_rich_menu_image(
 
 @router.post("/{id}/sync")
 async def sync_rich_menu(id: int, db: AsyncSession = Depends(get_db)):
+    """
+    Sync rich menu to LINE with idempotency.
+    If already synced, verifies existence on LINE.
+    If not synced, creates on LINE and stores the ID.
+    """
     result = await db.execute(select(RichMenu).where(RichMenu.id == id))
     rich_menu = result.scalar_one_or_none()
     if not rich_menu:
         raise HTTPException(status_code=404, detail="Rich Menu not found")
-        
+
     try:
-        # 1. Create on LINE if doesn't exist
-        if not rich_menu.line_rich_menu_id:
-            line_id = await RichMenuService.create_on_line(db, rich_menu.config)
-            rich_menu.line_rich_menu_id = line_id
-            await db.commit()
-            
-        # 2. Upload image if exists locally
-        if rich_menu.image_path and os.path.exists(rich_menu.image_path):
+        # Use idempotent sync
+        sync_result = await RichMenuService.sync_with_idempotency(db, id)
+
+        # If sync was successful and we have a local image, upload it
+        if sync_result.get("success") and rich_menu.image_path and os.path.exists(rich_menu.image_path):
             with open(rich_menu.image_path, "rb") as f:
                 img_bytes = f.read()
-            
+
             # Simple content type detection based on extension
             ext = os.path.splitext(rich_menu.image_path)[1].lower()
             content_type = "image/png" if ext == ".png" else "image/jpeg"
-            
+
             await RichMenuService.upload_image_to_line(
-                db, 
-                rich_menu.line_rich_menu_id, 
-                img_bytes, 
+                db,
+                sync_result.get("line_rich_menu_id") or rich_menu.line_rich_menu_id,
+                img_bytes,
                 content_type
             )
-            
-        return {"message": "Success", "line_rich_menu_id": rich_menu.line_rich_menu_id}
+
+        return sync_result
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Sync failed: {str(e)}")
+
+@router.get("/{id}/sync-status")
+async def get_sync_status(id: int, db: AsyncSession = Depends(get_db)):
+    """Get the current sync status of a rich menu."""
+    status_info = await RichMenuService.get_sync_status(db, id)
+    if "success" in status_info and not status_info["success"]:
+        raise HTTPException(status_code=404, detail=status_info.get("message", "Rich Menu not found"))
+    return status_info
 
 @router.post("/{id}/publish")
 async def publish_rich_menu(id: int, db: AsyncSession = Depends(get_db)):

@@ -473,7 +473,7 @@ export default function LiffServiceRequestV2() {
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
             <Head>
-                <title>ยื่นคำร้อง - SKN 4.0</title>
+                <title>ยื่นคำร้อง - JSK 4.0</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
             </Head>
 
@@ -486,7 +486,7 @@ export default function LiffServiceRequestV2() {
                             <h1 className="text-lg font-bold text-gray-900 tracking-tight">ยื่นคำขอรับบริการ</h1>
                         </div>
                         <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
-                            SKN 4.0 Platform • ยุติธรรมจังหวัดสกลนคร
+                            JSK 4.0 Platform • ยุติธรรมจังหวัดสกลนคร
                         </p>
                     </div>
                     <Badge variant={provinces.length > 0 ? "success" : "warning"} className="h-6">

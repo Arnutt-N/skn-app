@@ -22,6 +22,9 @@ from app.models.intent import IntentCategory, IntentKeyword, IntentResponse, Mat
 from app.models.service_request import ServiceRequest
 from app.services.flex_messages import build_request_status_list
 from sqlalchemy.orm import selectinload
+from app.core.websocket_manager import ws_manager
+from app.schemas.ws_events import WSEventType
+from datetime import datetime
 import logging
 
 router = APIRouter()
@@ -67,13 +70,29 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
         text = event.message.text.strip()
         
         # 1. Save User Message (Incoming)
-        await line_service.save_message(
+        saved_message = await line_service.save_message(
             db=db,
             line_user_id=line_user_id,
             direction=MessageDirection.INCOMING,
             message_type="text",
             content=text
         )
+
+        # Broadcast to WebSocket clients
+        room_id = ws_manager.get_room_id(line_user_id)
+        await ws_manager.broadcast_to_room(room_id, {
+            "type": WSEventType.NEW_MESSAGE.value,
+            "payload": {
+                "id": saved_message.id,
+                "line_user_id": line_user_id,
+                "direction": "INCOMING",
+                "content": text,
+                "message_type": "text",
+                "sender_role": "USER",
+                "created_at": saved_message.created_at.isoformat()
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        })
 
         # 2. Show Loading Animation
         await line_service.show_loading_animation(line_user_id)

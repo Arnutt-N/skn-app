@@ -48,3 +48,5 @@ htmlcov/
 examples/
 secrets/
 
+backend/venv_test/
+frontend/tsconfig.tsbuildii

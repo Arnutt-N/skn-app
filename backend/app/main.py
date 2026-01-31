@@ -14,14 +14,14 @@ tags_metadata = [
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Backend API for SknApp - Community Justice Services. Supports LINE OA integration and LIFF applications.",
+    description="Backend API for JskApp - Community Justice Services. Supports LINE OA integration and LIFF applications.",
     version="1.0.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url=f"{settings.API_V1_STR}/docs",
     openapi_tags=tags_metadata,
     contact={
-        "name": "SknApp Support Team",
-        "email": "support@skn-app.local",
+        "name": "JskApp Support Team",
+        "email": "support@jsk-app.local",
     },
 )
 
@@ -37,7 +37,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to SknApp API"}
+    return {"message": "Welcome to JskApp API"}
 
 @app.on_event("startup")
 async def startup_event():

@@ -1,8 +1,8 @@
-
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import StatsCard from './components/StatsCard';
 import ChartsWrapper from './components/ChartsWrapper';
+
+export const dynamic = 'force-dynamic';
 
 async function getRequestData() {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
@@ -13,13 +13,13 @@ async function getRequestData() {
         const id = setTimeout(() => controller.abort(), timeout);
 
         const [statsRes, monthlyRes] = await Promise.all([
-            fetch(`${API_BASE}/admin/requests/stats`, { 
-                cache: 'no-store', 
+            fetch(`${API_BASE}/admin/requests/stats`, {
+                cache: 'no-store',
                 signal: controller.signal,
                 headers: { 'Accept': 'application/json' }
             }),
-            fetch(`${API_BASE}/admin/requests/stats/monthly`, { 
-                cache: 'no-store', 
+            fetch(`${API_BASE}/admin/requests/stats/monthly`, {
+                cache: 'no-store',
                 signal: controller.signal,
                 headers: { 'Accept': 'application/json' }
             })
@@ -37,10 +37,10 @@ async function getRequestData() {
         };
     } catch (error: any) {
         console.error('Service Dashboard Fetch Error:', error);
-        const errorMessage = error.name === 'AbortError' 
-            ? 'Request timed out. The server is taking too long to respond.' 
+        const errorMessage = error.name === 'AbortError'
+            ? 'Request timed out. The server is taking too long to respond.'
             : 'Failed to load service data. Please check if the backend is running.';
-            
+
         return {
             requestStats: null,
             monthlyData: [],

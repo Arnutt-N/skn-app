@@ -1,8 +1,17 @@
-# SknApp - LINE Official Account System
+# JskApp - LINE Official Account System
 
 A modern LINE Official Account system with LIFF integration for Community Justice Services.
 
 ## Tech Stack
+
+> [!IMPORTANT]
+> **WSL Development Environment Required**
+> This project requires **WSL (Windows Subsystem for Linux)** for all development.
+> - **Backend**: Must run in WSL using `backend/venv_linux`.
+> - **Frontend**: Must run in WSL.
+> - **System**: Windows OS is the host, but execution happens in WSL.
+
+### Backend
 
 ### Backend
 - **FastAPI** (Python 3.11+)
@@ -20,7 +29,7 @@ A modern LINE Official Account system with LIFF integration for Community Justic
 ## Project Structure
 
 ```
-skn-app/
+jsk-app/
 ├── backend/
 │   ├── app/
 │   │   ├── api/          # API endpoints

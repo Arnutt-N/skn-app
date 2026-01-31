@@ -9,7 +9,7 @@ const notoThai = Noto_Sans_Thai({
 })
 
 export const metadata: Metadata = {
-    title: 'SknApp - Community Justice Services',
+    title: 'JskApp - Community Justice Services',
     description: 'LINE Official Account for Community Justice Center',
 }
 

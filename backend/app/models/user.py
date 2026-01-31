@@ -35,10 +35,16 @@ class User(Base):
 
     # Chat State
     chat_mode = Column(Enum(ChatMode), default=ChatMode.BOT)
-    
+
+    # Friend Status (For LINE Users)
+    friend_status = Column(String, nullable=True, default="ACTIVE")
+    friend_since = Column(DateTime(timezone=True), nullable=True)
+    last_message_at = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     requests = relationship("ServiceRequest", back_populates="requester", foreign_keys="ServiceRequest.requester_id")
     assigned_requests = relationship("ServiceRequest", back_populates="assignee", foreign_keys="ServiceRequest.assigned_agent_id")
     bookings = relationship("Booking", back_populates="user")
+    chat_sessions = relationship("ChatSession", back_populates="operator")
