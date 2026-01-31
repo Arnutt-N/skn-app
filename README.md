@@ -21,10 +21,10 @@ A modern LINE Official Account system with LIFF integration for Community Justic
 - **Redis** (Caching & Rate Limiting)
 
 ### Frontend
-- **Next.js 14** (App Router)
-- **React 18**
+- **Next.js 16** (App Router)
+- **React 19**
 - **TypeScript**
-- **Tailwind CSS**
+- **Tailwind CSS v4**
 
 ## Project Structure
 
@@ -51,7 +51,7 @@ jsk-app/
 
 ### Prerequisites
 - **Python 3.9+** (Python 3.13+ recommended for best performance)
-- Node.js 20+
+- Node.js 22+
 - PostgreSQL 16+
 - Redis 7+
 

@@ -50,3 +50,6 @@ secrets/
 
 backend/venv_test/
 frontend/tsconfig.tsbuildii
+
+
+.claude/settings*
