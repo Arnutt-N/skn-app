@@ -49,7 +49,7 @@ examples/
 secrets/
 
 backend/venv_test/
-frontend/tsconfig.tsbuildii
+frontend/tsconfig.tsbuildinfo
 
 
 .claude/settings*
