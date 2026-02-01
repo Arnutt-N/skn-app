@@ -173,12 +173,22 @@ export class WebSocketClient {
     }
   }
 
-  send(type: MessageType | string, payload: unknown): void {
-    if (this.state === 'connected' && this.ws?.readyState === WebSocket.OPEN) {
-      this.sendRaw(type, payload);
+  send(type: MessageType | string, payload: unknown): boolean {
+    // Capture WebSocket reference to avoid race condition
+    const ws = this.ws;
+    if (this.state === 'connected' && ws?.readyState === WebSocket.OPEN) {
+      try {
+        this.sendRaw(type, payload);
+        return true;
+      } catch (error) {
+        console.error('Failed to send WebSocket message, queueing:', error);
+        this.messageQueue.enqueue(type, payload);
+        return false;
+      }
     } else {
       // Queue message if not connected
       this.messageQueue.enqueue(type, payload);
+      return false;
     }
   }
 

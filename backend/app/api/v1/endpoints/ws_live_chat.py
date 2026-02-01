@@ -299,7 +299,7 @@ async def websocket_endpoint(
 
                 async with AsyncSessionLocal() as db:
                     await live_chat_service.send_message(
-                        line_user_id, text, int(admin_id), db
+                        line_user_id, text, admin_id_int, db
                     )
                     # Get the sent message
                     messages = await live_chat_service.get_recent_messages(line_user_id, 1, db)
@@ -360,23 +360,65 @@ async def websocket_endpoint(
                     }, exclude_admin=admin_id)
                 continue
 
+            # Validate admin_id is valid integer before processing
+            try:
+                admin_id_int = int(admin_id)
+            except (ValueError, TypeError):
+                await ws_manager.send_personal(websocket, {
+                    "type": WSEventType.ERROR.value,
+                    "payload": {
+                        "message": "Invalid admin ID format",
+                        "code": WSErrorCode.INVALID_REQUEST.value
+                    },
+                    "timestamp": timestamp
+                })
+                continue
+
             # === CLAIM SESSION ===
             if msg_type == WSEventType.CLAIM_SESSION.value:
                 if not current_room:
+                    await ws_manager.send_personal(websocket, {
+                        "type": WSEventType.ERROR.value,
+                        "payload": {
+                            "message": "Must join a conversation before claiming session",
+                            "code": WSErrorCode.NOT_IN_ROOM.value
+                        },
+                        "timestamp": timestamp
+                    })
                     continue
                 line_user_id = current_room.replace("conversation:", "")
                 async with AsyncSessionLocal() as db:
-                    session = await live_chat_service.claim_session(
-                        line_user_id, int(admin_id), db
-                    )
-                    if session:
-                        await ws_manager.broadcast_to_all({
-                            "type": WSEventType.SESSION_CLAIMED.value,
+                    try:
+                        session = await live_chat_service.claim_session(
+                            line_user_id, admin_id_int, db
+                        )
+                        if session:
+                            await ws_manager.broadcast_to_all({
+                                "type": WSEventType.SESSION_CLAIMED.value,
+                                "payload": {
+                                    "line_user_id": line_user_id,
+                                    "session_id": session.id,
+                                    "status": session.status.value,
+                                    "operator_id": admin_id_int
+                                },
+                                "timestamp": timestamp
+                            })
+                        else:
+                            await ws_manager.send_personal(websocket, {
+                                "type": WSEventType.ERROR.value,
+                                "payload": {
+                                    "message": "Session not found or already claimed",
+                                    "code": WSErrorCode.SESSION_NOT_FOUND.value
+                                },
+                                "timestamp": timestamp
+                            })
+                    except Exception as e:
+                        logger.error(f"Error claiming session: {e}")
+                        await ws_manager.send_personal(websocket, {
+                            "type": WSEventType.ERROR.value,
                             "payload": {
-                                "line_user_id": line_user_id,
-                                "session_id": session.id,
-                                "status": session.status.value,
-                                "operator_id": int(admin_id)
+                                "message": "Failed to claim session",
+                                "code": WSErrorCode.INTERNAL_ERROR.value
                             },
                             "timestamp": timestamp
                         })
@@ -385,18 +427,46 @@ async def websocket_endpoint(
             # === CLOSE SESSION ===
             if msg_type == WSEventType.CLOSE_SESSION.value:
                 if not current_room:
+                    await ws_manager.send_personal(websocket, {
+                        "type": WSEventType.ERROR.value,
+                        "payload": {
+                            "message": "Must join a conversation before closing session",
+                            "code": WSErrorCode.NOT_IN_ROOM.value
+                        },
+                        "timestamp": timestamp
+                    })
                     continue
                 line_user_id = current_room.replace("conversation:", "")
                 async with AsyncSessionLocal() as db:
-                    session = await live_chat_service.close_session(
-                        line_user_id, ClosedBy.OPERATOR, db
-                    )
-                    if session:
-                        await ws_manager.broadcast_to_all({
-                            "type": WSEventType.SESSION_CLOSED.value,
+                    try:
+                        session = await live_chat_service.close_session(
+                            line_user_id, ClosedBy.OPERATOR, db
+                        )
+                        if session:
+                            await ws_manager.broadcast_to_all({
+                                "type": WSEventType.SESSION_CLOSED.value,
+                                "payload": {
+                                    "line_user_id": line_user_id,
+                                    "session_id": session.id
+                                },
+                                "timestamp": timestamp
+                            })
+                        else:
+                            await ws_manager.send_personal(websocket, {
+                                "type": WSEventType.ERROR.value,
+                                "payload": {
+                                    "message": "Session not found or already closed",
+                                    "code": WSErrorCode.SESSION_NOT_FOUND.value
+                                },
+                                "timestamp": timestamp
+                            })
+                    except Exception as e:
+                        logger.error(f"Error closing session: {e}")
+                        await ws_manager.send_personal(websocket, {
+                            "type": WSEventType.ERROR.value,
                             "payload": {
-                                "line_user_id": line_user_id,
-                                "session_id": session.id
+                                "message": "Failed to close session",
+                                "code": WSErrorCode.INTERNAL_ERROR.value
                             },
                             "timestamp": timestamp
                         })

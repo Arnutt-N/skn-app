@@ -53,6 +53,8 @@ export default function LiveChatPage() {
     // Message status tracking
     const [pendingMessages, setPendingMessages] = useState<Set<string>>(new Set());
     const [failedMessages, setFailedMessages] = useState<Map<string, string>>(new Map());
+    // Admin ID from auth - TODO: Replace with proper auth context when available
+    const [adminId, setAdminId] = useState<string>('1');
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const isFirstLoadRef = useRef<boolean>(true);
@@ -177,8 +179,9 @@ export default function LiveChatPage() {
         }
     }, [wsStatus, failedMessages, messages, wsSendMessage]);
 
-    // Initialize WebSocket
+    // Initialize WebSocket with admin ID
     const { joinRoom, leaveRoom, sendMessage: wsSendMessage, startTyping, claimSession, closeSession, reconnect, retryMessage } = useLiveChatSocket({
+        adminId, // Pass admin ID from auth
         onNewMessage: handleNewMessage,
         onMessageSent: handleMessageSent,
         onMessageAck: handleMessageAck,

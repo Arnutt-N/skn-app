@@ -17,6 +17,7 @@ import {
 } from '@/lib/websocket/types';
 
 interface UseLiveChatSocketOptions {
+  adminId: string; // Required - must be provided from auth context
   onNewMessage?: (message: Message) => void;
   onMessageSent?: (message: Message) => void;
   onMessageAck?: (tempId: string, messageId: number) => void;
@@ -52,7 +53,7 @@ interface PendingMessage {
   retries: number;
 }
 
-export function useLiveChatSocket(options: UseLiveChatSocketOptions = {}): UseLiveChatSocketReturn {
+export function useLiveChatSocket(options: UseLiveChatSocketOptions): UseLiveChatSocketReturn {
   const currentRoom = useRef<string | null>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingMessages = useRef<Map<string, PendingMessage>>(new Map());
@@ -125,7 +126,7 @@ export function useLiveChatSocket(options: UseLiveChatSocketOptions = {}): UseLi
 
   const { send, connectionState, isConnected, reconnect } = useWebSocket({
     url: wsUrl,
-    adminId: '1', // Mock admin ID
+    adminId: options.adminId, // Use admin ID from auth context
     onMessage: handleMessage,
     onConnect: () => options.onConnectionChange?.('connected'),
     onDisconnect: () => options.onConnectionChange?.('disconnected'),

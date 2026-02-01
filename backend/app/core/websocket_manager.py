@@ -60,8 +60,9 @@ class ConnectionManager:
                 # Clean up rate limiter when last connection closes
                 ws_rate_limiter.reset(admin_id)
                 del self.connections[admin_id]
+                # Clean up admin metadata to prevent memory leak
                 if admin_id in self.admin_metadata:
-                    self.admin_metadata[admin_id]["status"] = "offline"
+                    del self.admin_metadata[admin_id]
 
         self.ws_to_admin.pop(websocket, None)
         logger.info(f"Admin {admin_id} disconnected")
@@ -111,36 +112,45 @@ class ConnectionManager:
 
         logger.info(f"Admin {admin_id} left room {room_id}")
 
-    async def send_personal(self, websocket: WebSocket, data: dict):
-        """Send to specific connection"""
+    async def send_personal(self, websocket: WebSocket, data: dict) -> bool:
+        """Send to specific connection. Returns True if successful."""
         try:
             await websocket.send_json(data)
+            return True
         except Exception as e:
             logger.error(f"Error sending to websocket: {e}")
+            return False
 
-    async def send_to_admin(self, admin_id: str, data: dict):
-        """Send to all connections of an admin"""
+    async def send_to_admin(self, admin_id: str, data: dict) -> bool:
+        """Send to all connections of an admin. Returns True if at least one send succeeded."""
         if admin_id not in self.connections:
-            return
+            return False
 
         disconnected = []
+        success = False
         for ws in self.connections[admin_id]:
             try:
                 await ws.send_json(data)
+                success = True
             except Exception:
                 disconnected.append(ws)
 
         for ws in disconnected:
             await self.disconnect(ws)
 
-    async def broadcast_to_room(self, room_id: str, data: dict, exclude_admin: Optional[str] = None):
-        """Broadcast to all admins in a room"""
-        if room_id not in self.rooms:
-            return
+        return success
 
+    async def broadcast_to_room(self, room_id: str, data: dict, exclude_admin: Optional[str] = None) -> int:
+        """Broadcast to all admins in a room. Returns count of successful sends."""
+        if room_id not in self.rooms:
+            return 0
+
+        success_count = 0
         for admin_id in list(self.rooms.get(room_id, [])):
             if admin_id != exclude_admin:
-                await self.send_to_admin(admin_id, data)
+                if await self.send_to_admin(admin_id, data):
+                    success_count += 1
+        return success_count
 
     async def broadcast_to_all(self, data: dict, exclude_admin: Optional[str] = None):
         """Broadcast to all connected admins"""
