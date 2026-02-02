@@ -46,6 +46,7 @@ export default function LiveChatPage() {
     const [filterStatus, setFilterStatus] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [sending, setSending] = useState(false);
+    const [claiming, setClaiming] = useState(false);
     const [showCustomerPanel, setShowCustomerPanel] = useState(true);
     const [activeActionMenu, setActiveActionMenu] = useState<string | null>(null);
     const [wsStatus, setWsStatus] = useState<ConnectionState>('disconnected');
@@ -352,15 +353,19 @@ export default function LiveChatPage() {
     };
 
     const handleClaim = async () => {
-        if (!selectedId) return;
-        
-        if (wsStatus === 'connected') {
-            claimSession();
-        } else {
-            try {
+        if (!selectedId || claiming) return;
+
+        setClaiming(true);
+        try {
+            if (wsStatus === 'connected') {
+                claimSession();
+            } else {
                 const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${selectedId}/claim`, { method: 'POST' });
                 if (res.ok) fetchChatDetail(selectedId);
-            } catch { }
+            }
+        } catch { }
+        finally {
+            setClaiming(false);
         }
     };
 
@@ -705,9 +710,10 @@ export default function LiveChatPage() {
                                         <ChatModeToggle currentMode={currentChat?.chat_mode || 'BOT'} onToggle={handleToggleMode} disabled={false} />
                                     </div>
                                     <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
-                                    {(!currentChat?.session || currentChat?.session?.status === 'WAITING') && (
-                                        <button onClick={handleClaim} className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xs font-semibold cursor-pointer flex items-center gap-1.5">
-                                            <Users className="w-4 h-4" />Claim
+                                    {currentChat?.session?.status === 'WAITING' && (
+                                        <button onClick={handleClaim} disabled={claiming} className={`px-3 py-1.5 text-white rounded-full text-xs font-semibold flex items-center gap-1.5 ${claiming ? 'bg-indigo-400 cursor-wait' : 'bg-indigo-600 hover:bg-indigo-700 cursor-pointer'}`}>
+                                            {claiming ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+                                            {claiming ? 'Claiming...' : 'Claim'}
                                         </button>
                                     )}
                                     {currentChat?.session?.status === 'ACTIVE' && (
