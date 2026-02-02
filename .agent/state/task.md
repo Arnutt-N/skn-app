@@ -1,73 +1,82 @@
 # Current Task
 
-**Status:** Completed
-**Assigned:** Claude Code
-**Started:** 2026-01-30 22:00
+**Status:** Pending (Handoff)
+**Assigned:** Next Agent
+**Started:** 2026-02-02 22:00
+**Handoff From:** Claude Code (claude-opus-4-5)
 
 ---
 
 ## Objective
 
-Create a comprehensive implementation plan for three interconnected features:
-1. Project Continuity System - Complete agent handover workflow automation
-2. Rich Menu Persistence - Cache LINE API responses, add idempotent sync
-3. Chat UI Refinement - Add message status indicators, retry logic, better UX
+Improve Connection Status UI in the Live Chat page following frontend design best practices.
 
 ---
 
 ## Subtasks
 
-- [x] Explore codebase for patterns (credential_service, rich_menu_service, live_chat)
-- [x] Analyze handoff workflows (handoff-to-any.md, pickup-from-any.md)
-- [x] Document code patterns (naming, DB persistence, error handling)
-- [x] Create implementation plan with 15 atomic tasks
-- [x] Update PROJECT_STATUS.md with progress
-- [x] Update current-session.json
+### Completed This Session
+- [x] Fix TDZ ReferenceError - wsSendMessage hook ordering (commit: `ada579a`)
+- [x] Fix Claim Button UX - prevent 404 errors (commit: `bfcb199`)
+- [x] Create investigation artifact and archive
+
+### Pending - Connection Status UI
+- [ ] Task 1: Update `getConnectionStatus()` - use `-600` colors, `/10` backgrounds
+- [ ] Task 2: Fix sidebar header status - add `aria-live`, increase font to `text-xs`
+- [ ] Task 3: Fix chat navbar empty state - remove Bot icon confusion
+- [ ] Task 4: Simplify sidebar footer - add dot indicator, change "Live" to "Real-time"
+- [ ] Task 5: (Optional) Remove/simplify customer panel status display
+
+### Other Pending Issues
+- [ ] Fix TypeScript error at `page.tsx:784` - `msg.temp_id` possibly undefined
+- [ ] Restart frontend dev server to apply committed fixes
 
 ---
 
 ## Progress Notes
 
-**Phase 0: Input Type Resolution**
-- Free-form text input: "Complete the Project Continuity System by updating handover workflows, then proceed with Rich Menu Persistence and Chat UI refinement"
-- Identified as ENHANCEMENT with MEDIUM complexity
-- Affected systems: Agent Workflows, Backend (Rich Menu), Frontend (Live Chat)
+**Session 2026-02-02 (Claude Code - Opus 4.5)**
 
-**Phase 1: Feature Understanding**
-- Parsed three interconnected features
-- Created user story: "As a development team member, I want to seamlessly hand off work between AI agents, have rich menus persist across sessions, and use a polished live chat interface"
+1. **TDZ ReferenceError Investigation & Fix**
+   - Root cause: `useEffect` referenced `wsSendMessage` before `useLiveChatSocket` hook declared it
+   - Fix: Reordered hooks - `useLiveChatSocket` now comes before auto-retry `useEffect`
+   - Commit: `ada579a`
 
-**Phase 2: Codebase Exploration**
-- Analyzed `.agent/workflows/` for handoff patterns
-- Found `credential_service.py` as model for DB persistence
-- Found `rich_menu_service.py` - has LINE API calls but no persistence
-- Found `live-chat/page.tsx` - has basic UI, needs refinement
+2. **Claim Button 404 Errors Investigation & Fix**
+   - Root cause: Button shown when no session exists, causing 404 on `/claim` endpoint
+   - Fix: Only show button when `session?.status === 'WAITING'`, added loading state
+   - Commit: `bfcb199`
 
-**Phase 3: Architecture Design**
-- Rich Menu: Add `sync_status`, `last_synced_at`, `last_sync_error` columns
-- Chat UI: Add MESSAGE_ACK, MESSAGE_FAILED WebSocket types
-- Handoff: Create unified `/agent_handoff` and `/agent_pickup` skills
-
-**Phase 4: Plan Generation**
-- Created `.claude/PRPs/plans/project-continuity-rich-menu-chat-ui.plan.md`
-- 15 atomic tasks across 3 phases
-- Each task has MIRROR pattern reference and validation
+3. **Connection Status UI Review**
+   - Analyzed current implementation against frontend design best practices
+   - Found 5 issues: hardcoded colors, no aria-live, font too small, confusing Bot icon, redundant displays
+   - Created plan at `C:\Users\TOPP\.claude\plans\sequential-coalescing-kahn.md`
 
 ---
 
 ## Blockers
 
-None
+**User action required:** Restart frontend dev server to apply committed fixes
 
 ---
 
 ## Next Steps
 
-To execute this plan, run: `/prp-implement .claude/PRPs/plans/project-continuity-rich-menu-chat-ui.plan.md`
+1. **Immediate**: Restart frontend dev server (`cd frontend && npm run dev`)
+2. **Then**: Execute Connection Status UI improvements following the plan
+3. **Optional**: Fix TypeScript error at page.tsx:784
 
-The plan includes:
-- **Phase 1 (Tasks 1-5)**: Project Continuity System - 2 new skills, workflow updates
-- **Phase 2 (Tasks 6-10)**: Rich Menu Persistence - DB schema, service enhancement, API endpoints
-- **Phase 3 (Tasks 11-15)**: Chat UI Refinement - TypeScript types, WebSocket ACK, UI enhancements
+---
 
-**Estimated effort**: 15 tasks, MEDIUM complexity, high pattern fidelity
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `frontend/app/admin/live-chat/page.tsx` | Connection status UI improvements |
+
+---
+
+## Reference Files
+
+- Plan: `C:\Users\TOPP\.claude\plans\sequential-coalescing-kahn.md`
+- Session log: `D:\genAI\skn-app\project-log-md\claude_code\session-2026-02-02-connection-status-ui.md`
