@@ -165,20 +165,6 @@ export default function LiveChatPage() {
         setSending(false);
     }, []);
 
-    // Auto-retry failed messages when reconnecting
-    useEffect(() => {
-        if (wsStatus === 'connected' && failedMessages.size > 0) {
-            const retryEntries = Array.from(failedMessages.entries());
-            retryEntries.forEach(([tempId]) => {
-                // Find message in messages to get its text
-                const msg = messages.find(m => m.temp_id === tempId);
-                if (msg) {
-                    wsSendMessage(msg.content, tempId);
-                }
-            });
-        }
-    }, [wsStatus, failedMessages, messages, wsSendMessage]);
-
     // Initialize WebSocket with admin ID
     const { joinRoom, leaveRoom, sendMessage: wsSendMessage, startTyping, claimSession, closeSession, reconnect, retryMessage } = useLiveChatSocket({
         adminId, // Pass admin ID from auth
@@ -193,6 +179,20 @@ export default function LiveChatPage() {
         onConnectionChange: handleConnectionChange,
         onError: (error) => console.error('WebSocket error:', error),
     });
+
+    // Auto-retry failed messages when reconnecting
+    useEffect(() => {
+        if (wsStatus === 'connected' && failedMessages.size > 0) {
+            const retryEntries = Array.from(failedMessages.entries());
+            retryEntries.forEach(([tempId]) => {
+                // Find message in messages to get its text
+                const msg = messages.find(m => m.temp_id === tempId);
+                if (msg) {
+                    wsSendMessage(msg.content, tempId);
+                }
+            });
+        }
+    }, [wsStatus, failedMessages, messages, wsSendMessage]);
 
     const fetchConversations = async () => {
         try {
