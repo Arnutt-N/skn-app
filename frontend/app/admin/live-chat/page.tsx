@@ -64,8 +64,29 @@ export default function LiveChatPage() {
 
     const API_BASE = '/api/v1';
 
+    // Handle message ACK - remove from pending (must be defined before handleMessageSent)
+    const handleMessageAck = useCallback((tempId: string, messageId: number) => {
+        setPendingMessages(prev => {
+            const next = new Set(prev);
+            next.delete(tempId);
+            return next;
+        });
+        setFailedMessages(prev => {
+            const next = new Map(prev);
+            next.delete(tempId);
+            return next;
+        });
+    }, []);
+
     // WebSocket event handlers
     const handleNewMessage = useCallback((message: Message) => {
+        // Only show messages for currently selected conversation
+        if (message.line_user_id !== selectedId) {
+            // Still refresh conversations list for unread counts
+            fetchConversations();
+            return;
+        }
+        
         setMessages(prev => {
             // Check if message already exists (by id or temp_id)
             const exists = prev.some(m => 
@@ -82,13 +103,17 @@ export default function LiveChatPage() {
         });
         // Refresh conversations list to update last message
         fetchConversations();
-    }, []);
+    }, [selectedId]);
 
     const handleMessageSent = useCallback((message: Message) => {
         handleNewMessage(message);
+        // Clear pending state since message was successfully sent
+        if (message.temp_id) {
+            handleMessageAck(message.temp_id, message.id);
+        }
         setSending(false);
         setInputText('');
-    }, [handleNewMessage]);
+    }, [handleNewMessage, handleMessageAck]);
 
     const handleTyping = useCallback((lineUserId: string, adminId: string, isTyping: boolean) => {
         if (isTyping) {
@@ -139,20 +164,6 @@ export default function LiveChatPage() {
         if (state === 'connected') {
             setBackendOnline(true);
         }
-    }, []);
-
-    // Handle message ACK - remove from pending
-    const handleMessageAck = useCallback((tempId: string, messageId: number) => {
-        setPendingMessages(prev => {
-            const next = new Set(prev);
-            next.delete(tempId);
-            return next;
-        });
-        setFailedMessages(prev => {
-            const next = new Map(prev);
-            next.delete(tempId);
-            return next;
-        });
     }, []);
 
     // Handle message failed - add to failed map
@@ -217,9 +228,13 @@ export default function LiveChatPage() {
             const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${id}`);
             if (res.ok) {
                 const data = await res.json();
-                setCurrentChat(data);
-                setMessages(data.messages || []);
-                setBackendOnline(true);
+                // Only update if this is still the selected conversation
+                // (prevents race condition when switching quickly)
+                if (selectedId === id) {
+                    setCurrentChat(data);
+                    setMessages(data.messages || []);
+                    setBackendOnline(true);
+                }
             }
         } catch {
             setBackendOnline(false);
@@ -238,32 +253,39 @@ export default function LiveChatPage() {
         return () => clearInterval(interval);
     }, [filterStatus, wsStatus]);
 
-    // Handle conversation selection
+    // Fallback polling for selected conversation messages (catches WebSocket race conditions)
     useEffect(() => {
         if (!selectedId) return;
-        
-        // Leave previous room
-        if (prevSelectedIdRef.current && prevSelectedIdRef.current !== selectedId) {
-            leaveRoom();
-        }
-        
-        // Fetch initial data
+
+        // Poll messages every 3 seconds as fallback for real-time updates
+        const interval = setInterval(() => {
+            fetchChatDetail(selectedId);
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [selectedId]);
+
+    // Handle conversation selection - only clear/fetch when selectedId changes
+    useEffect(() => {
+        if (!selectedId) return;
+
+        // Clear messages when switching to avoid showing old conversation
+        setMessages([]);
+
+        // Fetch initial data first
         fetchChatDetail(selectedId);
-        
-        // Join WebSocket room
-        if (wsStatus === 'connected') {
-            joinRoom(selectedId);
-        }
-        
+
         prevSelectedIdRef.current = selectedId;
         isFirstLoadRef.current = true;
-        
-        return () => {
-            if (selectedId) {
-                leaveRoom();
-            }
-        };
-    }, [selectedId, wsStatus, joinRoom, leaveRoom]);
+    }, [selectedId]);
+
+    // Join WebSocket room when connected - separate effect to avoid clearing messages on reconnect
+    useEffect(() => {
+        if (!selectedId || wsStatus !== 'connected') return;
+
+        // Join WebSocket room for real-time updates
+        joinRoom(selectedId);
+    }, [selectedId, wsStatus, joinRoom]);
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -437,14 +459,38 @@ export default function LiveChatPage() {
     const getConnectionStatus = () => {
         switch (wsStatus) {
             case 'connected':
-                return { icon: Wifi, color: 'text-emerald-500', bg: 'bg-emerald-50', label: 'Live' };
+                return { 
+                    icon: Wifi, 
+                    color: 'text-emerald-600', 
+                    bg: 'bg-emerald-600/10', 
+                    dotColor: 'bg-emerald-600',
+                    label: 'Connected' 
+                };
             case 'connecting':
             case 'authenticating':
-                return { icon: Wifi, color: 'text-amber-500', bg: 'bg-amber-50', label: 'Connecting...' };
+                return { 
+                    icon: Wifi, 
+                    color: 'text-amber-600', 
+                    bg: 'bg-amber-600/10', 
+                    dotColor: 'bg-amber-600',
+                    label: 'Connecting...' 
+                };
             case 'reconnecting':
-                return { icon: WifiOff, color: 'text-orange-500', bg: 'bg-orange-50', label: 'Reconnecting...' };
+                return { 
+                    icon: WifiOff, 
+                    color: 'text-orange-600', 
+                    bg: 'bg-orange-600/10', 
+                    dotColor: 'bg-orange-600',
+                    label: 'Reconnecting...' 
+                };
             default:
-                return { icon: WifiOff, color: 'text-slate-400', bg: 'bg-slate-100', label: 'Offline' };
+                return { 
+                    icon: WifiOff, 
+                    color: 'text-slate-500', 
+                    bg: 'bg-slate-500/10', 
+                    dotColor: 'bg-slate-500',
+                    label: 'Offline' 
+                };
         }
     };
 
@@ -495,10 +541,6 @@ export default function LiveChatPage() {
                             <Home className="w-4 h-4" />
                         </Link>
                         <h1 className="flex-1 text-white font-bold text-sm text-center">Live Chat</h1>
-                        <div className="flex items-center gap-1">
-                            <ConnIcon className={`w-4 h-4 ${connStatus.color}`} />
-                            <span className={`text-[10px] ${connStatus.color}`}>{connStatus.label}</span>
-                        </div>
                     </div>
 
                     {/* Search & Filters */}
@@ -644,8 +686,7 @@ export default function LiveChatPage() {
                     </div>
 
                     {/* Footer */}
-                    <div className="px-4 py-2.5 border-t border-slate-700/50 bg-[#25293c]/50 text-xs text-slate-500 flex justify-between">
-                        <span>{wsStatus === 'connected' ? 'Live' : 'Polling'}</span>
+                    <div className="px-4 py-2.5 border-t border-slate-700/50 bg-[#25293c]/50 text-xs text-slate-500 flex justify-center">
                         <span>{activeCount} active • {waitingCount} waiting</span>
                     </div>
                 </aside>
@@ -658,9 +699,12 @@ export default function LiveChatPage() {
                             <header className={`${HEADER_HEIGHT} px-5 bg-white border-b border-slate-200 flex items-center justify-between`}>
                                 <span className="font-semibold text-slate-700 text-sm">Live Chat Console</span>
                                 <div className="flex items-center gap-3">
-                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${connStatus.bg} ${connStatus.color}`}>
-                                        <div className={`w-2 h-2 rounded-full ${connStatus.color}`} />
-                                        <Bot className="w-4 h-4" />
+                                    <div 
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${connStatus.bg} ${connStatus.color}`}
+                                        aria-live="polite"
+                                        aria-atomic="true"
+                                    >
+                                        <ConnIcon className="w-4 h-4" aria-hidden="true" />
                                         {connStatus.label}
                                     </div>
                                     <Link href="/admin" className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-medium cursor-pointer flex items-center gap-1.5">
@@ -731,7 +775,7 @@ export default function LiveChatPage() {
                             </header>
 
                             {/* Messages */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-100 chat-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-100 chat-scrollbar">
                                 <div className="flex justify-center pb-3">
                                     <span className="px-3 py-1 bg-white text-slate-500 text-xs font-medium rounded-full shadow-sm">
                                         {new Date(currentChat?.session?.started_at || Date.now()).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -775,13 +819,13 @@ export default function LiveChatPage() {
                                                 </div>
                                                 {/* Message Status Indicators */}
                                                 {!isIncoming && msg.temp_id && (
-                                                    <div className="ml-2 flex items-center gap-1">
+                                                    <div className="mt-1 flex items-center justify-end gap-1 text-xs">
                                                         {isPending && <RefreshCw className="w-3.5 h-3.5 text-indigo-400 animate-spin" />}
                                                         {isFailed && (
                                                             <>
                                                                 <AlertCircle className="w-3.5 h-3.5 text-red-400" />
                                                                 <button
-                                                                    onClick={() => retryMessage(msg.temp_id)}
+                                                                    onClick={() => retryMessage(msg.temp_id!)}
                                                                     className="text-[10px] text-indigo-600 hover:underline cursor-pointer"
                                                                 >
                                                                     Retry
@@ -894,14 +938,8 @@ export default function LiveChatPage() {
                             </div>
                             <div className="bg-slate-50 rounded-xl p-3 flex justify-between items-center">
                                 <span className="text-xs text-slate-500">Session Status</span>
-                                <span className={`px-2 py-1 rounded-lg text-[10px] font-semibold ${currentChat?.session?.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
+                                <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${currentChat?.session?.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-600' : currentChat?.session?.status === 'WAITING' ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-600'}`}>
                                     {currentChat?.session?.status || 'None'}
-                                </span>
-                            </div>
-                            <div className="bg-slate-50 rounded-xl p-3 flex justify-between items-center">
-                                <span className="text-xs text-slate-500">Connection</span>
-                                <span className={`px-2 py-1 rounded-lg text-[10px] font-semibold ${connStatus.bg} ${connStatus.color}`}>
-                                    {connStatus.label}
                                 </span>
                             </div>
                         </div>
