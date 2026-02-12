@@ -14,7 +14,7 @@ A modern LINE Official Account system with LIFF integration for Community Justic
 ### Backend
 
 ### Backend
-- **FastAPI** (Python 3.11+)
+- **FastAPI** (Python 3.13+)
 - **PostgreSQL** (Database)
 - **SQLAlchemy** (ORM with Async support)
 - **Alembic** (Migrations)
@@ -50,18 +50,18 @@ jsk-app/
 ## Getting Started
 
 ### Prerequisites
-- **Python 3.9+** (Python 3.13+ recommended for best performance)
+- **Python 3.13+**
 - Node.js 22+
 - PostgreSQL 16+
 - Redis 7+
 
 ### Backend Setup
 
-1. Create virtual environment:
+1. Create virtual environment in WSL:
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python3.13 -m venv venv_linux
+source venv_linux/bin/activate
 ```
 
 2. Install dependencies:

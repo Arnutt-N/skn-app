@@ -17,6 +17,9 @@ class WSEventType(str, Enum):
     TYPING_STOP = "typing_stop"
     CLAIM_SESSION = "claim_session"
     CLOSE_SESSION = "close_session"
+    TRANSFER_SESSION = "transfer_session"
+    SUBSCRIBE_ANALYTICS = "subscribe_analytics"
+    UNSUBSCRIBE_ANALYTICS = "unsubscribe_analytics"
     PING = "ping"
 
     # Server → Client
@@ -27,10 +30,13 @@ class WSEventType(str, Enum):
     TYPING_INDICATOR = "typing_indicator"
     SESSION_CLAIMED = "session_claimed"
     SESSION_CLOSED = "session_closed"
+    SESSION_TRANSFERRED = "session_transferred"
     PRESENCE_UPDATE = "presence_update"
     CONVERSATION_UPDATE = "conversation_update"
     OPERATOR_JOINED = "operator_joined"
     OPERATOR_LEFT = "operator_left"
+    ANALYTICS_UPDATE = "analytics_update"
+    SLA_ALERT = "sla_alert"
     ERROR = "error"
     PONG = "pong"
 
@@ -42,9 +48,12 @@ class WSErrorCode(str, Enum):
     AUTH_MISSING_TOKEN = "auth_missing_token"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
     VALIDATION_ERROR = "validation_error"
+    INVALID_REQUEST = "invalid_request"
     MESSAGE_TOO_LONG = "message_too_long"
     NOT_AUTHENTICATED = "not_authenticated"
     NOT_IN_ROOM = "not_in_room"
+    SESSION_NOT_FOUND = "session_not_found"
+    INTERNAL_ERROR = "internal_error"
     UNKNOWN_EVENT = "unknown_event"
 
 
@@ -99,6 +108,12 @@ class SendMessagePayload(BaseModel):
         return cleaned
 
 
+class TransferSessionPayload(BaseModel):
+    """Transfer session payload"""
+    to_operator_id: int = Field(..., gt=0, description="Target operator ID")
+    reason: Optional[str] = Field(None, max_length=255, description="Transfer reason")
+
+
 class TypingPayload(BaseModel):
     """Typing indicator payload"""
     line_user_id: str
@@ -143,5 +158,6 @@ class ConversationUpdatePayload(BaseModel):
     display_name: str
     picture_url: Optional[str] = None
     chat_mode: str
+    unread_count: Optional[int] = None
     session: Optional[dict] = None
     messages: List[MessagePayload] = []

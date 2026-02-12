@@ -8,6 +8,9 @@ export enum MessageType {
   TYPING_STOP = 'typing_stop',
   CLAIM_SESSION = 'claim_session',
   CLOSE_SESSION = 'close_session',
+  TRANSFER_SESSION = 'transfer_session',
+  SUBSCRIBE_ANALYTICS = 'subscribe_analytics',
+  UNSUBSCRIBE_ANALYTICS = 'unsubscribe_analytics',
   PING = 'ping',
 
   // Server → Client
@@ -20,10 +23,12 @@ export enum MessageType {
   TYPING_INDICATOR = 'typing_indicator',
   SESSION_CLAIMED = 'session_claimed',
   SESSION_CLOSED = 'session_closed',
+  SESSION_TRANSFERRED = 'session_transferred',
   PRESENCE_UPDATE = 'presence_update',
   CONVERSATION_UPDATE = 'conversation_update',
   OPERATOR_JOINED = 'operator_joined',
   OPERATOR_LEFT = 'operator_left',
+  ANALYTICS_UPDATE = 'analytics_update',
   ERROR = 'error',
   PONG = 'pong'
 }
@@ -65,6 +70,7 @@ export interface Message {
   direction: 'INCOMING' | 'OUTGOING';
   content: string;
   message_type: string;
+  payload?: Record<string, unknown> | null;
   sender_role?: 'USER' | 'BOT' | 'ADMIN';
   operator_name?: string;
   created_at: string;
@@ -82,8 +88,18 @@ export interface ConversationUpdatePayload {
   display_name: string;
   picture_url?: string;
   chat_mode: 'BOT' | 'HUMAN';
+  unread_count?: number;
+  tags?: Array<{
+    id: number;
+    name: string;
+    color: string;
+  }>;
   session?: Session;
-  messages: Message[];
+  messages?: Message[];
+  last_message?: {
+    content: string;
+    created_at: string;
+  };
 }
 
 export interface TypingIndicatorPayload {
@@ -122,4 +138,12 @@ export interface MessageFailedPayload {
   temp_id: string;
   error: string;
   retryable: boolean;
+}
+
+export interface SessionTransferredPayload {
+  line_user_id: string;
+  session_id: number;
+  from_operator_id: number;
+  to_operator_id: number;
+  reason?: string;
 }

@@ -1,28 +1,41 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-    LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+    LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
-    Calendar, Users, MessageSquare, Clock, CheckCircle, ArrowUp, ArrowDown
+    Users, MessageSquare, Clock, CheckCircle
 } from 'lucide-react';
 
+interface AnalyticsSummary {
+    total_sessions: number;
+    avg_response_time: number;
+    avg_resolution_time: number;
+    total_messages: number;
+}
+
+interface DailyStat {
+    date: string;
+    total_sessions: number;
+}
+
+interface OperatorStat {
+    operator_name?: string;
+    total_sessions: number;
+    avg_response_time: number;
+    avg_resolution_time: number;
+}
+
 export default function AnalyticsPage() {
-    const [summary, setSummary] = useState<any>(null);
-    const [dailyStats, setDailyStats] = useState<any[]>([]);
-    const [operatorStats, setOperatorStats] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+    const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
+    const [operatorStats, setOperatorStats] = useState<OperatorStat[]>([]);
     const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-    useEffect(() => {
-        fetchData();
-    }, [dateRange]);
-
-    const fetchData = async () => {
-        setLoading(true);
+    const fetchData = useCallback(async () => {
         try {
             const query = `?from_date=${dateRange.from}&to_date=${dateRange.to}`;
 
@@ -44,10 +57,15 @@ export default function AnalyticsPage() {
 
         } catch (error) {
             console.error("Failed to fetch analytics", error);
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [API_BASE, dateRange.from, dateRange.to]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            void fetchData();
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [fetchData]);
 
     return (
         <div className="h-full overflow-y-auto p-6 bg-[#f8f7fa]">
@@ -60,13 +78,13 @@ export default function AnalyticsPage() {
                 <div className="flex gap-2">
                     <input
                         type="date"
-                        className="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
                         onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
                     />
                     <span className="self-center text-slate-400">-</span>
                     <input
                         type="date"
-                        className="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
                         onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
                     />
                 </div>
@@ -77,8 +95,8 @@ export default function AnalyticsPage() {
                 <StatCard
                     title="Total Sessions"
                     value={summary?.total_sessions || 0}
-                    icon={<MessageSquare className="w-5 h-5 text-indigo-600" />}
-                    color="bg-indigo-50"
+                    icon={<MessageSquare className="w-5 h-5 text-primary" />}
+                    color="bg-primary/8"
                 />
                 <StatCard
                     title="Avg Response Time"
@@ -102,7 +120,7 @@ export default function AnalyticsPage() {
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100/60">
                     <h3 className="font-bold text-slate-800 mb-4">Sessions Trend</h3>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
@@ -125,7 +143,7 @@ export default function AnalyticsPage() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100/60">
                     <h3 className="font-bold text-slate-800 mb-4">Operator Workload</h3>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
@@ -145,7 +163,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Operator Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100/60 overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-100">
                     <h3 className="font-bold text-slate-800">Operator Performance</h3>
                 </div>
@@ -183,14 +201,14 @@ export default function AnalyticsPage() {
     );
 }
 
-function StatCard({ title, value, icon, color }: { title: string, value: string | number, icon: any, color: string }) {
+function StatCard({ title, value, icon, color }: { title: string, value: string | number, icon: React.ReactNode, color: string }) {
     return (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100/60 flex items-center justify-between">
             <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{title}</p>
-                <p className="text-2xl font-bold text-slate-800 mt-1">{value}</p>
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{title}</p>
+                <p className="text-2xl font-bold text-slate-800 mt-1 tracking-tight">{value}</p>
             </div>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${color}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
                 {icon}
             </div>
         </div>

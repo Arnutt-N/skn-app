@@ -19,10 +19,24 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # 1. Update users table
-    op.add_column('users', sa.Column('friend_status', sa.String(), nullable=True, server_default='ACTIVE'))
-    op.add_column('users', sa.Column('friend_since', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('users', sa.Column('last_message_at', sa.DateTime(timezone=True), nullable=True))
+    conn = op.get_bind()
+
+    # Check if chat_sessions table already exists (indicates migration was already run)
+    result = conn.execute(sa.text(
+        "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'chat_sessions')"
+    ))
+    if result.scalar():
+        return  # Tables already exist, skip creation
+
+    # 1. Update users table (check if columns exist first)
+    result = conn.execute(sa.text("""
+        SELECT EXISTS (SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'friend_status')
+    """))
+    if not result.scalar():
+        op.add_column('users', sa.Column('friend_status', sa.String(), nullable=True, server_default='ACTIVE'))
+        op.add_column('users', sa.Column('friend_since', sa.DateTime(timezone=True), nullable=True))
+        op.add_column('users', sa.Column('last_message_at', sa.DateTime(timezone=True), nullable=True))
 
     # 2. Add HANDOFF to replytype enum
     # Note: PostgreSQL doesn't support adding values to enums inside a transaction easily in some versions,

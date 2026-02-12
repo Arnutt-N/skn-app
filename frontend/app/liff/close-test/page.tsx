@@ -21,15 +21,15 @@ export default function CloseTestPage() {
                 if (!liffId) {
                     throw new Error('LIFF ID not found')
                 }
-                if (typeof window !== 'undefined' && (window as any).liff) {
-                    await (window as any).liff.init({ liffId })
-                    setStatus('LIFF Initialized (In Client: ' + (window as any).liff.isInClient() + ')')
+                if (typeof window !== 'undefined' && window.liff) {
+                    await window.liff.init({ liffId })
+                    setStatus('LIFF Initialized (In Client: ' + window.liff.isInClient() + ')')
                 } else {
                     setStatus('LIFF Not Found (External Browser?)')
                 }
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error(e)
-                setLiffError(e.message)
+                setLiffError(e instanceof Error ? e.message : 'Unknown error')
                 setStatus('LIFF Init Failed')
             }
         }
@@ -37,7 +37,7 @@ export default function CloseTestPage() {
     }, [])
 
     const handleClose = () => {
-        const liff = (window as any).liff
+        const liff = window.liff
         try {
             if (liff?.isInClient()) {
                 setStatus('Attempting LIFF Close...')
@@ -54,9 +54,9 @@ export default function CloseTestPage() {
                     window.location.href = liffUrl
                 }
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error('Close window failed:', e)
-            setStatus(`Close Failed: ${e.message}`)
+            setStatus(`Close Failed: ${e instanceof Error ? e.message : 'Unknown error'}`)
         }
     }
 

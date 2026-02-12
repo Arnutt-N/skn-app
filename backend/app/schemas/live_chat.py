@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Any
@@ -13,6 +13,11 @@ class LastMessage(BaseModel):
     content: str
     created_at: datetime
 
+class TagSummary(BaseModel):
+    id: int
+    name: str
+    color: str
+
 class ConversationSummary(BaseModel):
     line_user_id: str
     display_name: Optional[str] = None
@@ -22,6 +27,7 @@ class ConversationSummary(BaseModel):
     session: Optional[ChatSessionResponse] = None
     last_message: Optional[LastMessage] = None
     unread_count: int = 0
+    tags: List[TagSummary] = Field(default_factory=list)
 
 class ConversationList(BaseModel):
     conversations: List[ConversationSummary]

@@ -5,6 +5,17 @@ description: Universal standard for handoff between Claude Code, Antigravity, an
 
 # Cross-Platform Collaboration Standard
 
+## Mandatory Sync Gate (Critical)
+
+A handoff is invalid unless these artifacts are all updated in the same session:
+1. `.agent/PROJECT_STATUS.md`
+2. `.agent/state/current-session.json`
+3. `.agent/state/task.md`
+4. `.agent/state/checkpoints/handover-[platform]-[YYYYMMDD-HHMM].json`
+5. `project-log-md/[platform]/session-summary-[YYYYMMDD-HHMM].md`
+
+If any item is missing, do not finalize handoff.
+
 ## Overview
 
 ระบบ collaboration ระหว่าง **ทุก AI coding platforms** ไม่จำกัด
@@ -14,7 +25,7 @@ description: Universal standard for handoff between Claude Code, Antigravity, an
 | Platform | Code | Capabilities |
 |----------|------|--------------|
 | **Claude Code** | `claude-code` | CLI tools, Read/Edit/Write, Bash |
-| **Antigravity** (Cursor) | `antigravity` | Artifacts, task management, context |
+| **Antigravity** (Google) | `antigravity` | AI pair programming, context-aware |
 | **Open Code** (OpenAI) | `open-code` | Markdown logs, standard files |
 | **GitHub Copilot** | `copilot` | VS Code integration, suggestions |
 | **Tabby** | `tabby` | Self-hosted AI assistant |
@@ -67,13 +78,14 @@ All output directories share the same agent-specific subdirectory structure:
 **Standard Subdirectory Structure:**
 ```
 [output-directory]/
-├── antigravity/    # Antigravity/Cursor sessions
+├── antigravity/    # Antigravity (Google) sessions
 ├── gemini_cli/     # Gemini CLI sessions
 ├── claude_code/    # Claude Code sessions
 ├── codeX/          # CodeX sessions
 ├── kilo_code/      # Kilo Code sessions
 ├── kimi_code/      # Kimi Code sessions
 ├── open_code/      # Open Code sessions
+├── qwen/           # Qwen (Alibaba) sessions
 ├── other/          # Other platforms
 └── archive/        # Archived/legacy files
 ```

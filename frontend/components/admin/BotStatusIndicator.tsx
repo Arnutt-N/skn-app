@@ -36,9 +36,14 @@ export const BotStatusIndicator: React.FC = () => {
     }, [API_BASE]);
 
     useEffect(() => {
-        checkStatus();
+        const initial = setTimeout(() => {
+            void checkStatus();
+        }, 0);
         const interval = setInterval(checkStatus, 60000); // Check every minute
-        return () => clearInterval(interval);
+        return () => {
+            clearTimeout(initial);
+            clearInterval(interval);
+        };
     }, [checkStatus]);
 
     const statusColors: Record<BotStatus, string> = {

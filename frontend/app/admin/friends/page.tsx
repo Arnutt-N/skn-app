@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Search, Filter, MoreVertical, User, History } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { MoreVertical, User } from 'lucide-react';
+import type { SelectOption } from '@/components/ui/Select';
+import { AdminSearchFilterBar } from '@/components/admin/AdminSearchFilterBar';
+import { AdminTableHead, type AdminTableHeadColumn } from '@/components/admin/AdminTableHead';
 
 interface Friend {
     line_user_id: string;
@@ -18,14 +21,24 @@ export default function FriendsPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState<string | null>(null);
+    const statusOptions: SelectOption[] = [
+        { value: '', label: 'All Status' },
+        { value: 'ACTIVE', label: 'Active' },
+        { value: 'BLOCKED', label: 'Blocked' },
+        { value: 'UNFOLLOWED', label: 'Unfollowed' },
+    ];
+    const tableColumns: AdminTableHeadColumn[] = [
+        { key: 'user', label: 'User', className: 'px-6 py-4' },
+        { key: 'status', label: 'Status', className: 'px-6 py-4' },
+        { key: 'chat_mode', label: 'Chat Mode', className: 'px-6 py-4' },
+        { key: 'since', label: 'Since', className: 'px-6 py-4' },
+        { key: 'last_active', label: 'Last Active', className: 'px-6 py-4' },
+        { key: 'actions', label: 'Actions', align: 'right', className: 'px-6 py-4' },
+    ];
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-    useEffect(() => {
-        fetchFriends();
-    }, [statusFilter]);
-
-    const fetchFriends = async () => {
+    const fetchFriends = useCallback(async () => {
         setLoading(true);
         try {
             const query = statusFilter ? `?status=${statusFilter}` : '';
@@ -39,7 +52,11 @@ export default function FriendsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE, statusFilter]);
+
+    useEffect(() => {
+        fetchFriends();
+    }, [fetchFriends]);
 
     const filteredFriends = friends.filter(f =>
         f.display_name?.toLowerCase().includes(filter.toLowerCase()) ||
@@ -47,48 +64,30 @@ export default function FriendsPage() {
     );
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-6 max-w-7xl mx-auto thai-text">
             <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">LINE Friends</h1>
-                    <p className="text-slate-500 text-sm">Manage users who follow the Official Account</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Search users..."
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
-                            className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-full md:w-64"
-                        />
-                    </div>
-                    <select
-                        className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500"
-                        onChange={(e) => setStatusFilter(e.target.value || null)}
-                    >
-                        <option value="">All Status</option>
-                        <option value="ACTIVE">Active</option>
-                        <option value="BLOCKED">Blocked</option>
-                        <option value="UNFOLLOWED">Unfollowed</option>
-                    </select>
+                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight thai-no-break">LINE Friends</h1>
+                    <p className="text-slate-400 text-sm thai-no-break">Manage users who follow the Official Account</p>
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="mb-6">
+                <AdminSearchFilterBar
+                    searchValue={filter}
+                    onSearchChange={setFilter}
+                    statusValue={statusFilter ?? ''}
+                    onStatusChange={(value) => setStatusFilter(value || null)}
+                    searchPlaceholder="Search users..."
+                    statusOptions={statusOptions}
+                    showCategory={false}
+                />
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100/60 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-slate-50 border-b border-slate-100">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Chat Mode</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Since</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Active</th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
+                        <AdminTableHead columns={tableColumns} rowClassName="text-slate-500" />
                         <tbody className="divide-y divide-slate-50">
                             {loading ? (
                                 <tr>
@@ -105,6 +104,7 @@ export default function FriendsPage() {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden">
                                                     {friend.picture_url ? (
+                                                        // eslint-disable-next-line @next/next/no-img-element
                                                         <img src={friend.picture_url} alt="" className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-slate-400">
@@ -119,15 +119,15 @@ export default function FriendsPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${friend.friend_status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' :
-                                                    friend.friend_status === 'BLOCKED' ? 'bg-red-100 text-red-700' :
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${friend.friend_status === 'ACTIVE' ? 'bg-success/12 text-success' :
+                                                    friend.friend_status === 'BLOCKED' ? 'bg-danger/12 text-danger' :
                                                         'bg-slate-100 text-slate-600'
                                                 }`}>
                                                 {friend.friend_status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${friend.chat_mode === 'HUMAN' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${friend.chat_mode === 'HUMAN' ? 'bg-primary/12 text-primary' : 'bg-slate-100 text-slate-600'
                                                 }`}>
                                                 {friend.chat_mode}
                                             </span>
@@ -139,7 +139,7 @@ export default function FriendsPage() {
                                             {friend.last_message_at ? new Date(friend.last_message_at).toLocaleString() : '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <button className="text-slate-400 hover:text-indigo-600 transition-colors">
+                                            <button className="text-slate-400 hover:text-primary transition-colors">
                                                 <MoreVertical className="w-5 h-5" />
                                             </button>
                                         </td>

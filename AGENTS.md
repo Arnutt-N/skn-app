@@ -25,7 +25,7 @@
 | Component | Technology | Version |
 |-----------|------------|---------|
 | Framework | FastAPI | 0.109+ |
-| Language | Python | 3.11+ |
+| Language | Python | 3.13+ |
 | Database | PostgreSQL | 16+ |
 | Cache | Redis | 7+ |
 | ORM | SQLAlchemy | 2.0+ (async) |
@@ -148,7 +148,7 @@ sk-app/
 > - Windows is the host OS, but execution happens in WSL
 
 ### Prerequisites
-- Python 3.11+
+- Python 3.13+
 - Node.js 20+
 - PostgreSQL 16+ (via Docker)
 - Redis 7+ (via Docker)
@@ -165,10 +165,9 @@ docker-compose up -d db redis
 ```bash
 cd backend
 
-# Create virtual environment (use WSL)
-python -m venv venv
-source venv/bin/activate  # WSL/Linux
-# or: venv\Scripts\activate  # Windows (not recommended)
+# Create virtual environment in WSL (required)
+python3.13 -m venv venv_linux
+source venv_linux/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt

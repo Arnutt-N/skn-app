@@ -4,20 +4,30 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { WebSocketClient } from '@/lib/websocket/client';
 import {
   MessageType,
-  WebSocketMessage,
   ConnectionState,
   UseWebSocketOptions,
   UseWebSocketReturn
 } from '@/lib/websocket/types';
 
 export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
+  const {
+    url,
+    adminId,
+    token,
+    onConnect,
+    onDisconnect,
+    onMessage,
+    onError,
+  } = options;
   const clientRef = useRef<WebSocketClient | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
   useEffect(() => {
     const client = new WebSocketClient({
-      ...options,
+      url,
+      adminId,
+      token,
       onStateChange: (state) => {
         setConnectionState(state);
         if (client) {
@@ -26,11 +36,11 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       },
       onConnect: () => {
         setReconnectAttempts(0);
-        options.onConnect?.();
+        onConnect?.();
       },
-      onDisconnect: options.onDisconnect,
-      onMessage: options.onMessage,
-      onError: options.onError
+      onDisconnect,
+      onMessage,
+      onError
     });
 
     clientRef.current = client;
@@ -40,7 +50,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       client.disconnect();
       clientRef.current = null;
     };
-  }, [options.url, options.adminId, options.token]);
+  }, [adminId, onConnect, onDisconnect, onError, onMessage, token, url]);
 
   const send = useCallback((type: MessageType | string, payload: unknown) => {
     clientRef.current?.send(type, payload);

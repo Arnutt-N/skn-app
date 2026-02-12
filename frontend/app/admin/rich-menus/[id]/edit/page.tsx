@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
@@ -46,11 +46,7 @@ export default function EditRichMenuPage() {
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-    useEffect(() => {
-        fetchMenu();
-    }, [menuId]);
-
-    const fetchMenu = async () => {
+    const fetchMenu = useCallback(async () => {
         try {
             const res = await fetch(`${API_BASE}/admin/rich-menus/${menuId}`);
             if (res.ok) {
@@ -72,7 +68,11 @@ export default function EditRichMenuPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE, menuId, router]);
+
+    useEffect(() => {
+        fetchMenu();
+    }, [fetchMenu]);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -118,7 +118,7 @@ export default function EditRichMenuPage() {
 
             alert('บันทึกสำเร็จ!');
             router.push('/admin/rich-menus');
-        } catch (error) {
+        } catch {
             alert('Error saving rich menu');
         } finally {
             setSaving(false);
@@ -128,7 +128,7 @@ export default function EditRichMenuPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center p-24">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
         );
     }
@@ -160,7 +160,7 @@ export default function EditRichMenuPage() {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-transparent transition-all"
                                 placeholder="e.g., Main Menu v1"
                             />
                         </div>
@@ -170,7 +170,7 @@ export default function EditRichMenuPage() {
                                 type="text"
                                 value={chatBarText}
                                 onChange={(e) => setChatBarText(e.target.value)}
-                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-transparent transition-all"
                                 placeholder="e.g., Open Menu"
                             />
                         </div>
@@ -189,9 +189,10 @@ export default function EditRichMenuPage() {
                         <label className="block text-sm font-medium text-slate-600 mb-2">รูปภาพเมนู</label>
                         <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="w-full aspect-[250/168.6] bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 hover:border-indigo-400 transition-colors cursor-pointer overflow-hidden group relative"
+                            className="w-full aspect-[250/168.6] bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 hover:border-primary/40 transition-colors cursor-pointer overflow-hidden group relative"
                         >
                             {imagePreview ? (
+                                // eslint-disable-next-line @next/next/no-img-element
                                 <img src={imagePreview} alt="Preview" className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-slate-400">
@@ -227,7 +228,7 @@ export default function EditRichMenuPage() {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-6 py-2.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors text-sm font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-6 py-2.5 bg-gradient-to-br from-primary to-primary-dark text-white rounded-lg hover:bg-primary-dark transition-colors text-sm font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                         {saving ? (
                             <>

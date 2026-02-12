@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
-import { Plus, Edit2, Trash2, CheckCircle, XCircle, Shield, Bot, Send, Database, Globe } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, Shield, Bot, Send, Database, Globe } from 'lucide-react';
 
 interface Credential {
     id: number;
@@ -10,8 +10,17 @@ interface Credential {
     provider: 'LINE' | 'TELEGRAM' | 'N8N' | 'GOOGLE_SHEETS' | 'CUSTOM';
     is_active: boolean;
     is_default: boolean;
-    metadata: any;
+    metadata: Record<string, unknown>;
     credentials_masked: string;
+}
+
+interface CredentialFormData {
+    name: string;
+    provider: Credential['provider'];
+    credentials: Record<string, string>;
+    metadata: Record<string, string>;
+    is_active: boolean;
+    is_default: boolean;
 }
 
 export default function CredentialList() {
@@ -19,7 +28,7 @@ export default function CredentialList() {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [formData, setFormData] = useState<any>({
+    const [formData, setFormData] = useState<CredentialFormData>({
         name: '',
         provider: 'LINE',
         credentials: {},
@@ -31,7 +40,7 @@ export default function CredentialList() {
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-    const fetchCredentials = async () => {
+    const fetchCredentials = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch(`${API_BASE}/admin/credentials`);
@@ -44,11 +53,11 @@ export default function CredentialList() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE]);
 
     useEffect(() => {
         fetchCredentials();
-    }, []);
+    }, [fetchCredentials]);
 
     const handleOpenCreate = () => {
         setEditingId(null);
@@ -70,6 +79,9 @@ export default function CredentialList() {
     };
 
     const handleOpenEdit = (cred: Credential) => {
+        const normalizedMetadata = Object.fromEntries(
+            Object.entries(cred.metadata || {}).map(([key, value]) => [key, String(value ?? '')])
+        ) as Record<string, string>;
         setEditingId(cred.id);
         // We can't edit the secret credentials directly (they are masked), 
         // but we can provide fields to overwrite them.
@@ -77,7 +89,7 @@ export default function CredentialList() {
             name: cred.name,
             provider: cred.provider,
             credentials: {}, // Will only send if filled
-            metadata: cred.metadata || {},
+            metadata: normalizedMetadata,
             is_active: cred.is_active,
             is_default: cred.is_default
         });
@@ -106,7 +118,7 @@ export default function CredentialList() {
                 const err = await res.json();
                 alert(`Error: ${err.detail || 'Failed to save'}`);
             }
-        } catch (error) {
+        } catch {
             alert('Network error');
         }
     };
@@ -121,7 +133,7 @@ export default function CredentialList() {
             if (res.ok) {
                 fetchCredentials();
             }
-        } catch (error) {
+        } catch {
             alert('Delete failed');
         }
     };
@@ -134,7 +146,7 @@ export default function CredentialList() {
             });
             const result = await res.json();
             alert(result.message);
-        } catch (error) {
+        } catch {
             alert('Verification failed');
         } finally {
             setVerifying(null);
@@ -149,7 +161,7 @@ export default function CredentialList() {
             if (res.ok) {
                 fetchCredentials();
             }
-        } catch (error) {
+        } catch {
             alert('Failed to set default');
         }
     };
@@ -170,7 +182,7 @@ export default function CredentialList() {
                 <h3 className="text-lg font-bold text-slate-800">API Credentials</h3>
                 <button
                     onClick={handleOpenCreate}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all text-sm font-bold shadow-lg shadow-indigo-200 active:scale-95 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-all text-sm font-bold shadow-lg shadow-primary/20 active:scale-95 cursor-pointer"
                 >
                     <Plus className="w-4 h-4" />
                     Add Credential
@@ -179,7 +191,7 @@ export default function CredentialList() {
 
             {loading ? (
                 <div className="flex justify-center p-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-4">
@@ -187,7 +199,7 @@ export default function CredentialList() {
                         <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
                             <Shield className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                             <p className="text-slate-500 font-medium">No credentials configured yet</p>
-                            <button onClick={handleOpenCreate} className="text-indigo-600 font-bold mt-2 hover:underline cursor-pointer">
+                            <button onClick={handleOpenCreate} className="text-primary font-bold mt-2 hover:underline cursor-pointer">
                                 Add your first one
                             </button>
                         </div>
@@ -202,7 +214,7 @@ export default function CredentialList() {
                                         <div className="flex items-center gap-2">
                                             <h4 className="font-bold text-slate-800">{cred.name}</h4>
                                             {cred.is_default && (
-                                                <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full uppercase">Default</span>
+                                                <span className="px-2 py-0.5 bg-primary/12 text-primary text-[10px] font-bold rounded-full uppercase">Default</span>
                                             )}
                                             {!cred.is_active && (
                                                 <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase">Inactive</span>
@@ -220,7 +232,7 @@ export default function CredentialList() {
                                     <button
                                         onClick={() => handleVerify(cred.id)}
                                         disabled={verifying === cred.id}
-                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                                        className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all cursor-pointer disabled:opacity-50"
                                         title="Verify Connection"
                                     >
                                         <CheckCircle className={`w-5 h-5 ${verifying === cred.id ? 'animate-pulse' : ''}`} />
@@ -270,17 +282,17 @@ export default function CredentialList() {
                                 required
                                 value={formData.name}
                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-primary/30 transition-all"
                                 placeholder="e.g. Main LINE OA"
                             />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-sm font-bold text-slate-700">Provider</label>
-                            <select
-                                value={formData.provider}
-                                onChange={(e) => setFormData({...formData, provider: e.target.value as any, credentials: {}, metadata: {}})}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                            >
+                                <select
+                                    value={formData.provider}
+                                    onChange={(e) => setFormData({...formData, provider: e.target.value as Credential['provider'], credentials: {}, metadata: {}})}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                                >
                                 <option value="LINE">LINE Messaging API</option>
                                 <option value="TELEGRAM">Telegram Bot</option>
                                 <option value="N8N">N8N Workflow</option>
@@ -300,7 +312,7 @@ export default function CredentialList() {
                                     <input
                                         type="password"
                                         placeholder={editingId ? "Leave empty to keep current" : "Enter token"}
-                                        className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                                         onChange={(e) => setFormData({
                                             ...formData, 
                                             credentials: {...formData.credentials, channel_access_token: e.target.value}
@@ -312,7 +324,7 @@ export default function CredentialList() {
                                     <input
                                         type="password"
                                         placeholder={editingId ? "Leave empty to keep current" : "Enter secret"}
-                                        className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                                         onChange={(e) => setFormData({
                                             ...formData, 
                                             credentials: {...formData.credentials, channel_secret: e.target.value}
@@ -328,7 +340,7 @@ export default function CredentialList() {
                                 <input
                                     type="password"
                                     placeholder={editingId ? "Leave empty to keep current" : "Enter bot token from BotFather"}
-                                    className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                                     onChange={(e) => setFormData({
                                         ...formData, 
                                         credentials: {...formData.credentials, bot_token: e.target.value}
@@ -347,7 +359,7 @@ export default function CredentialList() {
                                     type="checkbox"
                                     checked={formData.is_active}
                                     onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 transition-all checked:bg-indigo-600"
+                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 transition-all checked:bg-primary"
                                 />
                                 <CheckCircle className="absolute h-5 w-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
                             </div>
@@ -360,7 +372,7 @@ export default function CredentialList() {
                                     type="checkbox"
                                     checked={formData.is_default}
                                     onChange={(e) => setFormData({...formData, is_default: e.target.checked})}
-                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 transition-all checked:bg-indigo-600"
+                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 transition-all checked:bg-primary"
                                 />
                                 <CheckCircle className="absolute h-5 w-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
                             </div>
@@ -378,7 +390,7 @@ export default function CredentialList() {
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-bold transition-all shadow-lg shadow-indigo-200 active:scale-95 cursor-pointer"
+                            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark text-sm font-bold transition-all shadow-lg shadow-primary/20 active:scale-95 cursor-pointer"
                         >
                             {editingId ? 'Save Changes' : 'Create Credential'}
                         </button>
@@ -388,3 +400,4 @@ export default function CredentialList() {
         </div>
     );
 }
+

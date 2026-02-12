@@ -13,6 +13,7 @@ class ClosedBy(str, Enum):
     OPERATOR = "OPERATOR"
     SYSTEM = "SYSTEM"
     USER = "USER"
+    SYSTEM_TIMEOUT = "SYSTEM_TIMEOUT"
 
 class ChatSession(Base):
     __tablename__ = "chat_sessions"
@@ -25,7 +26,11 @@ class ChatSession(Base):
     claimed_at = Column(DateTime(timezone=True), nullable=True)
     closed_at = Column(DateTime(timezone=True), nullable=True)
     first_response_at = Column(DateTime(timezone=True), nullable=True)
+    last_activity_at = Column(DateTime(timezone=True), nullable=True)
     message_count = Column(Integer, default=0)
     closed_by = Column(String(20), nullable=True)
+    transfer_count = Column(Integer, default=0)
+    transfer_reason = Column(String(255), nullable=True)
 
     operator = relationship("User", back_populates="chat_sessions")
+    csat_responses = relationship("CsatResponse", back_populates="session")

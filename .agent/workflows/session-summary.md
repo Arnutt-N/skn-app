@@ -42,6 +42,16 @@ Agent: [ชื่อ Agent]
 [สิ่งที่ต้องทำต่อทันที หรือคำแนะนำสำหรับ Agent คนถัดไป]
 ```
 
+### 3. อัปเดต Project Status
+อ่านไฟล์ `.agent/PROJECT_STATUS.md` และดำเนินการดังนี้:
+1. **Timestamp Check**:
+   - ถ้า `Current Time > Last Updated` → อัปเดต Header Timestamp
+   - ถ้า `Current Time < Last Updated` → **ห้าม** แก้ Header (ให้คงอันล่าสุดไว้)
+2. **Merge History**:
+   - เพิ่มรายการ "Recent Completions" ของเราเข้าไปเสมอ (ต่อท้ายหรือแทรกตามเวลา)
+   - ห้ามลบรายการของ Agent อื่น
+3. **Commit**: บันทึกไฟล์ที่แก้ไข
+
 ### 2. ตรวจสอบไฟล์
 // turbo
 ```bash

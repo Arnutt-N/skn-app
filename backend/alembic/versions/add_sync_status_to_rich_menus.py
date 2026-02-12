@@ -11,12 +11,25 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_sync_status_to_rich_menus'
-down_revision = 'add_system_settings'
+down_revision = 'f1a2b3c4d5e6'  # Must run after rich_menus table is created
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
+    # Check if column already exists before adding
+    conn = op.get_bind()
+    result = conn.execute(sa.text("""
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'rich_menus' AND column_name = 'sync_status'
+        )
+    """))
+    column_exists = result.scalar()
+
+    if column_exists:
+        return  # Columns already exist, skip
+
     # Add sync tracking columns to rich_menus table
     op.add_column('rich_menus', sa.Column('sync_status', sa.String(), nullable=True))
     op.add_column('rich_menus', sa.Column('last_synced_at', sa.DateTime(timezone=True), nullable=True))

@@ -1,6 +1,6 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Query
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from jose import jwt, JWTError, ExpiredSignatureError
@@ -10,13 +10,16 @@ from app.core.config import settings
 from app.db.session import AsyncSessionLocal
 from app.core.websocket_manager import ws_manager
 from app.core.rate_limiter import ws_rate_limiter
+from app.core.websocket_health import ws_health_monitor
 from app.services.live_chat_service import live_chat_service
+from app.services.analytics_service import analytics_service
 from app.schemas.ws_events import (
     WSEventType,
     WSErrorCode,
     AuthPayload,
     SendMessagePayload,
-    JoinRoomPayload
+    JoinRoomPayload,
+    TransferSessionPayload
 )
 from app.models.chat_session import ClosedBy
 
@@ -26,13 +29,14 @@ router = APIRouter()
 
 async def handle_auth(websocket: WebSocket, payload: dict, query_token: Optional[str] = None) -> Optional[str]:
     """
-    Authenticate WebSocket connection using JWT token.
+    Authenticate WebSocket connection using JWT token or admin_id (dev mode).
 
     Token can be provided via:
     1. Auth message payload: {"token": "<jwt>"}
     2. Query parameter: ?token=<jwt>
+    3. Dev mode: {"admin_id": "1"} (when no token provided)
 
-    Returns admin_id (from JWT 'sub' claim) or None if invalid.
+    Returns admin_id or None if invalid.
     """
     # Get token from payload or fallback to query param
     try:
@@ -42,14 +46,21 @@ async def handle_auth(websocket: WebSocket, payload: dict, query_token: Optional
         logger.warning(f"Auth payload validation failed: {e}")
         token = query_token  # Fallback to query param
 
+    # DEV MODE: Allow admin_id without JWT for development
     if not token:
+        if settings.ENVIRONMENT == "development":
+            admin_id = payload.get('admin_id')
+            if admin_id:
+                logger.warning(f"WebSocket auth bypass used in development mode for admin {admin_id}")
+                return str(admin_id)
+        
         await ws_manager.send_personal(websocket, {
             "type": WSEventType.AUTH_ERROR.value,
             "payload": {
-                "message": "Token required. Provide in auth message or query parameter.",
+                "message": "Token or admin_id required.",
                 "code": WSErrorCode.AUTH_MISSING_TOKEN.value
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
         return None
 
@@ -76,7 +87,7 @@ async def handle_auth(websocket: WebSocket, payload: dict, query_token: Optional
                 "message": "Token expired. Please refresh and reconnect.",
                 "code": WSErrorCode.AUTH_EXPIRED_TOKEN.value
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
         return None
 
@@ -88,7 +99,7 @@ async def handle_auth(websocket: WebSocket, payload: dict, query_token: Optional
                 "message": "Invalid token",
                 "code": WSErrorCode.AUTH_INVALID_TOKEN.value
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
         return None
 
@@ -121,22 +132,29 @@ async def websocket_endpoint(
       - close_session: {"type": "close_session"}
       - ping: {"type": "ping"}
     """
+    import time
     connection_id = await ws_manager.connect(websocket)
     admin_id: Optional[str] = None
     current_room: Optional[str] = None
+    message_start_time: Optional[float] = None
 
     try:
         while True:
+            message_start_time = time.time()
             data = await websocket.receive_json()
             msg_type = data.get("type")
             payload = data.get("payload", {})
-            timestamp = datetime.utcnow().isoformat()
+            timestamp = datetime.now(timezone.utc).isoformat()
+
+            # Track received message
+            ws_health_monitor.record_message_received()
 
             # === AUTH (must be first) ===
             if msg_type == WSEventType.AUTH.value:
                 admin_id = await handle_auth(websocket, payload, token)  # Pass query token
                 if admin_id:
                     await ws_manager.register(websocket, admin_id)
+                    ws_health_monitor.record_connection(admin_id)
                     await ws_manager.send_personal(websocket, {
                         "type": WSEventType.AUTH_SUCCESS.value,
                         "payload": {"admin_id": admin_id},
@@ -145,10 +163,11 @@ async def websocket_endpoint(
                     # Send presence update
                     await ws_manager.send_personal(websocket, {
                         "type": WSEventType.PRESENCE_UPDATE.value,
-                        "payload": {"operators": ws_manager.get_online_admins()},
+                        "payload": {"operators": await ws_manager.get_online_admins()},
                         "timestamp": timestamp
                     })
                 else:
+                    ws_health_monitor.record_error("auth_failed")
                     await ws_manager.send_personal(websocket, {
                         "type": WSEventType.AUTH_ERROR.value,
                         "payload": {"message": "Invalid credentials"},
@@ -164,6 +183,20 @@ async def websocket_endpoint(
                     "payload": {
                         "message": "Not authenticated. Send 'auth' first.",
                         "code": WSErrorCode.NOT_AUTHENTICATED.value
+                    },
+                    "timestamp": timestamp
+                })
+                continue
+
+            # Validate admin_id is valid integer (needed for DB operations)
+            try:
+                admin_id_int = int(admin_id)
+            except (ValueError, TypeError):
+                await ws_manager.send_personal(websocket, {
+                    "type": WSEventType.ERROR.value,
+                    "payload": {
+                        "message": "Invalid admin ID format",
+                        "code": WSErrorCode.INVALID_REQUEST.value
                     },
                     "timestamp": timestamp
                 })
@@ -186,6 +219,7 @@ async def websocket_endpoint(
 
             # === PING/PONG ===
             if msg_type == WSEventType.PING.value:
+                await ws_manager.touch_presence(admin_id)
                 await ws_manager.send_personal(websocket, {
                     "type": WSEventType.PONG.value,
                     "payload": {"server_time": timestamp},
@@ -216,6 +250,7 @@ async def websocket_endpoint(
                 room_id = ws_manager.get_room_id(line_user_id)
                 await ws_manager.join_room(websocket, room_id)
                 current_room = room_id
+                await ws_manager.mark_conversation_read(admin_id, line_user_id)
 
                 # Send conversation state
                 async with AsyncSessionLocal() as db:
@@ -227,10 +262,10 @@ async def websocket_endpoint(
                                 "line_user_id": detail["line_user_id"],
                                 "display_name": detail["display_name"],
                                 "picture_url": detail["picture_url"],
-                                "chat_mode": detail["chat_mode"],
+                                "chat_mode": detail["chat_mode"].value if hasattr(detail["chat_mode"], 'value') else detail["chat_mode"],
                                 "session": {
                                     "id": detail["session"].id,
-                                    "status": detail["session"].status.value,
+                                    "status": detail["session"].status.value if hasattr(detail["session"].status, 'value') else detail["session"].status,
                                     "operator_id": detail["session"].operator_id
                                 } if detail["session"] else None,
                                 "messages": [
@@ -239,7 +274,8 @@ async def websocket_endpoint(
                                         "direction": m.direction.value if hasattr(m.direction, 'value') else m.direction,
                                         "content": m.content,
                                         "message_type": m.message_type,
-                                        "sender_role": m.sender_role,
+                                        "payload": m.payload,
+                                        "sender_role": m.sender_role.value if hasattr(m.sender_role, 'value') else m.sender_role,
                                         "operator_name": m.operator_name,
                                         "created_at": m.created_at.isoformat()
                                     } for m in detail["messages"]
@@ -254,6 +290,17 @@ async def websocket_endpoint(
                 if current_room:
                     await ws_manager.leave_room(websocket, current_room)
                     current_room = None
+                continue
+
+            # === ANALYTICS SUBSCRIBE ===
+            if msg_type == WSEventType.SUBSCRIBE_ANALYTICS.value:
+                await ws_manager.subscribe_analytics(websocket)
+                async with AsyncSessionLocal() as db:
+                    await analytics_service.emit_live_kpis_update(db)
+                continue
+
+            if msg_type == WSEventType.UNSUBSCRIBE_ANALYTICS.value:
+                await ws_manager.unsubscribe_analytics(websocket)
                 continue
 
             # === SEND MESSAGE ===
@@ -301,6 +348,7 @@ async def websocket_endpoint(
                     await live_chat_service.send_message(
                         line_user_id, text, admin_id_int, db
                     )
+                    await db.commit()
                     # Get the sent message
                     messages = await live_chat_service.get_recent_messages(line_user_id, 1, db)
                     if messages:
@@ -311,7 +359,8 @@ async def websocket_endpoint(
                             "direction": msg.direction.value if hasattr(msg.direction, 'value') else msg.direction,
                             "content": msg.content,
                             "message_type": msg.message_type,
-                            "sender_role": msg.sender_role,
+                            "payload": msg.payload,
+                            "sender_role": msg.sender_role.value if hasattr(msg.sender_role, 'value') else msg.sender_role,
                             "operator_name": msg.operator_name,
                             "created_at": msg.created_at.isoformat(),
                             "temp_id": temp_id
@@ -322,6 +371,9 @@ async def websocket_endpoint(
                             "payload": msg_data,
                             "timestamp": timestamp
                         })
+                        # Track message sent with latency
+                        latency_ms = (time.time() - message_start_time) * 1000
+                        ws_health_monitor.record_message_sent(latency_ms)
                         # Broadcast to room
                         await ws_manager.broadcast_to_room(current_room, {
                             "type": WSEventType.NEW_MESSAGE.value,
@@ -360,20 +412,6 @@ async def websocket_endpoint(
                     }, exclude_admin=admin_id)
                 continue
 
-            # Validate admin_id is valid integer before processing
-            try:
-                admin_id_int = int(admin_id)
-            except (ValueError, TypeError):
-                await ws_manager.send_personal(websocket, {
-                    "type": WSEventType.ERROR.value,
-                    "payload": {
-                        "message": "Invalid admin ID format",
-                        "code": WSErrorCode.INVALID_REQUEST.value
-                    },
-                    "timestamp": timestamp
-                })
-                continue
-
             # === CLAIM SESSION ===
             if msg_type == WSEventType.CLAIM_SESSION.value:
                 if not current_room:
@@ -393,6 +431,7 @@ async def websocket_endpoint(
                             line_user_id, admin_id_int, db
                         )
                         if session:
+                            await db.commit()
                             await ws_manager.broadcast_to_all({
                                 "type": WSEventType.SESSION_CLAIMED.value,
                                 "payload": {
@@ -412,6 +451,16 @@ async def websocket_endpoint(
                                 },
                                 "timestamp": timestamp
                             })
+                            await analytics_service.emit_live_kpis_update(db)
+                    except HTTPException as e:
+                        await ws_manager.send_personal(websocket, {
+                            "type": WSEventType.ERROR.value,
+                            "payload": {
+                                "message": str(e.detail),
+                                "code": WSErrorCode.VALIDATION_ERROR.value
+                            },
+                            "timestamp": timestamp
+                        })
                     except Exception as e:
                         logger.error(f"Error claiming session: {e}")
                         await ws_manager.send_personal(websocket, {
@@ -443,6 +492,7 @@ async def websocket_endpoint(
                             line_user_id, ClosedBy.OPERATOR, db
                         )
                         if session:
+                            await db.commit()
                             await ws_manager.broadcast_to_all({
                                 "type": WSEventType.SESSION_CLOSED.value,
                                 "payload": {
@@ -451,6 +501,7 @@ async def websocket_endpoint(
                                 },
                                 "timestamp": timestamp
                             })
+                            await analytics_service.emit_live_kpis_update(db)
                         else:
                             await ws_manager.send_personal(websocket, {
                                 "type": WSEventType.ERROR.value,
@@ -472,6 +523,84 @@ async def websocket_endpoint(
                         })
                 continue
 
+            # === TRANSFER SESSION ===
+            if msg_type == WSEventType.TRANSFER_SESSION.value:
+                if not current_room:
+                    await ws_manager.send_personal(websocket, {
+                        "type": WSEventType.ERROR.value,
+                        "payload": {
+                            "message": "Must join a conversation before transferring session",
+                            "code": WSErrorCode.NOT_IN_ROOM.value
+                        },
+                        "timestamp": timestamp
+                    })
+                    continue
+                line_user_id = current_room.replace("conversation:", "")
+                try:
+                    transfer_payload = TransferSessionPayload(**payload)
+                except ValidationError as e:
+                    await ws_manager.send_personal(websocket, {
+                        "type": WSEventType.ERROR.value,
+                        "payload": {
+                            "message": "Invalid transfer payload: to_operator_id required",
+                            "code": WSErrorCode.VALIDATION_ERROR.value
+                        },
+                        "timestamp": timestamp
+                    })
+                    continue
+                async with AsyncSessionLocal() as db:
+                    try:
+                        session = await live_chat_service.transfer_session(
+                            line_user_id=line_user_id,
+                            from_operator_id=admin_id_int,
+                            to_operator_id=transfer_payload.to_operator_id,
+                            reason=transfer_payload.reason,
+                            db=db
+                        )
+                        if session:
+                            await db.commit()
+                            await ws_manager.broadcast_to_all({
+                                "type": WSEventType.SESSION_TRANSFERRED.value,
+                                "payload": {
+                                    "line_user_id": line_user_id,
+                                    "session_id": session.id,
+                                    "from_operator_id": admin_id_int,
+                                    "to_operator_id": transfer_payload.to_operator_id,
+                                    "reason": transfer_payload.reason
+                                },
+                                "timestamp": timestamp
+                            })
+                            await analytics_service.emit_live_kpis_update(db)
+                        else:
+                            await ws_manager.send_personal(websocket, {
+                                "type": WSEventType.ERROR.value,
+                                "payload": {
+                                    "message": "Session not found or not active",
+                                    "code": WSErrorCode.SESSION_NOT_FOUND.value
+                                },
+                                "timestamp": timestamp
+                            })
+                    except ValueError as e:
+                        await ws_manager.send_personal(websocket, {
+                            "type": WSEventType.ERROR.value,
+                            "payload": {
+                                "message": str(e),
+                                "code": WSErrorCode.VALIDATION_ERROR.value
+                            },
+                            "timestamp": timestamp
+                        })
+                    except Exception as e:
+                        logger.error(f"Error transferring session: {e}")
+                        await ws_manager.send_personal(websocket, {
+                            "type": WSEventType.ERROR.value,
+                            "payload": {
+                                "message": "Failed to transfer session",
+                                "code": WSErrorCode.INTERNAL_ERROR.value
+                            },
+                            "timestamp": timestamp
+                        })
+                continue
+
             # Unknown message type
             await ws_manager.send_personal(websocket, {
                 "type": WSEventType.ERROR.value,
@@ -481,9 +610,13 @@ async def websocket_endpoint(
 
     except WebSocketDisconnect:
         logger.info(f"WebSocket disconnected for admin {admin_id}")
+        if admin_id:
+            ws_health_monitor.record_disconnection(admin_id)
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
+        ws_health_monitor.record_error("websocket_exception")
     finally:
         if admin_id:
             ws_rate_limiter.reset(admin_id)
         await ws_manager.disconnect(websocket)
+

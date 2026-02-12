@@ -12,7 +12,7 @@ declare global {
             getLanguage: () => string;
             isInClient: () => boolean;
             isApiAvailable: (name: string) => boolean;
-            scanCodeV2: () => Promise<any>;
+            scanCodeV2: () => Promise<unknown>;
             openWindow: (url: string) => void;
             getProfile: () => Promise<{
                 userId: string;
@@ -21,7 +21,7 @@ declare global {
                 statusMessage: string;
             }>;
             getFriendship: () => Promise<{ friendFlag: boolean }>;
-            sendMessages: (messages: any[]) => Promise<void>;
+            sendMessages: (messages: unknown[]) => Promise<void>;
             closeWindow: () => void;
         };
     }

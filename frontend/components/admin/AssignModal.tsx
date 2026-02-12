@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Search, User as UserIcon, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Search, User as UserIcon } from 'lucide-react';
 
 interface Agent {
     id: number;
@@ -35,13 +34,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchAgents();
-        }
-    }, [isOpen]);
-
-    const fetchAgents = async () => {
+    const fetchAgents = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch(`${API_BASE}/admin/users?role=AGENT`);
@@ -53,7 +46,13 @@ export const AssignModal: React.FC<AssignModalProps> = ({
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchAgents();
+        }
+    }, [fetchAgents, isOpen]);
 
     const handleAssign = async (agent: Agent) => {
         setAssigningId(agent.id);
@@ -89,7 +88,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({
                 </div>
 
                 {/* Agents List */}
-                <div className="max-h-[400px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                <div className="max-h-[400px] overflow-y-auto space-y-2 pr-1 scrollbar-thin">
                     {loading ? (
                         <div className="flex justify-center py-8">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -104,8 +103,8 @@ export const AssignModal: React.FC<AssignModalProps> = ({
                             <div
                                 key={agent.id}
                                 className={`flex items-center justify-between p-3 rounded-xl border transition-all ${currentAssigneeId === agent.id
-                                        ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
-                                        : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-sm'
+                                    ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
+                                    : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-sm'
                                     }`}
                             >
                                 <div className="flex items-center gap-3">

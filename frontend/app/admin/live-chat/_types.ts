@@ -1,0 +1,33 @@
+import type { Message } from '@/lib/websocket/types';
+
+export interface Session {
+  id: number;
+  status: 'WAITING' | 'ACTIVE' | 'CLOSED';
+  started_at?: string;
+  operator_id?: number;
+}
+
+export interface ConversationTag {
+  id: number;
+  name: string;
+  color: string;
+}
+
+export interface Conversation {
+  line_user_id: string;
+  display_name: string;
+  picture_url: string;
+  friend_status: string;
+  chat_mode: 'BOT' | 'HUMAN';
+  session?: Session;
+  last_message?: {
+    content: string;
+    created_at: string;
+  };
+  unread_count: number;
+  tags?: ConversationTag[];
+}
+
+export interface CurrentChat extends Conversation {
+  messages?: Message[];
+}

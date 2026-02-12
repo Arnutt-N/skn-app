@@ -13,11 +13,13 @@ import {
   ErrorPayload,
   MessageAckPayload,
   MessageFailedPayload,
+  SessionTransferredPayload,
   WebSocketMessage
 } from '@/lib/websocket/types';
 
 interface UseLiveChatSocketOptions {
   adminId: string; // Required - must be provided from auth context
+  token?: string;  // JWT token for authentication
   onNewMessage?: (message: Message) => void;
   onMessageSent?: (message: Message) => void;
   onMessageAck?: (tempId: string, messageId: number) => void;
@@ -25,6 +27,7 @@ interface UseLiveChatSocketOptions {
   onTyping?: (lineUserId: string, adminId: string, isTyping: boolean) => void;
   onSessionClaimed?: (lineUserId: string, operatorId: number) => void;
   onSessionClosed?: (lineUserId: string) => void;
+  onSessionTransferred?: (data: SessionTransferredPayload) => void;
   onConversationUpdate?: (data: ConversationUpdatePayload) => void;
   onPresenceUpdate?: (operators: PresencePayload['operators']) => void;
   onOperatorJoined?: (adminId: string, roomId: string) => void;
@@ -44,6 +47,7 @@ interface UseLiveChatSocketReturn {
   stopTyping: (lineUserId: string) => void;
   claimSession: () => void;
   closeSession: () => void;
+  transferSession: (toOperatorId: number, reason?: string) => void;
   reconnect: () => void;
 }
 
@@ -54,6 +58,24 @@ interface PendingMessage {
 }
 
 export function useLiveChatSocket(options: UseLiveChatSocketOptions): UseLiveChatSocketReturn {
+  const {
+    adminId,
+    token,
+    onNewMessage,
+    onMessageSent,
+    onMessageAck,
+    onMessageFailed,
+    onTyping,
+    onSessionClaimed,
+    onSessionClosed,
+    onSessionTransferred,
+    onConversationUpdate,
+    onPresenceUpdate,
+    onOperatorJoined,
+    onOperatorLeft,
+    onError,
+    onConnectionChange,
+  } = options;
   const currentRoom = useRef<string | null>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingMessages = useRef<Map<string, PendingMessage>>(new Map());
@@ -68,24 +90,24 @@ export function useLiveChatSocket(options: UseLiveChatSocketOptions): UseLiveCha
   const handleMessage = useCallback((data: WebSocketMessage) => {
     switch (data.type) {
       case MessageType.NEW_MESSAGE:
-        options.onNewMessage?.(data.payload as Message);
+        onNewMessage?.(data.payload as Message);
         break;
       case MessageType.MESSAGE_SENT:
-        options.onMessageSent?.(data.payload as Message);
+        onMessageSent?.(data.payload as Message);
         break;
       case MessageType.MESSAGE_ACK:
         const ackPayload = data.payload as MessageAckPayload;
         // Clean up pending message on successful ACK
         pendingMessages.current.delete(ackPayload.temp_id);
-        options.onMessageAck?.(ackPayload.temp_id, ackPayload.message_id);
+        onMessageAck?.(ackPayload.temp_id, ackPayload.message_id);
         break;
       case MessageType.MESSAGE_FAILED:
         const failedPayload = data.payload as MessageFailedPayload;
-        options.onMessageFailed?.(failedPayload.temp_id, failedPayload.error);
+        onMessageFailed?.(failedPayload.temp_id, failedPayload.error);
         break;
       case MessageType.TYPING_INDICATOR:
         const typingPayload = data.payload as TypingIndicatorPayload;
-        options.onTyping?.(
+        onTyping?.(
           typingPayload.line_user_id,
           typingPayload.admin_id,
           typingPayload.is_typing
@@ -93,49 +115,67 @@ export function useLiveChatSocket(options: UseLiveChatSocketOptions): UseLiveCha
         break;
       case MessageType.SESSION_CLAIMED:
         const sessionPayload = data.payload as SessionPayload;
-        options.onSessionClaimed?.(
+        onSessionClaimed?.(
           sessionPayload.line_user_id,
           sessionPayload.operator_id || 0
         );
         break;
       case MessageType.SESSION_CLOSED:
         const closedPayload = data.payload as SessionPayload;
-        options.onSessionClosed?.(closedPayload.line_user_id);
+        onSessionClosed?.(closedPayload.line_user_id);
+        break;
+      case MessageType.SESSION_TRANSFERRED:
+        onSessionTransferred?.(data.payload as SessionTransferredPayload);
         break;
       case MessageType.CONVERSATION_UPDATE:
-        options.onConversationUpdate?.(data.payload as ConversationUpdatePayload);
+        onConversationUpdate?.(data.payload as ConversationUpdatePayload);
         break;
       case MessageType.PRESENCE_UPDATE:
         const presencePayload = data.payload as PresencePayload;
-        options.onPresenceUpdate?.(presencePayload.operators);
+        onPresenceUpdate?.(presencePayload.operators);
         break;
       case MessageType.OPERATOR_JOINED:
         const joinedPayload = data.payload as { admin_id: string; room_id: string };
-        options.onOperatorJoined?.(joinedPayload.admin_id, joinedPayload.room_id);
+        onOperatorJoined?.(joinedPayload.admin_id, joinedPayload.room_id);
         break;
       case MessageType.OPERATOR_LEFT:
         const leftPayload = data.payload as { admin_id: string; room_id: string };
-        options.onOperatorLeft?.(leftPayload.admin_id, leftPayload.room_id);
+        onOperatorLeft?.(leftPayload.admin_id, leftPayload.room_id);
         break;
       case MessageType.ERROR:
         const errorPayload = data.payload as ErrorPayload;
-        options.onError?.(errorPayload.message);
+        onError?.(errorPayload.message);
         break;
     }
-  }, [options]);
+  }, [
+    onConversationUpdate,
+    onError,
+    onMessageAck,
+    onMessageFailed,
+    onMessageSent,
+    onNewMessage,
+    onOperatorJoined,
+    onOperatorLeft,
+    onPresenceUpdate,
+    onSessionClaimed,
+    onSessionClosed,
+    onSessionTransferred,
+    onTyping,
+  ]);
 
   const { send, connectionState, isConnected, reconnect } = useWebSocket({
     url: wsUrl,
-    adminId: options.adminId, // Use admin ID from auth context
+    adminId, // Use admin ID from auth context
+    token,   // JWT token for authentication
     onMessage: handleMessage,
-    onConnect: () => options.onConnectionChange?.('connected'),
-    onDisconnect: () => options.onConnectionChange?.('disconnected'),
+    onConnect: () => onConnectionChange?.('connected'),
+    onDisconnect: () => onConnectionChange?.('disconnected'),
   });
 
   // Notify parent of status changes
   useEffect(() => {
-    options.onConnectionChange?.(connectionState);
-  }, [connectionState, options.onConnectionChange]);
+    onConnectionChange?.(connectionState);
+  }, [connectionState, onConnectionChange]);
 
   const joinRoom = useCallback((lineUserId: string) => {
     currentRoom.current = lineUserId;
@@ -197,13 +237,18 @@ export function useLiveChatSocket(options: UseLiveChatSocketOptions): UseLiveCha
     send(MessageType.CLOSE_SESSION, {});
   }, [send]);
 
+  const transferSession = useCallback((toOperatorId: number, reason?: string) => {
+    send(MessageType.TRANSFER_SESSION, { to_operator_id: toOperatorId, reason });
+  }, [send]);
+
   // Cleanup on unmount
   useEffect(() => {
+    const pendingMap = pendingMessages.current;
     return () => {
       if (typingTimeout.current) {
         clearTimeout(typingTimeout.current);
       }
-      pendingMessages.current.clear();
+      pendingMap.clear();
     };
   }, []);
 
@@ -218,6 +263,7 @@ export function useLiveChatSocket(options: UseLiveChatSocketOptions): UseLiveCha
     stopTyping,
     claimSession,
     closeSession,
+    transferSession,
     reconnect,
   };
 }

@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     PROJECT_NAME: str = "JskApp"
     API_V1_STR: str = "/api/v1"
+    ENVIRONMENT: str = "development"
     
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
@@ -32,6 +33,18 @@ class Settings(BaseSettings):
     WS_RATE_LIMIT_MESSAGES: int = 30   # Max messages per window
     WS_RATE_LIMIT_WINDOW: int = 60     # Window in seconds
     WS_MAX_MESSAGE_LENGTH: int = 5000  # Max message content length
+
+    # Redis
+    REDIS_URL: str = "redis://localhost:6379/0"
+
+    # Webhook Deduplication (seconds)
+    WEBHOOK_EVENT_TTL: int = 300  # 5 minutes
+
+    # SLA thresholds
+    SLA_MAX_FRT_SECONDS: int = 120
+    SLA_MAX_RESOLUTION_SECONDS: int = 1800
+    SLA_MAX_QUEUE_WAIT_SECONDS: int = 300
+    SLA_ALERT_TELEGRAM_ENABLED: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env", 

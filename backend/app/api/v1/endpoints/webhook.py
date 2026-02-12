@@ -3,14 +3,15 @@ from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import (
     MessageEvent,
     TextMessageContent,
-    MessageEvent,
-    TextMessageContent,
-    PostbackEvent
+    PostbackEvent,
+    FollowEvent,
+    UnfollowEvent
 )
 from linebot.v3.messaging import TextMessage, FlexMessage
 import re
 from app.core.line_client import parser
 from app.services.line_service import line_service
+from app.services.friend_service import friend_service
 from app.services.response_parser import parse_response
 from app.core.config import settings
 from app.db.session import AsyncSessionLocal
@@ -23,12 +24,19 @@ from app.models.service_request import ServiceRequest
 from app.services.flex_messages import build_request_status_list
 from sqlalchemy.orm import selectinload
 from app.core.websocket_manager import ws_manager
+from app.core.redis_client import redis_client
 from app.schemas.ws_events import WSEventType
+from app.core.config import settings
+from app.services.handoff_service import handoff_service
+from app.services.live_chat_service import live_chat_service
 from datetime import datetime
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# Webhook event deduplication cache key prefix
+WEBHOOK_EVENT_KEY_PREFIX = "webhook:event:"
 
 @router.post("/webhook")
 async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_line_signature: str = Header(None)):
@@ -50,12 +58,51 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_li
     return "OK"
 
 async def process_webhook_events(events):
+    """Process webhook events with deduplication support."""
     async with AsyncSessionLocal() as db:
         for event in events:
+            # Deduplication check using webhookEventId
+            event_id = getattr(event, 'webhook_event_id', None)
+            if event_id:
+                cache_key = f"{WEBHOOK_EVENT_KEY_PREFIX}{event_id}"
+                if await redis_client.exists(cache_key):
+                    logger.info(f"Duplicate webhook event {event_id}, skipping")
+                    continue
+                # Mark as processed with TTL
+                await redis_client.setex(
+                    cache_key, 
+                    settings.WEBHOOK_EVENT_TTL, 
+                    "1"
+                )
+                logger.debug(f"Marked event {event_id} as processed")
+            
+            # Process the event
             if isinstance(event, MessageEvent):
                 await handle_message_event(event, db)
             elif isinstance(event, PostbackEvent):
                 await handle_postback_event(event, db)
+            elif isinstance(event, FollowEvent):
+                await handle_follow_event(event, db)
+            elif isinstance(event, UnfollowEvent):
+                await handle_unfollow_event(event, db)
+
+
+async def handle_follow_event(event: FollowEvent, db: AsyncSession):
+    """Handle when a user adds the LINE OA as friend"""
+    line_user_id = event.source.user_id
+    logger.info(f"User {line_user_id} followed the OA")
+
+    # Create user record and log follow event
+    await friend_service.get_or_create_user(line_user_id, db)
+    await friend_service.handle_follow(line_user_id, db)
+
+
+async def handle_unfollow_event(event: UnfollowEvent, db: AsyncSession):
+    """Handle when a user blocks/unfollows the LINE OA"""
+    line_user_id = event.source.user_id
+    logger.info(f"User {line_user_id} unfollowed the OA")
+
+    await friend_service.handle_unfollow(line_user_id, db)
 
 
 async def handle_message_event(event: MessageEvent, db: AsyncSession):
@@ -65,10 +112,18 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
         return
 
     line_user_id = event.source.user_id
-    
+
+    # Ensure User record exists (critical for live chat to show this user)
+    user = await friend_service.get_or_create_user(line_user_id, db)
+    user = await friend_service.refresh_profile(line_user_id, db, force=False, stale_after_hours=24) or user
+
+    # Update last_message_at for conversation sorting
+    user.last_message_at = datetime.utcnow()
+    await db.commit()
+
     if isinstance(event.message, TextMessageContent):
         text = event.message.text.strip()
-        
+
         # 1. Save User Message (Incoming)
         saved_message = await line_service.save_message(
             db=db,
@@ -78,7 +133,7 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
             content=text
         )
 
-        # Broadcast to WebSocket clients
+        # Broadcast to WebSocket clients in room (for operators viewing this conversation)
         room_id = ws_manager.get_room_id(line_user_id)
         await ws_manager.broadcast_to_room(room_id, {
             "type": WSEventType.NEW_MESSAGE.value,
@@ -94,8 +149,49 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
             "timestamp": datetime.utcnow().isoformat()
         })
 
+        # Send conversation updates per admin with personalized unread counts.
+        room_id = ws_manager.get_room_id(line_user_id)
+        for admin_id in ws_manager.get_connected_admin_ids():
+            if await ws_manager.is_admin_in_room_global(admin_id, room_id):
+                await ws_manager.mark_conversation_read(
+                    admin_id,
+                    line_user_id,
+                    saved_message.created_at if saved_message.created_at else datetime.utcnow(),
+                )
+                unread_count = 0
+            else:
+                unread_count = await live_chat_service.get_unread_count(
+                    line_user_id=line_user_id,
+                    admin_id=admin_id,
+                    db=db,
+                )
+
+            await ws_manager.send_to_admin(admin_id, {
+                "type": WSEventType.CONVERSATION_UPDATE.value,
+                "payload": {
+                    "line_user_id": line_user_id,
+                    "display_name": user.display_name or "LINE User",
+                    "picture_url": user.picture_url,
+                    "chat_mode": user.chat_mode.value if user.chat_mode else "BOT",
+                    "last_message": {
+                        "content": text,
+                        "created_at": saved_message.created_at.isoformat()
+                    },
+                    "unread_count": unread_count,
+                },
+                "timestamp": datetime.utcnow().isoformat()
+            })
+
         # 2. Show Loading Animation
         await line_service.show_loading_animation(line_user_id)
+
+        # --- HANDOFF KEYWORD DETECTION ---
+        # Check for handoff keywords before intent matching
+        if await handoff_service.check_handoff_keywords(text, user, event.reply_token, db):
+            # Handoff initiated - skip bot response
+            await db.commit()
+            return
+        # -----------------------------------
 
         # --- SPECIAL COMMAND: CHECK STATUS ---
         if text == "ติดตาม" or text == "สถานะ":
@@ -250,17 +346,174 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
                 await line_service.reply_text(event.reply_token, "ขออภัย เกิดข้อผิดพลาดในการส่งข้อมูล")
 
 
+    else:
+        message_type, content, payload = await _extract_non_text_message(event.message)
+        if not message_type:
+            logger.info("Unsupported non-text message type: %s", getattr(event.message, "type", "unknown"))
+            return
+
+        saved_message = await line_service.save_message(
+            db=db,
+            line_user_id=line_user_id,
+            direction=MessageDirection.INCOMING,
+            message_type=message_type,
+            content=content,
+            payload=payload,
+            sender_role="USER",
+        )
+
+        room_id = ws_manager.get_room_id(line_user_id)
+        await ws_manager.broadcast_to_room(room_id, {
+            "type": WSEventType.NEW_MESSAGE.value,
+            "payload": {
+                "id": saved_message.id,
+                "line_user_id": line_user_id,
+                "direction": "INCOMING",
+                "content": content,
+                "message_type": message_type,
+                "payload": payload,
+                "sender_role": "USER",
+                "created_at": saved_message.created_at.isoformat()
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        })
+
+        for admin_id in ws_manager.get_connected_admin_ids():
+            if await ws_manager.is_admin_in_room_global(admin_id, room_id):
+                await ws_manager.mark_conversation_read(
+                    admin_id,
+                    line_user_id,
+                    saved_message.created_at if saved_message.created_at else datetime.utcnow(),
+                )
+                unread_count = 0
+            else:
+                unread_count = await live_chat_service.get_unread_count(
+                    line_user_id=line_user_id,
+                    admin_id=admin_id,
+                    db=db,
+                )
+
+            await ws_manager.send_to_admin(admin_id, {
+                "type": WSEventType.CONVERSATION_UPDATE.value,
+                "payload": {
+                    "line_user_id": line_user_id,
+                    "display_name": user.display_name or "LINE User",
+                    "picture_url": user.picture_url,
+                    "chat_mode": user.chat_mode.value if user.chat_mode else "BOT",
+                    "last_message": {
+                        "content": content,
+                        "created_at": saved_message.created_at.isoformat()
+                    },
+                    "unread_count": unread_count,
+                },
+                "timestamp": datetime.utcnow().isoformat()
+            })
+
+
+async def _extract_non_text_message(message):
+    message_type = getattr(message, "type", None)
+    line_message_id = getattr(message, "id", None)
+
+    if message_type == "image":
+        media = await line_service.persist_line_media(
+            message_id=str(line_message_id),
+            media_type="image",
+        ) if line_message_id else {"url": None, "preview_url": None, "content_type": None, "size": None}
+        return "image", "[Image]", {
+            "line_message_id": line_message_id,
+            "preview_url": media.get("preview_url"),
+            "url": media.get("url"),
+            "content_type": media.get("content_type"),
+            "size": media.get("size"),
+        }
+
+    if message_type == "sticker":
+        package_id = str(getattr(message, "package_id", ""))
+        sticker_id = str(getattr(message, "sticker_id", ""))
+        return "sticker", f"[Sticker {package_id}/{sticker_id}]", {
+            "line_message_id": line_message_id,
+            "package_id": package_id,
+            "sticker_id": sticker_id,
+            "sticker_resource_type": getattr(message, "sticker_resource_type", None),
+        }
+
+    if message_type == "file":
+        file_name = getattr(message, "file_name", None)
+        file_size = getattr(message, "file_size", None)
+        media = await line_service.persist_line_media(
+            message_id=str(line_message_id),
+            media_type="file",
+            file_name=file_name,
+        ) if line_message_id else {"url": None, "preview_url": None, "content_type": None, "size": None}
+        return "file", file_name or "[File]", {
+            "line_message_id": line_message_id,
+            "file_name": media.get("file_name") or file_name,
+            "size": media.get("size") if media.get("size") is not None else file_size,
+            "url": media.get("url"),
+            "content_type": media.get("content_type"),
+        }
+
+    if message_type in {"video", "audio"}:
+        media = await line_service.persist_line_media(
+            message_id=str(line_message_id),
+            media_type=message_type,
+        ) if line_message_id else {"url": None, "preview_url": None, "content_type": None, "size": None}
+        return message_type, "[Video]" if message_type == "video" else "[Audio]", {
+            "line_message_id": line_message_id,
+            "url": media.get("url"),
+            "content_type": media.get("content_type"),
+            "size": media.get("size"),
+        }
+
+    return None, "", {}
+
+
 async def handle_postback_event(event: PostbackEvent, db: AsyncSession):
     line_user_id = event.source.user_id
     data = event.postback.data
-    
+
     await line_service.show_loading_animation(line_user_id)
-    
+
     if data == "action=track_requests":
         await handle_check_status(line_user_id, event.reply_token, db)
+    elif data.startswith("csat|"):
+        await handle_csat_response(line_user_id, data, event.reply_token, db)
     else:
         # Handle other postbacks if any
         pass
+
+
+async def handle_csat_response(line_user_id: str, data: str, reply_token: str, db: AsyncSession):
+    """Handle CSAT survey postback: csat|{session_id}|{score}"""
+    try:
+        parts = data.split("|")
+        if len(parts) != 3:
+            logger.warning(f"Invalid CSAT postback data: {data}")
+            return
+
+        session_id = int(parts[1])
+        score = int(parts[2])
+
+        if not 1 <= score <= 5:
+            logger.warning(f"Invalid CSAT score: {score}")
+            return
+
+        from app.services.csat_service import csat_service
+        response = await csat_service.record_response(
+            session_id=session_id,
+            line_user_id=line_user_id,
+            score=score,
+            feedback=None,
+            db=db
+        )
+
+        thank_you = csat_service.get_thank_you_message(score)
+        await line_service.reply_text(reply_token, thank_you)
+
+    except (ValueError, IndexError) as e:
+        logger.error(f"Error parsing CSAT postback '{data}': {e}")
+    except Exception as e:
+        logger.error(f"Error recording CSAT response: {e}")
 
 async def handle_check_status(line_user_id: str, reply_token: str, db: AsyncSession):
     """Fetch latest 5 requests and reply with Flex Message or ask for Phone"""

@@ -83,4 +83,30 @@ class TelegramService:
             logger.error(f"Failed to send Telegram notification: {e}")
             return False
 
+    async def send_alert_message(self, text: str, db: AsyncSession) -> bool:
+        """Send plain-text operational alert to configured Telegram chat."""
+        await self.load_credentials(db)
+        if not self.bot_token or not self.chat_id:
+            logger.warning("Telegram bot token or chat ID not configured")
+            return False
+
+        url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    url,
+                    json={
+                        "chat_id": self.chat_id,
+                        "text": text,
+                        "disable_web_page_preview": True,
+                    },
+                )
+                if response.status_code == 200:
+                    return True
+                logger.error(f"Telegram API error: {response.text}")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to send Telegram alert: {e}")
+            return False
+
 telegram_service = TelegramService()

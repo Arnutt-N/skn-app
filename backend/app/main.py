@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
+from app.core.redis_client import redis_client
+from app.core.websocket_manager import ws_manager
+from app.services.business_hours_service import business_hours_service
+from app.tasks import start_cleanup_task
 from app.api.v1.api import api_router
 
 tags_metadata = [
@@ -41,7 +45,14 @@ def root():
 
 @app.on_event("startup")
 async def startup_event():
-    from app.db.session import engine
+    # Initialize Redis connection
+    await redis_client.connect()
+    
+    # Initialize WebSocket manager with Pub/Sub
+    await ws_manager.initialize()
+    
+    # Initialize database
+    from app.db.session import engine, AsyncSessionLocal
     from sqlalchemy import text
     async with engine.begin() as conn:
         await conn.execute(text("""
@@ -56,6 +67,22 @@ async def startup_event():
         """))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_system_settings_key ON system_settings (key)"))
         print("Database initialized: system_settings table ensured.")
+    
+    # Initialize default business hours
+    async with AsyncSessionLocal() as db:
+        await business_hours_service.initialize_defaults(db)
+        print("Business hours initialized.")
+    
+    # Start background tasks
+    await start_cleanup_task()
+    print("Background tasks started.")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on application shutdown."""
+    from app.core.pubsub_manager import pubsub_manager
+    await pubsub_manager.disconnect()
+    await redis_client.disconnect()
 
 import os
 # Find 'uploads' directory relative to the current working directory or main.py

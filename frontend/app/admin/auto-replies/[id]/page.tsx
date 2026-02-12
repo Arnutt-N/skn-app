@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 interface IntentKeyword {
@@ -14,7 +14,7 @@ interface IntentResponse {
     id: number;
     reply_type: string;
     text_content?: string;
-    payload?: any;
+    payload?: unknown;
     is_active: boolean;
     order: number;
 }
@@ -33,7 +33,6 @@ const REPLY_TYPES = ['text', 'flex', 'image', 'sticker', 'video'];
 
 export default function CategoryDetailPage() {
     const params = useParams();
-    const router = useRouter();
     const searchParams = useSearchParams();
     const mode = searchParams.get('mode'); // 'edit' or undefined (view)
 
@@ -58,10 +57,6 @@ export default function CategoryDetailPage() {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
     useEffect(() => {
-        fetchCategoryDetail();
-    }, [params.id]);
-
-    useEffect(() => {
         if (category) {
             setCategoryFormData({
                 name: category.name,
@@ -71,7 +66,7 @@ export default function CategoryDetailPage() {
         }
     }, [category]);
 
-    const fetchCategoryDetail = async () => {
+    const fetchCategoryDetail = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch(`${API_BASE}/admin/intents/categories/${params.id}`);
@@ -81,7 +76,14 @@ export default function CategoryDetailPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE, params.id]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            void fetchCategoryDetail();
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [fetchCategoryDetail]);
 
     // Category Update
     const handleCategoryUpdate = async (e: React.FormEvent) => {
@@ -130,7 +132,7 @@ export default function CategoryDetailPage() {
             try {
                 payload = JSON.parse(responseFormData.payload);
                 setPayloadError(null);
-            } catch (err) {
+            } catch {
                 setPayloadError('Invalid JSON format');
                 return;
             }
@@ -191,7 +193,7 @@ export default function CategoryDetailPage() {
                 <div className="flex items-center gap-4">
                     <Link
                         href="/admin/auto-replies"
-                        className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
+                        className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-primary hover:border-primary/20 transition-all shadow-sm"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -216,7 +218,7 @@ export default function CategoryDetailPage() {
                         onClick={() => setIsEditing(!isEditing)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${isEditing
                                 ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                                : 'bg-primary/8 text-primary hover:bg-primary/12'
                             }`}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,7 +229,7 @@ export default function CategoryDetailPage() {
                     {isEditing && (
                         <button
                             onClick={handleCategoryUpdate}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all text-sm font-medium shadow-sm shadow-indigo-200"
+                            className="px-4 py-2 bg-gradient-to-br from-primary to-primary-dark text-white rounded-lg hover:bg-primary-dark transition-all text-sm font-medium shadow-sm shadow-primary/20"
                         >
                             Save Changes
                         </button>
@@ -249,7 +251,7 @@ export default function CategoryDetailPage() {
                                 <textarea
                                     value={categoryFormData.description}
                                     onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm transition-all"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary/40 text-sm transition-all"
                                     rows={3}
                                     placeholder="Add a description..."
                                 />
@@ -265,7 +267,7 @@ export default function CategoryDetailPage() {
                                             type="text"
                                             value={categoryFormData.name}
                                             onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
-                                            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                                            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/30/20 focus:border-primary/40 text-sm"
                                         />
                                     </div>
                                     <div className="flex items-center gap-2 mt-3">
@@ -273,7 +275,7 @@ export default function CategoryDetailPage() {
                                             type="checkbox"
                                             checked={categoryFormData.is_active}
                                             onChange={(e) => setCategoryFormData({ ...categoryFormData, is_active: e.target.checked })}
-                                            className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                                            className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary/30"
                                             id="isActive"
                                         />
                                         <label htmlFor="isActive" className="text-sm text-slate-600 cursor-pointer select-none">Active Status</label>
@@ -289,7 +291,7 @@ export default function CategoryDetailPage() {
                             <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider">Keywords</h3>
                             <button
                                 onClick={() => setShowKeywordForm(true)}
-                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                className="p-2 text-primary hover:bg-primary/8 rounded-lg transition-colors"
                                 title="Add Keyword"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,12 +308,12 @@ export default function CategoryDetailPage() {
                                         </svg>
                                     </div>
                                     <p className="text-slate-500 text-sm">No keywords defined yet</p>
-                                    <button onClick={() => setShowKeywordForm(true)} className="text-indigo-600 text-sm font-medium mt-2 hover:underline">Add one now</button>
+                                    <button onClick={() => setShowKeywordForm(true)} className="text-primary text-sm font-medium mt-2 hover:underline">Add one now</button>
                                 </div>
                             ) : (
                                 <div className="flex flex-wrap gap-2">
                                     {category.keywords.map((kw) => (
-                                        <div key={kw.id} className="group flex items-center bg-slate-50 border border-slate-100 rounded-full pl-3 pr-2 py-1.5 transition-all hover:border-indigo-200 hover:bg-indigo-50/30">
+                                        <div key={kw.id} className="group flex items-center bg-slate-50 border border-slate-100 rounded-full pl-3 pr-2 py-1.5 transition-all hover:border-primary/20 hover:bg-primary/8">
                                             <span className="text-sm text-slate-700 font-medium">{kw.keyword}</span>
                                             <span className="mx-2 text-[10px] text-slate-400 uppercase tracking-wide bg-white px-1.5 py-0.5 rounded border border-slate-100">
                                                 {kw.match_type === 'exact' ? '=' : kw.match_type === 'contains' ? 'abc' : '*'}
@@ -340,7 +342,7 @@ export default function CategoryDetailPage() {
                             <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider">Responses</h3>
                             <button
                                 onClick={() => { resetResponseForm(); setShowResponseForm(true); }}
-                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                className="p-2 text-primary hover:bg-primary/8 rounded-lg transition-colors"
                                 title="Add Response"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -364,7 +366,7 @@ export default function CategoryDetailPage() {
                                         <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => handleEditResponse(resp)}
-                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                                                className="p-1.5 text-slate-400 hover:text-primary hover:bg-indigo-50 rounded-lg"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -433,7 +435,7 @@ export default function CategoryDetailPage() {
                                     type="text"
                                     value={keywordFormData.keyword}
                                     onChange={(e) => setKeywordFormData({ ...keywordFormData, keyword: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-sm transition-all"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary/40 text-sm transition-all"
                                     placeholder="e.g. hello, pricing, contact"
                                     required
                                     autoFocus
@@ -464,7 +466,7 @@ export default function CategoryDetailPage() {
                                 <button type="button" onClick={() => setShowKeywordForm(false)} className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium">
                                     Cancel
                                 </button>
-                                <button type="submit" className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium shadow-lg shadow-indigo-200">
+                                <button type="submit" className="flex-1 px-4 py-2.5 bg-gradient-to-br from-primary to-primary-dark text-white rounded-xl hover:shadow-lg transition-colors text-sm font-medium shadow-lg shadow-primary/20">
                                     Add Keyword
                                 </button>
                             </div>
@@ -493,7 +495,7 @@ export default function CategoryDetailPage() {
                                             type="button"
                                             onClick={() => setResponseFormData({ ...responseFormData, reply_type: type })}
                                             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${responseFormData.reply_type === type
-                                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                                                    ? 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-md shadow-primary/20'
                                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                                 }`}
                                         >
@@ -510,7 +512,7 @@ export default function CategoryDetailPage() {
                                     <textarea
                                         value={responseFormData.text_content}
                                         onChange={(e) => setResponseFormData({ ...responseFormData, text_content: e.target.value })}
-                                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-sm transition-all"
+                                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary/40 text-sm transition-all"
                                         rows={4}
                                         placeholder="Enter the reply message..."
                                         required
@@ -534,7 +536,7 @@ export default function CategoryDetailPage() {
                                             }}
                                             className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm font-mono transition-all ${payloadError
                                                     ? 'border-red-300 focus:ring-red-100 focus:border-red-500'
-                                                    : 'border-slate-200 focus:ring-indigo-500/10 focus:border-indigo-500'
+                                                    : 'border-slate-200 focus:ring-primary/10 focus:border-primary/40'
                                                 }`}
                                             rows={8}
                                             placeholder='{\n  "type": "flex",\n  "altText": "Start",\n  "contents": { ... }\n}'
@@ -546,7 +548,7 @@ export default function CategoryDetailPage() {
                                         )}
                                     </div>
                                     <p className="text-xs text-slate-400 mt-2">
-                                        Tip: You can use <a href="https://developers.line.biz/flex-simulator/" target="_blank" className="text-indigo-500 hover:underline">LINE Flex Simulator</a> to generate JSON.
+                                        Tip: You can use <a href="https://developers.line.biz/flex-simulator/" target="_blank" className="text-primary hover:underline">LINE Flex Simulator</a> to generate JSON.
                                     </p>
                                 </div>
                             )}
@@ -557,7 +559,7 @@ export default function CategoryDetailPage() {
                                         type="checkbox"
                                         checked={responseFormData.is_active}
                                         onChange={(e) => setResponseFormData({ ...responseFormData, is_active: e.target.checked })}
-                                        className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                                        className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary/30"
                                     />
                                     <span className="text-sm font-medium text-slate-700">Set as Active</span>
                                 </label>
@@ -567,7 +569,7 @@ export default function CategoryDetailPage() {
                                 <button type="button" onClick={() => setShowResponseForm(false)} className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium">
                                     Cancel
                                 </button>
-                                <button type="submit" className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium shadow-lg shadow-indigo-200">
+                                <button type="submit" className="flex-1 px-4 py-2.5 bg-gradient-to-br from-primary to-primary-dark text-white rounded-xl hover:shadow-lg transition-colors text-sm font-medium shadow-lg shadow-primary/20">
                                     {responseFormData.id ? 'Save Changes' : 'Create Response'}
                                 </button>
                             </div>

@@ -5,17 +5,16 @@ import { useEffect, useState, useCallback } from 'react';
 type Theme = 'light' | 'dark';
 
 export const useTheme = () => {
-    const [theme, setTheme] = useState<Theme>('light');
-    const [mounted, setMounted] = useState(false);
+    const [theme, setTheme] = useState<Theme>(() => {
+        if (typeof window === 'undefined') return 'light';
+        const stored = localStorage.getItem('jsk-admin-theme');
+        return stored === 'dark' ? 'dark' : 'light';
+    });
+    const mounted = true;
 
     useEffect(() => {
-        setMounted(true);
-        const stored = localStorage.getItem('jsk-admin-theme') as Theme;
-        if (stored && (stored === 'light' || stored === 'dark')) {
-            setTheme(stored);
-            document.documentElement.classList.toggle('dark', stored === 'dark');
-        }
-    }, []);
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+    }, [theme]);
 
     const toggleTheme = useCallback(() => {
         const newTheme: Theme = theme === 'light' ? 'dark' : 'light';

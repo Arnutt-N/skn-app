@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Bot, User, Zap } from 'lucide-react';
+import { Bot, User } from 'lucide-react';
 
 interface ChatModeToggleProps {
   currentMode: 'BOT' | 'HUMAN';

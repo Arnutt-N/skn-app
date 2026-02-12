@@ -19,6 +19,16 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # Check if table already exists
+    conn = op.get_bind()
+    result = conn.execute(sa.text(
+        "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'rich_menus')"
+    ))
+    table_exists = result.scalar()
+
+    if table_exists:
+        return  # Table already exists, skip creation
+
     # Create enum type using raw SQL with IF NOT EXISTS logic
     op.execute("""
         DO $$ BEGIN
@@ -27,7 +37,7 @@ def upgrade() -> None:
             WHEN duplicate_object THEN null;
         END $$;
     """)
-    
+
     op.create_table('rich_menus',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),

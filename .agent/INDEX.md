@@ -219,6 +219,15 @@
 
 ---
 
+## Quick Start for New Agents
+
+**New to this project? Start here:**
+1. **Read**: `.agent/AGENT_PROMPT_TEMPLATE.md` - Universal template for session summary & handoff
+2. **Check**: `.agent/PROJECT_STATUS.md` - Current project status (single source of truth)
+3. **Use**: `/agent_pickup` skill or `.agent/workflows/pickup-from-any.md` - Resume from previous agent
+
+---
+
 ## How to Use This Index
 
 1. **Search by keyword** - Use Ctrl+F to find relevant skills/workflows

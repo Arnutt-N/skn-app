@@ -10,15 +10,12 @@ import { Badge } from '@/components/ui/Badge'
 import { Alert } from '@/components/ui/Alert'
 import {
     User,
-    MapPin,
     MessageSquare,
     Paperclip,
     CheckCircle2,
     Upload,
     X,
     Shield,
-    FileText,
-    LogOut,
     Building2
 } from 'lucide-react'
 
@@ -48,6 +45,10 @@ const TOPIC_OPTIONS: Record<string, string[]> = {
 }
 
 export default function LiffServiceRequestSingle() {
+    interface LiffProfile {
+        userId: string;
+    }
+
     // --- STATE ---
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
@@ -55,7 +56,7 @@ export default function LiffServiceRequestSingle() {
     const [success, setSuccess] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-    const [profile, setProfile] = useState<any>(null)
+    const [profile, setProfile] = useState<LiffProfile | null>(null)
 
     // Location Data State
     const [provinces, setProvinces] = useState<Province[]>([])
@@ -106,7 +107,7 @@ export default function LiffServiceRequestSingle() {
                         setProfile(userProfile)
                     }
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('LIFF Init Error:', err)
             } finally {
                 setLoading(false)
@@ -285,7 +286,7 @@ export default function LiffServiceRequestSingle() {
             let data
             try {
                 data = JSON.parse(resText)
-            } catch (jsonErr) {
+            } catch {
                 throw new Error(resText || `Server Error: ${res.status}`)
             }
 
@@ -296,8 +297,8 @@ export default function LiffServiceRequestSingle() {
             setSuccess(true)
             setShowConfirm(false)
             window.scrollTo(0, 0)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to submit')
             setShowConfirm(false)
             window.scrollTo(0, 0)
         } finally {
@@ -306,7 +307,7 @@ export default function LiffServiceRequestSingle() {
     }
 
     const handleClose = () => {
-        const liff = (window as any).liff
+        const liff = window.liff
         try {
             if (liff?.isInClient()) {
                 liff.closeWindow()

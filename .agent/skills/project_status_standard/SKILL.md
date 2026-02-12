@@ -5,6 +5,14 @@ description: Standard for maintaining the central PROJECT_STATUS.md file to trac
 
 # Project Status Standard
 
+## Mandatory State Consistency Rule
+
+`PROJECT_STATUS.md` cannot be updated alone. Every status update session must also reconcile:
+- `.agent/state/current-session.json`
+- `.agent/state/task.md`
+
+If these files are not aligned, the status update is incomplete and must be treated as invalid handoff metadata.
+
 ## Overview
 
 The `PROJECT_STATUS.md` file located at `.agent/PROJECT_STATUS.md` is the **Central Dashboard** of the project. It provides a high-level overview of "What is happening now" and "Where are we going".
@@ -92,7 +100,14 @@ History of what was recently done (Keep last 5-10 items).
 - **Finishing a feature**: Move to Recent Completions, check off in Roadmap.
 - **Blocking Issues**: Add a "🛑 BLOCKED" note in Active Milestones.
 
-### How to Update
-- Keep descriptions concise.
-- Use emojis for readability.
-- verify the Mermaid syntax before saving.
+### How to Update (Conflict Resolution)
+1.  **Timestamp Validation**: Check the `Last Updated` timestamp in the file.
+    *   **Current > File**: Update the header timestamp to your current time.
+    *   **File > Current**: Do **NOT** update the header timestamp. Keep the newer one.
+2.  **Merge Strategy (Recent Completions)**:
+    *   **ALWAYS** add your new items to "Recent Completions", regardless of the timestamp.
+    *   **Deduplicate**: Check if your item is already listed.
+    *   **Sort**: Insert your item chronologically if possible, otherwise add to top.
+    *   **Preserve History**: Keep at least the last 15 items. Do not delete other agents' work.
+3.  **Visuals**: Verifiy Mermaid syntax.
+4.  **Format**: Be concise and use emojis.

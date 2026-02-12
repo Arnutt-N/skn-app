@@ -3,7 +3,57 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-const PRESET_TEMPLATES = [
+interface TemplateBounds {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+interface TemplateArea {
+    id: number;
+    name: string;
+    bounds: TemplateBounds;
+}
+
+interface TemplateItem {
+    id: string;
+    name: string;
+    areas: TemplateArea[];
+}
+
+interface TemplateGroup {
+    category: string;
+    description: string;
+    width: number;
+    height: number;
+    items: TemplateItem[];
+}
+
+interface TemplateSelection {
+    category: TemplateGroup;
+    item: TemplateItem;
+}
+
+interface MenuAction {
+    type: 'uri' | 'message';
+    uri: string;
+    label: string;
+    text: string;
+}
+
+interface ReplyObjectLite {
+    id: number;
+    object_id: string;
+    name: string;
+}
+
+interface AutoReplyLite {
+    id: number;
+    name: string;
+}
+
+const PRESET_TEMPLATES: TemplateGroup[] = [
     {
         category: 'Large',
         description: 'A larger menu for displaying more items.',
@@ -117,10 +167,10 @@ const PRESET_TEMPLATES = [
     }
 ];
 
-const TemplateIcon = ({ areas, width, height, isActive }: { areas: any[], width: number, height: number, isActive: boolean }) => (
+const TemplateIcon = ({ areas, width, height, isActive }: { areas: TemplateArea[]; width: number; height: number; isActive: boolean }) => (
     <div
         className={`relative aspect-[250/168.6] w-full border-2 transition-all duration-300 overflow-hidden cursor-pointer ${isActive
-            ? 'border-indigo-600 bg-indigo-50 shadow-md ring-2 ring-indigo-500/20'
+            ? 'border-primary bg-primary/8 shadow-md ring-2 ring-primary/20'
             : 'border-slate-300 bg-slate-50 hover:border-slate-400 hover:bg-slate-100 hover:shadow-sm'
             }`}
         style={{ aspectRatio: `${width}/${height}` }}
@@ -131,7 +181,7 @@ const TemplateIcon = ({ areas, width, height, isActive }: { areas: any[], width:
             {areas.map((area, i) => (
                 <div
                     key={i}
-                    className={`border border-slate-300 flex items-center justify-center text-[8px] transition-colors ${isActive ? 'border-indigo-200' : 'border-slate-300'
+                    className={`border border-slate-300 flex items-center justify-center text-[8px] transition-colors ${isActive ? 'border-primary/20' : 'border-slate-300'
                         }`}
                     style={{
                         position: 'absolute',
@@ -153,21 +203,21 @@ export default function NewRichMenuPage() {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-    const [selectedTemplate, setSelectedTemplate] = useState<{ category: any, item: any } | null>({
+    const [selectedTemplate, setSelectedTemplate] = useState<TemplateSelection | null>({
         category: PRESET_TEMPLATES[0],
         item: PRESET_TEMPLATES[0].items[0]
     });
     // Temporary state for modal selection
-    const [pendingTemplate, setPendingTemplate] = useState<{ category: any, item: any } | null>(null);
+    const [pendingTemplate, setPendingTemplate] = useState<TemplateSelection | null>(null);
 
     const [form, setForm] = useState({
         name: '',
         chat_bar_text: 'Open Menu',
     });
 
-    const [actions, setActions] = useState<any>([]);
-    const [replyObjects, setReplyObjects] = useState<any[]>([]);
-    const [autoReplies, setAutoReplies] = useState<any[]>([]);
+    const [actions, setActions] = useState<MenuAction[]>([]);
+    const [replyObjects, setReplyObjects] = useState<ReplyObjectLite[]>([]);
+    const [autoReplies, setAutoReplies] = useState<AutoReplyLite[]>([]);
     const [file, setFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -181,7 +231,7 @@ export default function NewRichMenuPage() {
     useEffect(() => {
         if (!selectedTemplate) return;
 
-        setActions(selectedTemplate.item.areas.map((a: any) => ({
+        setActions(selectedTemplate.item.areas.map((a: TemplateArea) => ({
             type: 'uri',
             uri: 'https://',
             label: a.name,
@@ -196,14 +246,14 @@ export default function NewRichMenuPage() {
                     fetch(`${API_BASE}/admin/reply-objects`),
                     fetch(`${API_BASE}/admin/intents/categories`)
                 ]);
-                if (objRes.ok) setReplyObjects(await objRes.json());
-                if (intentRes.ok) setAutoReplies(await intentRes.json());
+                if (objRes.ok) setReplyObjects((await objRes.json()) as ReplyObjectLite[]);
+                if (intentRes.ok) setAutoReplies((await intentRes.json()) as AutoReplyLite[]);
             } catch (error) {
                 console.error("Data fetch failed", error);
             }
         };
         fetchData();
-    }, []);
+    }, [API_BASE]);
 
     const handleActionChange = (index: number, field: string, value: string) => {
         const newActions = [...actions];
@@ -238,7 +288,7 @@ export default function NewRichMenuPage() {
                 name: form.name,
                 chat_bar_text: form.chat_bar_text,
                 template_type: selectedTemplate.item.id,
-                areas: selectedTemplate.item.areas.map((area: any, i: number) => ({
+                areas: selectedTemplate.item.areas.map((area: TemplateArea, i: number) => ({
                     bounds: area.bounds,
                     action: actions[i]
                 }))
@@ -278,8 +328,8 @@ export default function NewRichMenuPage() {
 
             alert(syncToLine ? "Rich Menu created and synced successfully!" : "Rich Menu saved as draft!");
             router.push('/admin/rich-menus');
-        } catch (error: any) {
-            alert(error.message);
+        } catch (error: unknown) {
+            alert(error instanceof Error ? error.message : 'Unknown error');
         } finally {
             setIsSaving(false);
         }
@@ -297,7 +347,7 @@ export default function NewRichMenuPage() {
             <div className="flex items-center gap-4 mb-8">
                 <button
                     onClick={() => router.back()}
-                    className="p-2 hover:bg-white hover:shadow-md rounded-full transition-all duration-300 text-slate-500 hover:text-indigo-600"
+                    className="p-2 hover:bg-white hover:shadow-md rounded-full transition-all duration-300 text-slate-500 hover:text-primary"
                 >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -311,14 +361,14 @@ export default function NewRichMenuPage() {
                 <div className="lg:col-span-2 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 space-y-4">
                         <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 text-xs flex items-center justify-center font-bold">1</span>
+                            <span className="w-6 h-6 rounded-full bg-primary/8 text-primary text-xs flex items-center justify-center font-bold">1</span>
                             Basic Information
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Internal Name</label>
                                 <input
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none transition-all"
                                     placeholder="e.g. Summer Campaign 2024"
                                     value={form.name}
                                     onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -327,7 +377,7 @@ export default function NewRichMenuPage() {
                             <div className="space-y-1">
                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Chat Bar Text</label>
                                 <input
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none transition-all"
                                     value={form.chat_bar_text}
                                     onChange={(e) => setForm({ ...form, chat_bar_text: e.target.value })}
                                 />
@@ -338,12 +388,12 @@ export default function NewRichMenuPage() {
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 space-y-6">
                         <div className="flex justify-between items-center">
                             <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2">
-                                <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 text-xs flex items-center justify-center font-bold">2</span>
+                                <span className="w-6 h-6 rounded-full bg-primary/8 text-primary text-xs flex items-center justify-center font-bold">2</span>
                                 Template & Actions
                             </h2>
                             <button
                                 onClick={() => setIsTemplateModalOpen(true)}
-                                className="text-sm font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-all group cursor-pointer"
+                                className="text-sm font-bold text-primary hover:text-primary-dark flex items-center gap-1 transition-all group cursor-pointer"
                             >
                                 <svg className="w-4 h-4 transition-transform group-hover:rotate-180 duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -353,7 +403,7 @@ export default function NewRichMenuPage() {
                         </div>
 
                         {selectedTemplate && (
-                            <div className="flex gap-4 items-center p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 group hover:bg-indigo-50 transition-all duration-300">
+                            <div className="flex gap-4 items-center p-4 bg-primary/8 rounded-2xl border border-primary/10 group hover:bg-primary/12 transition-all duration-300">
                                 <div className="w-24 shrink-0 shadow-sm overflow-hidden group-hover:shadow-md transition-shadow">
                                     <TemplateIcon
                                         areas={selectedTemplate.item.areas}
@@ -363,9 +413,9 @@ export default function NewRichMenuPage() {
                                     />
                                 </div>
                                 <div>
-                                    <div className="font-bold text-indigo-900 text-lg">{selectedTemplate.item.name}</div>
-                                    <div className="text-xs text-indigo-600 flex items-center gap-2">
-                                        <span className="bg-white/80 px-2 py-0.5 rounded border border-indigo-100">{selectedTemplate.category.category}</span>
+                                    <div className="font-bold text-primary text-lg">{selectedTemplate.item.name}</div>
+                                    <div className="text-xs text-primary flex items-center gap-2">
+                                        <span className="bg-white/80 px-2 py-0.5 rounded border border-primary/10">{selectedTemplate.category.category}</span>
                                         <span className="font-mono">{selectedTemplate.category.width}x{selectedTemplate.category.height}</span>
                                     </div>
                                 </div>
@@ -373,11 +423,11 @@ export default function NewRichMenuPage() {
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                            {selectedTemplate?.item.areas.map((area: any, i: number) => (
-                                <div key={area.id} className="p-4 bg-slate-50/50 rounded-2xl border border-slate-200/60 space-y-4 hover:border-indigo-300 hover:bg-white transition-all duration-300 group">
+                            {selectedTemplate?.item.areas.map((area: TemplateArea, i: number) => (
+                                <div key={area.id} className="p-4 bg-slate-50/50 rounded-2xl border border-slate-200/60 space-y-4 hover:border-primary/40 hover:bg-white transition-all duration-300 group">
                                     <div className="flex justify-between items-center">
                                         <div className="flex items-center gap-2">
-                                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold group-hover:bg-primary group-hover:text-white transition-all">
                                                 {i + 1}
                                             </span>
                                             <span className="text-xs font-bold text-slate-500 uppercase">
@@ -387,7 +437,7 @@ export default function NewRichMenuPage() {
                                         <select
                                             value={actions[i]?.type || 'uri'}
                                             onChange={(e) => handleActionChange(i, 'type', e.target.value)}
-                                            className="text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer"
+                                            className="text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer"
                                         >
                                             <option value="uri">Open URL</option>
                                             <option value="message">Send Msg</option>
@@ -399,7 +449,7 @@ export default function NewRichMenuPage() {
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-bold text-slate-400">WEBSITE URL</label>
                                                 <input
-                                                    className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                                    className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary/20 outline-none"
                                                     value={actions[i]?.uri || ''}
                                                     onChange={(e) => handleActionChange(i, 'uri', e.target.value)}
                                                     placeholder="https://"
@@ -410,7 +460,7 @@ export default function NewRichMenuPage() {
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold text-slate-400">TEXT / PAYLOAD</label>
                                                     <input
-                                                        className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                                        className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary/20 outline-none"
                                                         value={actions[i]?.text || ''}
                                                         onChange={(e) => handleActionChange(i, 'text', e.target.value)}
                                                     />
@@ -451,19 +501,20 @@ export default function NewRichMenuPage() {
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 space-y-6 sticky top-6">
                         <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 text-xs flex items-center justify-center font-bold">3</span>
+                            <span className="w-6 h-6 rounded-full bg-primary/8 text-primary text-xs flex items-center justify-center font-bold">3</span>
                             Design & Sync
                         </h2>
 
                         <div className="space-y-4">
-                            <label className="block bg-slate-100 border-2 border-dashed border-slate-300 hover:border-indigo-400 transition-all cursor-pointer overflow-hidden relative group"
+                            <label className="block bg-slate-100 border-2 border-dashed border-slate-300 hover:border-primary/40 transition-all cursor-pointer overflow-hidden relative group"
                                 style={{ aspectRatio: selectedTemplate ? `${selectedTemplate.category.width}/${selectedTemplate.category.height}` : '2500/1686' }}
                             >
                                 {file ? (
                                     <div className="w-full h-full relative">
-                                        <img src={URL.createObjectURL(file)} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" />
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={URL.createObjectURL(file)} alt="Rich menu preview" className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" />
                                         <div className="absolute inset-0 pointer-events-none opacity-40">
-                                            {selectedTemplate?.item.areas.map((area: any, i: number) => (
+                                            {selectedTemplate?.item.areas.map((area: TemplateArea, i: number) => (
                                                 <div key={i} className="absolute border border-white flex items-center justify-center text-white font-bold text-3xl bg-black bg-opacity-20"
                                                     style={{
                                                         left: `${(area.bounds.x / 2500) * 100}%`,
@@ -480,7 +531,7 @@ export default function NewRichMenuPage() {
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-full text-slate-400 py-12">
                                         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4 group-hover:scale-110 transition-transform duration-300">
-                                            <svg className="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                         </div>
@@ -513,7 +564,7 @@ export default function NewRichMenuPage() {
                             <button
                                 onClick={() => handleSave(true)}
                                 disabled={isSaving}
-                                className={`w-full py-4 rounded-2xl font-bold transition-all shadow-xl flex items-center justify-center gap-2 group ${isSaving ? 'bg-slate-300 text-slate-500' : 'bg-indigo-600 hover:bg-slate-900 text-white shadow-indigo-200'
+                                className={`w-full py-4 rounded-2xl font-bold transition-all shadow-xl flex items-center justify-center gap-2 group ${isSaving ? 'bg-slate-300 text-slate-500' : 'bg-gradient-to-br from-primary to-primary-dark hover:bg-primary-dark text-white shadow-primary/20'
                                     }`}
                             >
                                 {isSaving ? (
@@ -578,7 +629,7 @@ export default function NewRichMenuPage() {
                                                         isActive={pendingTemplate?.item.id === item.id}
                                                     />
                                                 </div>
-                                                <div className={`text-[11px] font-bold uppercase tracking-tight transition-colors ${pendingTemplate?.item.id === item.id ? 'text-indigo-600' : 'text-slate-500 group-hover:text-slate-800'
+                                                <div className={`text-[11px] font-bold uppercase tracking-tight transition-colors ${pendingTemplate?.item.id === item.id ? 'text-primary' : 'text-slate-500 group-hover:text-slate-800'
                                                     }`}>
                                                     {item.name}
                                                 </div>
@@ -598,7 +649,7 @@ export default function NewRichMenuPage() {
                             </button>
                             <button
                                 onClick={handleApplyTemplate}
-                                className="px-12 py-3 rounded-2xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 cursor-pointer active:scale-95 transform duration-150"
+                                className="px-12 py-3 rounded-2xl font-bold text-white bg-gradient-to-br from-primary to-primary-dark hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 cursor-pointer active:scale-95 transform duration-150"
                             >
                                 Apply Design
                             </button>
