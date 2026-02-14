@@ -1,7 +1,7 @@
 'use client';
 
 import React, { memo } from 'react';
-import { MoreVertical } from 'lucide-react';
+import { Bot, MoreVertical, Star, User } from 'lucide-react';
 
 import type { Conversation } from '../_types';
 
@@ -24,47 +24,75 @@ export const ConversationItem = memo(function ConversationItem({
 }: ConversationItemProps) {
   const isWaiting = conversation.session?.status === 'WAITING';
   const isActive = conversation.session?.status === 'ACTIVE';
+  const isVip = conversation.tags?.some((t) => t.name.toUpperCase() === 'VIP');
+  const isBot = conversation.chat_mode === 'BOT';
+
   return (
     <div
       id={optionId}
       role="option"
       aria-selected={selected}
-      className={`group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all thai-text ${selected
-        ? 'bg-primary/15 border border-primary/30'
-        : 'hover:bg-white/5 border border-transparent'
-        }`}
+      className={`group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all thai-text ${
+        selected
+          ? 'bg-brand-500/10 ring-1 ring-brand-500/20'
+          : 'hover:bg-sidebar-accent border border-transparent'
+      }`}
       onClick={onClick}
     >
+      {/* Avatar + status dot */}
       <div className="relative flex-shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={conversation.picture_url || `https://ui-avatars.com/api/?name=${conversation.display_name}&background=6366f1&color=fff&size=44`}
-          className="w-11 h-11 rounded-full object-cover"
+          src={conversation.picture_url || `https://ui-avatars.com/api/?name=${conversation.display_name}&background=6366f1&color=fff&size=40`}
+          className="w-10 h-10 rounded-full object-cover"
           alt={conversation.display_name}
         />
-        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#2B2840] ${isWaiting ? 'bg-orange-500' : isActive ? 'bg-emerald-500' : 'bg-slate-500'}`} />
+        <div
+          className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar-bg ${
+            isActive ? 'bg-online' : isWaiting ? 'bg-away' : 'bg-offline'
+          }`}
+        />
       </div>
+
+      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <span className={`font-semibold truncate text-sm ${selected ? 'text-white' : 'text-slate-200'}`}>
-            {conversation.display_name}
+          <span className="flex items-center gap-1 min-w-0">
+            <span className={`font-semibold truncate text-sm ${selected ? 'text-sidebar-fg' : 'text-sidebar-fg/90'}`}>
+              {conversation.display_name}
+            </span>
+            {isVip && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400 flex-shrink-0" />}
           </span>
-          <span className="text-[10px] text-slate-500 flex-shrink-0 thai-no-break">
+          <span className="text-[10px] text-sidebar-muted flex-shrink-0 thai-no-break">
             {formattedTime || ''}
           </span>
         </div>
-        <div className="flex items-center justify-between gap-2 mt-1">
-          <span className={`truncate text-xs thai-no-break ${selected ? 'text-primary-light/70' : 'text-slate-400'}`}>
+        <div className="flex items-center justify-between gap-2 mt-0.5">
+          <span className={`truncate text-xs thai-no-break ${selected ? 'text-sidebar-fg/60' : 'text-sidebar-muted'}`}>
             {conversation.last_message?.content || 'No messages yet'}
           </span>
-          {conversation.unread_count > 0 && (
-            <span className="min-w-[18px] h-[18px] px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-              {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Mode badge */}
+            <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${
+              isBot
+                ? 'bg-info/15 text-info'
+                : 'bg-online/15 text-online'
+            }`}>
+              {isBot ? <Bot className="w-2.5 h-2.5" /> : <User className="w-2.5 h-2.5" />}
+              {isBot ? 'Bot' : 'Manual'}
             </span>
-          )}
+            {/* Unread badge */}
+            {conversation.unread_count > 0 && (
+              <span className="blink-badge min-w-[18px] h-[18px] px-1 bg-brand-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Tags */}
         {!!conversation.tags?.length && (
-        <div className="mt-1.5 flex items-center gap-1 overflow-hidden">
+          <div className="mt-1.5 flex items-center gap-1 overflow-hidden">
             {conversation.tags.slice(0, 2).map((tag) => (
               <span
                 key={tag.id}
@@ -75,17 +103,19 @@ export const ConversationItem = memo(function ConversationItem({
               </span>
             ))}
             {conversation.tags.length > 2 && (
-              <span className="text-[10px] text-slate-500">+{conversation.tags.length - 2}</span>
+              <span className="text-[10px] text-sidebar-muted">+{conversation.tags.length - 2}</span>
             )}
           </div>
         )}
       </div>
+
+      {/* Menu button */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           onMenuClick();
         }}
-        className="p-1.5 rounded-lg cursor-pointer text-slate-500 hover:text-white opacity-0 group-hover:opacity-100 focus-ring"
+        className="p-1.5 rounded-lg cursor-pointer text-sidebar-muted hover:text-sidebar-fg opacity-0 group-hover:opacity-100 transition-opacity"
         aria-label={`Open actions for ${conversation.display_name}`}
       >
         <MoreVertical className="w-4 h-4" />

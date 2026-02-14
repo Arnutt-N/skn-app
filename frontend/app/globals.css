@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @theme {
   /* Brand Colors (HSL) */
@@ -27,7 +27,7 @@
   --color-info-light: hsl(213 93% 78%);
   --color-info-dark: hsl(224 76% 48%);
 
-  /* WCAG AA Accessible Text Colors (≥4.5:1 on white) */
+  /* WCAG AA Accessible Text Colors (โฅ4.5:1 on white) */
   /* Use these for text on light backgrounds instead of brand-500 / danger / success */
   --color-brand-text: hsl(263 70% 50%);     /* brand-700, ~9:1 ratio */
   --color-danger-text: hsl(0 72% 51%);      /* danger-dark, ~5.6:1 ratio */
@@ -72,6 +72,19 @@
   --color-chat-admin: hsl(142 64% 37%);
   --color-chat-bot: hsl(220 13% 91%);
   --color-chat-system: hsl(38 92% 50%);
+
+  /* Live Chat Status Colors (from example admin-chat-system) */
+  --color-online: hsl(142 71% 45%);
+  --color-away: hsl(38 92% 50%);
+  --color-busy: hsl(0 84% 60%);
+  --color-offline: hsl(220 10% 46%);
+
+  /* Live Chat Sidebar (dark slate from example) */
+  --color-sidebar-bg: hsl(222 47% 11%);
+  --color-sidebar-fg: hsl(210 20% 98%);
+  --color-sidebar-muted: hsl(215 14% 34%);
+  --color-sidebar-accent: hsl(217 33% 17%);
+  --color-sidebar-border: hsl(215 28% 17%);
 
   /* Status Colors */
   --color-status-waiting: hsl(38 92% 50%);
@@ -174,6 +187,28 @@
   * {
     @apply border-gray-200;
   }
+
+  /* Force-remove scrollbar arrow buttons globally (Chrome/Edge/Safari) */
+  *::-webkit-scrollbar-button,
+  *::-webkit-scrollbar-button:single-button,
+  *::-webkit-scrollbar-button:double-button,
+  *::-webkit-scrollbar-button:horizontal,
+  *::-webkit-scrollbar-button:vertical,
+  *::-webkit-scrollbar-button:horizontal:increment,
+  *::-webkit-scrollbar-button:horizontal:decrement,
+  *::-webkit-scrollbar-button:vertical:increment,
+  *::-webkit-scrollbar-button:vertical:decrement,
+  *::-webkit-scrollbar-button:start,
+  *::-webkit-scrollbar-button:end,
+  *::-webkit-scrollbar-button:increment,
+  *::-webkit-scrollbar-button:decrement {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    -webkit-appearance: none !important;
+  }
   
   html {
     font-family: var(--font-sans);
@@ -251,49 +286,123 @@
 }
 
 @layer utilities {
-  /* Minimal Scrollbar — no arrows, thin track */
-  /* Minimal Scrollbar — no arrows, thin track */
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+  /* Minimal, theme-aware scrollbars */
+  .scrollbar-thin,
+  .scrollbar-sidebar,
+  .dark-scrollbar,
+  .chat-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
   }
 
-  .scrollbar-thin::-webkit-scrollbar-track {
+  .scrollbar-thin {
+    scrollbar-color: hsl(220 9% 46% / 0.28) transparent;
+  }
+
+  .scrollbar-sidebar,
+  .dark-scrollbar {
+    scrollbar-color: hsl(217 19% 27% / 0.55) transparent;
+  }
+
+  .chat-scrollbar {
+    scrollbar-color: hsl(216 12% 65% / 0.45) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar,
+  .scrollbar-sidebar::-webkit-scrollbar,
+  .dark-scrollbar::-webkit-scrollbar,
+  .chat-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track,
+  .scrollbar-sidebar::-webkit-scrollbar-track,
+  .dark-scrollbar::-webkit-scrollbar-track,
+  .chat-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(0 0% 50% / 0.2);
+  .scrollbar-thin::-webkit-scrollbar-thumb,
+  .scrollbar-sidebar::-webkit-scrollbar-thumb,
+  .dark-scrollbar::-webkit-scrollbar-thumb,
+  .chat-scrollbar::-webkit-scrollbar-thumb {
     border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: background-color 180ms ease;
   }
 
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: hsl(0 0% 50% / 0.4);
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(220 9% 46% / 0.28);
   }
 
-  .scrollbar-thin::-webkit-scrollbar-button {
+  .scrollbar-sidebar::-webkit-scrollbar-thumb,
+  .dark-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(217 19% 27% / 0.52);
+  }
+
+  .chat-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(216 12% 65% / 0.42);
+  }
+
+  .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+    background-color: hsl(220 9% 46% / 0.42);
+  }
+
+  .scrollbar-sidebar:hover::-webkit-scrollbar-thumb,
+  .dark-scrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: hsl(215 14% 34% / 0.62);
+  }
+
+  .chat-scrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: hsl(216 12% 65% / 0.62);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-button,
+  .scrollbar-sidebar::-webkit-scrollbar-button,
+  .dark-scrollbar::-webkit-scrollbar-button,
+  .chat-scrollbar::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: 0 !important;
+    -webkit-appearance: none !important;
+  }
+
+  .scrollbar-sidebar::-webkit-scrollbar-button:vertical:increment,
+  .scrollbar-sidebar::-webkit-scrollbar-button:vertical:decrement,
+  .scrollbar-sidebar::-webkit-scrollbar-button:horizontal:increment,
+  .scrollbar-sidebar::-webkit-scrollbar-button:horizontal:decrement,
+  .dark-scrollbar::-webkit-scrollbar-button:vertical:increment,
+  .dark-scrollbar::-webkit-scrollbar-button:vertical:decrement,
+  .dark-scrollbar::-webkit-scrollbar-button:horizontal:increment,
+  .dark-scrollbar::-webkit-scrollbar-button:horizontal:decrement {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: 0 !important;
+    -webkit-appearance: none !important;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-corner,
+  .scrollbar-sidebar::-webkit-scrollbar-corner,
+  .dark-scrollbar::-webkit-scrollbar-corner,
+  .chat-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;
   }
 
-  /* Firefox */
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(0 0% 50% / 0.2) transparent;
-  }
-
-
-  
-
-
-  
-
-
-
-
-
-  
   /* Glass Effect */
   .glass {
     background: hsl(0 0% 100% / 0.7);
@@ -532,6 +641,61 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-400 { animation-delay: 400ms; }
   .delay-500 { animation-delay: 500ms; }
+
+  /* ── Live Chat Animations (from example admin-chat-system) ── */
+  @keyframes typing-bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  @keyframes slide-in-left {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes blink-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+
+  @keyframes toast-slide {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Chat message animations */
+  .msg-in { animation: slide-in-left 0.3s ease-out; }
+  .msg-out { animation: slide-in-right 0.3s ease-out; }
+
+  /* Typing dots */
+  .typing-dot {
+    animation: typing-bounce 1.4s infinite ease-in-out;
+  }
+  .typing-dot:nth-child(1) { animation-delay: 0s; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  /* Badge blink */
+  .blink-badge { animation: blink-badge 1s ease-in-out infinite; }
+
+  /* Toast slide-in */
+  .toast-slide { animation: toast-slide 0.4s ease-out; }
+
+  /* Custom scrollbar for chat */
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(218 11% 65% / 0.3);
+    border-radius: 20px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(218 11% 65% / 0.5);
+  }
 }
 
 /* Reduced Motion Support */

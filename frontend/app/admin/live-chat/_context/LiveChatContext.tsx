@@ -19,11 +19,35 @@ import type {
   Message,
   SessionTransferredPayload,
 } from '@/lib/websocket/types';
-import { useChatReducer } from '../_hooks/useChatReducer';
+import { useLiveChatStore } from '../_store/liveChatStore';
 import type { Conversation, CurrentChat, Session } from '../_types';
 
+// State shape exposed via context (matches Zustand store)
+interface ChatState {
+  conversations: Conversation[];
+  selectedId: string | null;
+  currentChat: CurrentChat | null;
+  messages: Message[];
+  loading: boolean;
+  backendOnline: boolean;
+  filterStatus: string | null;
+  searchQuery: string;
+  inputText: string;
+  sending: boolean;
+  claiming: boolean;
+  showCustomerPanel: boolean;
+  activeActionMenu: string | null;
+  showTransferDialog: boolean;
+  showCannedPicker: boolean;
+  soundEnabled: boolean;
+  pendingMessages: Set<string>;
+  failedMessages: Map<string, string>;
+  hasMoreHistory: boolean;
+  isLoadingHistory: boolean;
+}
+
 interface LiveChatContextValue {
-  state: ReturnType<typeof useChatReducer>[0];
+  state: ChatState;
   wsStatus: ConnectionState;
   isMobileView: boolean;
   typingUsersCount: number;
@@ -59,8 +83,35 @@ interface LiveChatContextValue {
 const LiveChatContext = createContext<LiveChatContextValue | undefined>(undefined);
 const API_BASE = '/api/v1';
 
+// Helper to get current store state without subscribing
+const getStore = () => useLiveChatStore.getState();
+
 export function LiveChatProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useChatReducer();
+  // ── Zustand store ──
+  const store = useLiveChatStore;
+
+  // Subscribe to state slices needed for Context compatibility & effects
+  const conversations = store((s) => s.conversations);
+  const selectedId = store((s) => s.selectedId);
+  const currentChat = store((s) => s.currentChat);
+  const messages = store((s) => s.messages);
+  const loading = store((s) => s.loading);
+  const backendOnline = store((s) => s.backendOnline);
+  const filterStatus = store((s) => s.filterStatus);
+  const searchQuery = store((s) => s.searchQuery);
+  const inputText = store((s) => s.inputText);
+  const sending = store((s) => s.sending);
+  const claiming = store((s) => s.claiming);
+  const showCustomerPanel = store((s) => s.showCustomerPanel);
+  const activeActionMenu = store((s) => s.activeActionMenu);
+  const showTransferDialog = store((s) => s.showTransferDialog);
+  const showCannedPicker = store((s) => s.showCannedPicker);
+  const soundEnabled = store((s) => s.soundEnabled);
+  const pendingMessages = store((s) => s.pendingMessages);
+  const failedMessages = store((s) => s.failedMessages);
+  const hasMoreHistory = store((s) => s.hasMoreHistory);
+  const isLoadingHistory = store((s) => s.isLoadingHistory);
+
   const { user, token } = useAuth();
   const searchParams = useSearchParams();
   const { playNotification, setEnabled } = useNotificationSound();
@@ -86,68 +137,66 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    selectedIdRef.current = state.selectedId;
-    messagesRef.current = state.messages;
-  }, [state.selectedId, state.messages]);
+    selectedIdRef.current = selectedId;
+    messagesRef.current = messages;
+  }, [selectedId, messages]);
 
   useEffect(() => {
     wsStatusRef.current = wsStatus;
   }, [wsStatus]);
 
+  // ── Simple state setters (delegate to store) ──
   const setSearchQuery = useCallback((value: string) => {
-    dispatch({ type: 'SET_SEARCH', payload: value });
-  }, [dispatch]);
+    getStore().setSearchQuery(value);
+  }, []);
 
   const setFilterStatus = useCallback((value: string | null) => {
-    dispatch({ type: 'SET_FILTER', payload: value });
-  }, [dispatch]);
+    getStore().setFilterStatus(value);
+  }, []);
 
   const setInputText = useCallback((value: string) => {
-    dispatch({ type: 'SET_INPUT', payload: value });
-    if (value === '/') {
-      dispatch({ type: 'SET_SHOW_CANNED_PICKER', payload: true });
-    } else if (!value.startsWith('/')) {
-      dispatch({ type: 'SET_SHOW_CANNED_PICKER', payload: false });
-    }
-  }, [dispatch]);
+    getStore().setInputText(value);
+  }, []);
 
   const setShowCustomerPanel = useCallback((value: boolean) => {
-    dispatch({ type: 'SET_SHOW_CUSTOMER_PANEL', payload: value });
-  }, [dispatch]);
+    getStore().setShowCustomerPanel(value);
+  }, []);
 
   const setActiveActionMenu = useCallback((value: string | null) => {
-    dispatch({ type: 'SET_ACTIVE_ACTION_MENU', payload: value });
-  }, [dispatch]);
+    getStore().setActiveActionMenu(value);
+  }, []);
 
   const setShowTransferDialog = useCallback((value: boolean) => {
-    dispatch({ type: 'SET_SHOW_TRANSFER_DIALOG', payload: value });
-  }, [dispatch]);
+    getStore().setShowTransferDialog(value);
+  }, []);
 
   const setShowCannedPicker = useCallback((value: boolean) => {
-    dispatch({ type: 'SET_SHOW_CANNED_PICKER', payload: value });
-  }, [dispatch]);
+    getStore().setShowCannedPicker(value);
+  }, []);
 
   const setSoundEnabled = useCallback((value: boolean) => {
-    dispatch({ type: 'SET_SOUND_ENABLED', payload: value });
+    getStore().setSoundEnabled(value);
     setEnabled(value);
-  }, [dispatch, setEnabled]);
+  }, [setEnabled]);
 
+  // ── API methods ──
   const fetchConversations = useCallback(async () => {
+    const currentFilter = getStore().filterStatus;
     try {
-      const res = await fetch(`${API_BASE}/admin/live-chat/conversations${state.filterStatus ? `?status=${state.filterStatus}` : ''}`);
+      const res = await fetch(`${API_BASE}/admin/live-chat/conversations${currentFilter ? `?status=${currentFilter}` : ''}`);
       if (res.ok) {
         const data = await res.json();
-        dispatch({ type: 'SET_CONVERSATIONS', payload: data.conversations || data || [] });
-        dispatch({ type: 'SET_BACKEND_ONLINE', payload: true });
+        getStore().setConversations(data.conversations || data || []);
+        getStore().setBackendOnline(true);
       } else {
-        dispatch({ type: 'SET_BACKEND_ONLINE', payload: false });
+        getStore().setBackendOnline(false);
       }
     } catch {
-      dispatch({ type: 'SET_BACKEND_ONLINE', payload: false });
+      getStore().setBackendOnline(false);
     } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
+      getStore().setLoading(false);
     }
-  }, [dispatch, state.filterStatus]);
+  }, []);
 
   const fetchChatDetail = useCallback(async (id: string, includeMessages = true) => {
     try {
@@ -155,17 +204,17 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
       if (!res.ok) return;
       const data = (await res.json()) as CurrentChat;
       if (selectedIdRef.current !== id) return;
-      dispatch({ type: 'SET_CURRENT_CHAT', payload: data });
+      getStore().setCurrentChat(data);
       if (includeMessages) {
         const nextMessages = data.messages || [];
-        dispatch({ type: 'SET_MESSAGES', payload: nextMessages });
-        dispatch({ type: 'SET_HAS_MORE_HISTORY', payload: nextMessages.length >= 50 });
+        getStore().setMessages(nextMessages);
+        getStore().setHasMoreHistory(nextMessages.length >= 50);
       }
-      dispatch({ type: 'SET_BACKEND_ONLINE', payload: true });
+      getStore().setBackendOnline(true);
     } catch {
-      dispatch({ type: 'SET_BACKEND_ONLINE', payload: false });
+      getStore().setBackendOnline(false);
     }
-  }, [dispatch]);
+  }, []);
 
   const fetchMessagesPage = useCallback(async (id: string, beforeId?: number) => {
     const query = new URLSearchParams();
@@ -177,33 +226,45 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleMessageAck = useCallback((tempId: string) => {
-    dispatch({ type: 'REMOVE_PENDING', payload: tempId });
-    dispatch({ type: 'CLEAR_FAILED', payload: tempId });
-  }, [dispatch]);
+    getStore().removePending(tempId);
+    getStore().clearFailed(tempId);
+  }, []);
 
   const handleNewMessage = useCallback((message: Message) => {
-    if (message.direction === 'INCOMING') playNotification();
+    if (message.direction === 'INCOMING') {
+      playNotification();
+      // Fire toast if not viewing this conversation
+      if (message.line_user_id !== selectedIdRef.current) {
+        getStore().addNotification({
+          title: message.operator_name || 'New Message',
+          message: message.content?.substring(0, 100) || 'New message received',
+          avatar: undefined,
+          type: 'message',
+        });
+      }
+    }
     if (message.line_user_id !== selectedIdRef.current) return;
-    const exists = messagesRef.current.some((m) => m.id === message.id || (message.temp_id && m.temp_id === message.temp_id));
+    const currentMessages = messagesRef.current;
+    const exists = currentMessages.some((m) => m.id === message.id || (message.temp_id && m.temp_id === message.temp_id));
     if (exists) {
-      const next = messagesRef.current.map((m) => ((m.temp_id && m.temp_id === message.temp_id) ? message : m));
-      dispatch({ type: 'SET_MESSAGES', payload: next });
+      const next = currentMessages.map((m) => ((m.temp_id && m.temp_id === message.temp_id) ? message : m));
+      getStore().setMessages(next);
       return;
     }
-    dispatch({ type: 'ADD_MESSAGE', payload: message });
-  }, [dispatch, playNotification]);
+    getStore().addMessage(message);
+  }, [playNotification]);
 
   const handleMessageSent = useCallback((message: Message) => {
     handleNewMessage(message);
     if (message.temp_id) handleMessageAck(message.temp_id);
-    dispatch({ type: 'SET_SENDING', payload: false });
-    dispatch({ type: 'SET_INPUT', payload: '' });
-  }, [dispatch, handleMessageAck, handleNewMessage]);
+    getStore().setSending(false);
+    getStore().setInputText('');
+  }, [handleMessageAck, handleNewMessage]);
 
   const handleConversationUpdate = useCallback((data: ConversationUpdatePayload) => {
     const currentSelectedId = selectedIdRef.current;
     const isSelected = currentSelectedId === data.line_user_id;
-    const list = [...state.conversations];
+    const list = [...getStore().conversations];
     const idx = list.findIndex((c) => c.line_user_id === data.line_user_id);
     const existingTags = idx >= 0 ? (list[idx]?.tags || []) : [];
     let unread = 0;
@@ -224,32 +285,30 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
       tags: data.tags || existingTags,
     };
     if (idx === -1) {
-      dispatch({ type: 'SET_CONVERSATIONS', payload: [updated, ...list] });
+      getStore().setConversations([updated, ...list]);
     } else {
       list.splice(idx, 1);
-      dispatch({ type: 'SET_CONVERSATIONS', payload: [updated, ...list] });
+      getStore().setConversations([updated, ...list]);
     }
     if (isSelected) {
-      dispatch({ type: 'SET_CURRENT_CHAT', payload: data as CurrentChat });
+      getStore().setCurrentChat(data as CurrentChat);
       if (data.messages) {
-        dispatch({ type: 'SET_MESSAGES', payload: data.messages });
+        getStore().setMessages(data.messages);
       }
     }
-  }, [dispatch, state.conversations]);
+  }, []);
 
   const handleSessionTransferred = useCallback((payload: SessionTransferredPayload) => {
-    if (state.currentChat?.line_user_id !== payload.line_user_id) return;
-        dispatch({
-          type: 'SET_CURRENT_CHAT',
-          payload: {
-            ...state.currentChat,
-            session: state.currentChat.session
-              ? { ...state.currentChat.session, operator_id: payload.to_operator_id }
-              : undefined,
-          },
-        });
+    const chat = getStore().currentChat;
+    if (chat?.line_user_id !== payload.line_user_id) return;
+    getStore().setCurrentChat({
+      ...chat,
+      session: chat.session
+        ? { ...chat.session, operator_id: payload.to_operator_id }
+        : undefined,
+    });
     fetchConversations();
-  }, [dispatch, fetchConversations, state.currentChat]);
+  }, [fetchConversations]);
 
   const adminId = user?.id || '1';
   const {
@@ -269,9 +328,9 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
     onMessageSent: handleMessageSent,
     onMessageAck: (tempId) => handleMessageAck(tempId),
     onMessageFailed: (tempId, error) => {
-      dispatch({ type: 'REMOVE_PENDING', payload: tempId });
-      dispatch({ type: 'SET_FAILED', payload: { tempId, error } });
-      dispatch({ type: 'SET_SENDING', payload: false });
+      getStore().removePending(tempId);
+      getStore().setFailed(tempId, error);
+      getStore().setSending(false);
     },
     onTyping: (_lineUserId, admin, isTyping) => {
       const next = new Set(typingUsersRef.current);
@@ -281,50 +340,68 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
       setTypingUsersCount(next.size);
     },
     onSessionClaimed: (lineUserId, operatorId) => {
-      if (state.currentChat?.line_user_id === lineUserId) {
-        dispatch({
-          type: 'SET_CURRENT_CHAT',
-          payload: {
-            ...state.currentChat,
-            session: state.currentChat.session
-              ? { ...state.currentChat.session, status: 'ACTIVE', operator_id: operatorId }
-              : undefined,
-          },
+      const chat = getStore().currentChat;
+      if (chat?.line_user_id === lineUserId) {
+        getStore().setCurrentChat({
+          ...chat,
+          session: chat.session
+            ? { ...chat.session, status: 'ACTIVE', operator_id: operatorId }
+            : undefined,
         });
       }
+      getStore().addNotification({
+        title: 'Session Claimed',
+        message: `Operator #${operatorId} claimed a session`,
+        type: 'system',
+      });
       fetchConversations();
     },
     onSessionClosed: (lineUserId) => {
-      if (state.currentChat?.line_user_id === lineUserId) {
-        dispatch({
-          type: 'SET_CURRENT_CHAT',
-          payload: { ...state.currentChat, chat_mode: 'BOT', session: undefined },
-        });
+      const chat = getStore().currentChat;
+      if (chat?.line_user_id === lineUserId) {
+        getStore().setCurrentChat({ ...chat, chat_mode: 'BOT', session: undefined });
       }
       fetchConversations();
     },
-    onSessionTransferred: handleSessionTransferred,
+    onSessionTransferred: (payload: SessionTransferredPayload) => {
+      handleSessionTransferred(payload);
+      getStore().addNotification({
+        title: 'Session Transferred',
+        message: `Session transferred to operator #${payload.to_operator_id}`,
+        type: 'system',
+      });
+    },
     onConversationUpdate: handleConversationUpdate,
     onConnectionChange: (status) => {
+      const wasOffline = wsStatus !== 'connected';
       setWsStatus(status);
-      if (status === 'connected') dispatch({ type: 'SET_BACKEND_ONLINE', payload: true });
+      if (status === 'connected') {
+        getStore().setBackendOnline(true);
+        if (wasOffline) {
+          getStore().addNotification({
+            title: 'Connected',
+            message: 'WebSocket connection restored',
+            type: 'system',
+          });
+        }
+      }
     },
   });
 
   const selectConversation = useCallback((id: string | null) => {
-    dispatch({ type: 'SELECT_CHAT', payload: id });
+    getStore().selectChat(id);
     if (id) {
       window.history.replaceState(null, '', `/admin/live-chat?chat=${id}`);
-      const next = state.conversations.map((c) => (
+      const next = getStore().conversations.map((c) => (
         c.line_user_id === id ? { ...c, unread_count: 0 } : c
       ));
-      dispatch({ type: 'SET_CONVERSATIONS', payload: next });
+      getStore().setConversations(next);
     } else {
       window.history.replaceState(null, '', '/admin/live-chat');
-      dispatch({ type: 'SET_CURRENT_CHAT', payload: null });
-      dispatch({ type: 'SET_MESSAGES', payload: [] });
+      getStore().setCurrentChat(null);
+      getStore().setMessages([]);
     }
-  }, [dispatch, state.conversations]);
+  }, []);
 
   const jumpToMessage = useCallback((lineUserId: string, messageId: number) => {
     setFocusedMessageId(messageId);
@@ -338,10 +415,10 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!initializedRef.current) {
       const chatId = searchParams.get('chat');
-      if (chatId) dispatch({ type: 'SELECT_CHAT', payload: chatId });
+      if (chatId) getStore().selectChat(chatId);
       initializedRef.current = true;
     }
-  }, [dispatch, searchParams]);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchConversations();
@@ -352,39 +429,40 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
   }, [fetchConversations]);
 
   useEffect(() => {
-    if (!state.selectedId) return;
-    dispatch({ type: 'SET_MESSAGES', payload: [] });
+    if (!selectedId) return;
+    getStore().setMessages([]);
     firstLoadRef.current = true;
-    fetchChatDetail(state.selectedId, false).then(async () => {
-      const page = await fetchMessagesPage(state.selectedId!);
-      if (selectedIdRef.current !== state.selectedId) return;
-      dispatch({ type: 'SET_MESSAGES', payload: page.messages || [] });
-      dispatch({ type: 'SET_HAS_MORE_HISTORY', payload: page.has_more });
+    fetchChatDetail(selectedId, false).then(async () => {
+      const page = await fetchMessagesPage(selectedId);
+      if (selectedIdRef.current !== selectedId) return;
+      getStore().setMessages(page.messages || []);
+      getStore().setHasMoreHistory(page.has_more);
     }).catch(() => undefined);
-  }, [dispatch, fetchChatDetail, fetchMessagesPage, state.selectedId]);
+  }, [fetchChatDetail, fetchMessagesPage, selectedId]);
 
   useEffect(() => {
-    if (!state.selectedId || wsStatus !== 'connected') return;
-    joinRoom(state.selectedId);
+    if (!selectedId || wsStatus !== 'connected') return;
+    joinRoom(selectedId);
     return () => leaveRoom();
-  }, [joinRoom, leaveRoom, state.selectedId, wsStatus]);
+  }, [joinRoom, leaveRoom, selectedId, wsStatus]);
 
   useEffect(() => {
-    if (!state.selectedId) return;
+    if (!selectedId) return;
     const interval = setInterval(() => {
       if (wsStatusRef.current === 'connected') return;
-      fetchChatDetail(state.selectedId!, false);
+      fetchChatDetail(selectedId, false);
     }, 3000);
     return () => clearInterval(interval);
-  }, [fetchChatDetail, state.selectedId]);
+  }, [fetchChatDetail, selectedId]);
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!state.selectedId || !text.trim() || state.sending) return;
-    dispatch({ type: 'SET_SENDING', payload: true });
+    const s = getStore();
+    if (!s.selectedId || !text.trim() || s.sending) return;
+    s.setSending(true);
     const tempId = `temp-${Date.now()}`;
     const optimistic: Message = {
       id: 0,
-      line_user_id: state.selectedId,
+      line_user_id: s.selectedId,
       direction: 'OUTGOING',
       content: text,
       message_type: 'text',
@@ -393,8 +471,8 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
       created_at: new Date().toISOString(),
       temp_id: tempId,
     };
-    dispatch({ type: 'ADD_MESSAGE', payload: optimistic });
-    dispatch({ type: 'ADD_PENDING', payload: tempId });
+    s.addMessage(optimistic);
+    s.addPending(tempId);
 
     if (wsStatusRef.current === 'connected') {
       wsSendMessage(text, tempId);
@@ -402,110 +480,116 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${state.selectedId}/messages`, {
+      const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${s.selectedId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       });
       if (!res.ok) throw new Error('send failed');
-      await fetchChatDetail(state.selectedId, true);
+      await fetchChatDetail(s.selectedId, true);
       await fetchConversations();
       handleMessageAck(tempId);
-      dispatch({ type: 'SET_INPUT', payload: '' });
+      getStore().setInputText('');
     } catch {
-      dispatch({ type: 'SET_FAILED', payload: { tempId, error: 'Failed to send' } });
-      dispatch({ type: 'REMOVE_PENDING', payload: tempId });
+      getStore().setFailed(tempId, 'Failed to send');
+      getStore().removePending(tempId);
     } finally {
-      dispatch({ type: 'SET_SENDING', payload: false });
+      getStore().setSending(false);
     }
-  }, [dispatch, fetchChatDetail, fetchConversations, handleMessageAck, state.selectedId, state.sending, user?.display_name, wsSendMessage]);
+  }, [fetchChatDetail, fetchConversations, handleMessageAck, user?.display_name, wsSendMessage]);
 
   const sendMedia = useCallback(async (file: File) => {
-    if (!state.selectedId || state.sending) return;
-    dispatch({ type: 'SET_SENDING', payload: true });
+    const s = getStore();
+    if (!s.selectedId || s.sending) return;
+    s.setSending(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${state.selectedId}/media`, {
+      const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${s.selectedId}/media`, {
         method: 'POST',
         body: formData,
       });
       if (!res.ok) throw new Error('media send failed');
-      await fetchChatDetail(state.selectedId, true);
+      await fetchChatDetail(s.selectedId, true);
       await fetchConversations();
     } catch {
-      dispatch({ type: 'SET_BACKEND_ONLINE', payload: false });
+      getStore().setBackendOnline(false);
     } finally {
-      dispatch({ type: 'SET_SENDING', payload: false });
+      getStore().setSending(false);
     }
-  }, [dispatch, fetchChatDetail, fetchConversations, state.selectedId, state.sending]);
+  }, [fetchChatDetail, fetchConversations]);
 
   const claimSession = useCallback(async () => {
-    if (!state.selectedId || state.claiming) return;
-    dispatch({ type: 'SET_CLAIMING', payload: true });
+    const s = getStore();
+    if (!s.selectedId || s.claiming) return;
+    s.setClaiming(true);
     try {
       if (wsStatusRef.current === 'connected') {
         wsClaimSession();
       } else {
-        const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${state.selectedId}/claim`, { method: 'POST' });
-        if (res.ok) await fetchChatDetail(state.selectedId, false);
+        const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${s.selectedId}/claim`, { method: 'POST' });
+        if (res.ok) await fetchChatDetail(s.selectedId, false);
       }
     } finally {
-      dispatch({ type: 'SET_CLAIMING', payload: false });
+      getStore().setClaiming(false);
     }
-  }, [dispatch, fetchChatDetail, state.claiming, state.selectedId, wsClaimSession]);
+  }, [fetchChatDetail, wsClaimSession]);
 
   const closeSession = useCallback(async () => {
-    if (!state.selectedId) return;
+    const s = getStore();
+    if (!s.selectedId) return;
     if (wsStatusRef.current === 'connected') {
       wsCloseSession();
       return;
     }
-    const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${state.selectedId}/close`, { method: 'POST' });
-    if (res.ok) await fetchChatDetail(state.selectedId, false);
-  }, [fetchChatDetail, state.selectedId, wsCloseSession]);
+    const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${s.selectedId}/close`, { method: 'POST' });
+    if (res.ok) await fetchChatDetail(s.selectedId, false);
+  }, [fetchChatDetail, wsCloseSession]);
 
   const transferSession = useCallback(async (toOperatorId: number, reason?: string) => {
-    if (!state.selectedId) return;
+    const s = getStore();
+    if (!s.selectedId) return;
     if (wsStatusRef.current === 'connected') {
       wsTransferSession(toOperatorId, reason);
       return;
     }
-  }, [state.selectedId, wsTransferSession]);
+  }, [wsTransferSession]);
 
   const toggleMode = useCallback(async (mode: 'BOT' | 'HUMAN') => {
-    if (!state.selectedId) return;
-    const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${state.selectedId}/mode`, {
+    const s = getStore();
+    if (!s.selectedId) return;
+    const res = await fetch(`${API_BASE}/admin/live-chat/conversations/${s.selectedId}/mode`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode }),
     });
-    if (res.ok) await fetchChatDetail(state.selectedId, false);
-  }, [fetchChatDetail, state.selectedId]);
+    if (res.ok) await fetchChatDetail(s.selectedId, false);
+  }, [fetchChatDetail]);
 
   const loadOlderMessages = useCallback(async () => {
-    if (!state.selectedId || state.isLoadingHistory || !state.hasMoreHistory) return;
+    const s = getStore();
+    if (!s.selectedId || s.isLoadingHistory || !s.hasMoreHistory) return;
     const current = messagesRef.current;
     const oldest = current[0];
     if (!oldest?.id) {
-      dispatch({ type: 'SET_HAS_MORE_HISTORY', payload: false });
+      s.setHasMoreHistory(false);
       return;
     }
-    dispatch({ type: 'SET_LOADING_HISTORY', payload: true });
+    s.setIsLoadingHistory(true);
     try {
-      const page = await fetchMessagesPage(state.selectedId, oldest.id);
-      dispatch({ type: 'PREPEND_MESSAGES', payload: page.messages || [] });
-      dispatch({ type: 'SET_HAS_MORE_HISTORY', payload: page.has_more });
+      const page = await fetchMessagesPage(s.selectedId, oldest.id);
+      getStore().prependMessages(page.messages || []);
+      getStore().setHasMoreHistory(page.has_more);
     } finally {
-      dispatch({ type: 'SET_LOADING_HISTORY', payload: false });
+      getStore().setIsLoadingHistory(false);
     }
-  }, [dispatch, fetchMessagesPage, state.hasMoreHistory, state.isLoadingHistory, state.selectedId]);
+  }, [fetchMessagesPage]);
 
   const selectedConversation = useMemo(() => (
-    state.conversations.find((c) => c.line_user_id === state.selectedId) || null
-  ), [state.conversations, state.selectedId]);
+    conversations.find((c) => c.line_user_id === selectedId) || null
+  ), [conversations, selectedId]);
 
-  const isHumanMode = state.currentChat?.chat_mode === 'HUMAN';
+  const isHumanMode = currentChat?.chat_mode === 'HUMAN';
 
   const formatTime = useCallback((value: string) => {
     const d = new Date(value);
@@ -518,6 +602,35 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
     if (hours < 48) return 'Yesterday';
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }, []);
+
+  // Build state object from Zustand subscriptions for backward compat
+  const state: ChatState = useMemo(() => ({
+    conversations,
+    selectedId,
+    currentChat,
+    messages,
+    loading,
+    backendOnline,
+    filterStatus,
+    searchQuery,
+    inputText,
+    sending,
+    claiming,
+    showCustomerPanel,
+    activeActionMenu,
+    showTransferDialog,
+    showCannedPicker,
+    soundEnabled,
+    pendingMessages,
+    failedMessages,
+    hasMoreHistory,
+    isLoadingHistory,
+  }), [
+    conversations, selectedId, currentChat, messages, loading, backendOnline,
+    filterStatus, searchQuery, inputText, sending, claiming, showCustomerPanel,
+    activeActionMenu, showTransferDialog, showCannedPicker, soundEnabled,
+    pendingMessages, failedMessages, hasMoreHistory, isLoadingHistory,
+  ]);
 
   const value: LiveChatContextValue = {
     state,

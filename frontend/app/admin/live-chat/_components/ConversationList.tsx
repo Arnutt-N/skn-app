@@ -2,12 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Home, Inbox, Search } from 'lucide-react';
+import { Home, Inbox, Search, Users } from 'lucide-react';
 
+import { useLiveChatStore } from '../_store/liveChatStore';
 import { useConversations } from '../_hooks/useConversations';
 import { useLiveChatContext } from '../_context/LiveChatContext';
 import { ConversationItem } from './ConversationItem';
-import { QueueBadge } from './QueueBadge';
 
 interface SearchMessageResult {
   id: number;
@@ -20,23 +20,29 @@ interface SearchMessageResult {
 }
 
 export function ConversationList() {
-  const {
-    state,
-    formatTime,
-    setFilterStatus,
-    setSearchQuery,
-    selectConversation,
-    jumpToMessage,
-    setActiveActionMenu,
-  } = useLiveChatContext();
-  const { filtered, waitingCount, activeCount } = useConversations(state.conversations, state.searchQuery);
-  const selectedIndex = filtered.findIndex((c) => c.line_user_id === state.selectedId);
+  // Read state from Zustand
+  const conversations = useLiveChatStore((s) => s.conversations);
+  const selectedId = useLiveChatStore((s) => s.selectedId);
+  const searchQuery = useLiveChatStore((s) => s.searchQuery);
+  const filterStatus = useLiveChatStore((s) => s.filterStatus);
+  const loading = useLiveChatStore((s) => s.loading);
+  const activeActionMenu = useLiveChatStore((s) => s.activeActionMenu);
+  const setSearchQuery = useLiveChatStore((s) => s.setSearchQuery);
+  const setFilterStatus = useLiveChatStore((s) => s.setFilterStatus);
+  const setActiveActionMenu = useLiveChatStore((s) => s.setActiveActionMenu);
+
+  // API methods from Context
+  const { formatTime, selectConversation, jumpToMessage } = useLiveChatContext();
+
+  const { filtered, waitingCount, activeCount } = useConversations(conversations, searchQuery);
+  const selectedIndex = filtered.findIndex((c) => c.line_user_id === selectedId);
   const selectedConversation = selectedIndex >= 0 ? filtered[selectedIndex] : null;
   const [searchResults, setSearchResults] = React.useState<SearchMessageResult[]>([]);
   const [searching, setSearching] = React.useState(false);
+  const closedCount = conversations.filter((c) => !c.session || c.session.status === 'CLOSED').length;
 
   React.useEffect(() => {
-    const q = state.searchQuery.trim();
+    const q = searchQuery.trim();
     if (!q) {
       setSearchResults([]);
       return;
@@ -53,57 +59,74 @@ export function ConversationList() {
       }
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [state.searchQuery]);
+  }, [searchQuery]);
+
+  const filterButtons = [
+    { key: null, label: 'All', count: conversations.length },
+    { key: 'WAITING', label: 'Waiting', count: waitingCount },
+    { key: 'ACTIVE', label: 'Active', count: activeCount },
+  ] as const;
 
   return (
-    <aside className="w-full md:w-72 bg-gradient-to-b from-[#2B2840] to-[#1E1B33] flex flex-col flex-shrink-0 border-r border-white/5 thai-text">
-      <div className="h-14 px-4 border-b border-white/5 flex items-center gap-3">
+    <aside className="w-full md:w-80 bg-sidebar-bg flex flex-col flex-shrink-0 border-r border-sidebar-border thai-text">
+      {/* Header */}
+      <div className="h-16 px-4 border-b border-sidebar-border flex items-center gap-3">
         <Link
           href="/admin"
-          className="p-2 bg-white/8 hover:bg-primary/30 text-slate-400 hover:text-white rounded-xl transition-all"
+          className="p-2 rounded-xl bg-sidebar-accent text-sidebar-muted hover:text-sidebar-fg transition-colors"
           aria-label="Back to admin dashboard"
         >
           <Home className="w-4 h-4" />
         </Link>
-        <h1 className="flex-1 text-white font-bold text-sm text-center tracking-tight">Live Chat</h1>
+        <div className="flex-1">
+          <h1 className="text-sidebar-fg font-bold text-sm tracking-tight">Conversations</h1>
+          <p className="text-[11px] text-sidebar-muted flex items-center gap-1">
+            <Users className="w-3 h-3" />
+            <span>{activeCount} online</span>
+          </p>
+        </div>
       </div>
 
-      <div className="px-4 py-3 space-y-3">
+      {/* Search + Filter */}
+      <div className="px-3 py-3 space-y-2.5">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sidebar-muted" />
           <input
             type="text"
-            value={state.searchQuery}
+            value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full pl-10 pr-3 py-2.5 bg-white/5 border border-white/10 text-slate-200 rounded-xl text-sm focus-ring focus:border-primary/40 focus:bg-white/8 placeholder:text-slate-500 transition-all thai-no-break"
+            className="w-full pl-10 pr-3 py-2 bg-sidebar-accent border border-sidebar-border text-sidebar-fg rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500/40 placeholder:text-sidebar-muted transition-all thai-no-break"
             aria-label="Search conversations"
           />
         </div>
         <div className="flex gap-1.5">
-          <button
-            className={`flex-1 py-1.5 px-2 text-[11px] font-semibold rounded-lg transition-all focus-ring ${state.filterStatus === null ? 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-sm' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'}`}
-            onClick={() => setFilterStatus(null)}
-          >
-            <span className="flex items-center justify-center gap-1">All <QueueBadge count={state.conversations.length} tone="neutral" /></span>
-          </button>
-          <button
-            className={`flex-1 py-1.5 px-2 text-[11px] font-semibold rounded-lg transition-all focus-ring ${state.filterStatus === 'WAITING' ? 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-sm' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'}`}
-            onClick={() => setFilterStatus('WAITING')}
-          >
-            <span className="flex items-center justify-center gap-1">Waiting <QueueBadge count={waitingCount} tone="waiting" /></span>
-          </button>
-          <button
-            className={`flex-1 py-1.5 px-2 text-[11px] font-semibold rounded-lg transition-all focus-ring ${state.filterStatus === 'ACTIVE' ? 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-sm' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'}`}
-            onClick={() => setFilterStatus('ACTIVE')}
-          >
-            <span className="flex items-center justify-center gap-1">Active <QueueBadge count={activeCount} tone="active" /></span>
-          </button>
+          {filterButtons.map((btn) => (
+            <button
+              key={btn.key ?? 'all'}
+              className={`flex-1 py-1.5 px-2 text-[11px] font-semibold rounded-lg transition-all ${
+                filterStatus === btn.key
+                  ? 'bg-brand-600 text-white shadow-sm'
+                  : 'bg-sidebar-accent text-sidebar-muted hover:text-sidebar-fg'
+              }`}
+              onClick={() => setFilterStatus(btn.key)}
+            >
+              <span className="flex items-center justify-center gap-1">
+                {btn.label}
+                <span className={`min-w-[16px] h-4 px-1 text-[10px] rounded-full inline-flex items-center justify-center ${
+                  filterStatus === btn.key ? 'bg-white/20' : 'bg-sidebar-border'
+                }`}>
+                  {btn.count}
+                </span>
+              </span>
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* Conversation list */}
       <div
-        className="flex-1 overflow-y-auto dark-scrollbar px-2"
+        className="flex-1 overflow-y-auto custom-scrollbar px-2"
         role="listbox"
         aria-label="Conversation list"
         aria-activedescendant={selectedConversation ? `conversation-option-${selectedConversation.line_user_id}` : undefined}
@@ -124,14 +147,15 @@ export function ConversationList() {
           }
         }}
       >
-        {state.searchQuery.trim() && (
+        {/* Search results */}
+        {searchQuery.trim() && (
           <div className="px-1 pt-2 pb-1">
-            <div className="px-2 py-1 text-[10px] tracking-wide text-slate-500 font-semibold">
+            <div className="px-2 py-1 text-[10px] tracking-wide text-sidebar-muted font-semibold uppercase">
               Message Search
             </div>
-            {searching && <div className="px-2 py-2 text-xs text-slate-400">Searching...</div>}
+            {searching && <div className="px-2 py-2 text-xs text-sidebar-muted">Searching...</div>}
             {!searching && searchResults.length === 0 && (
-              <div className="px-2 py-2 text-xs text-slate-500">No matching messages</div>
+              <div className="px-2 py-2 text-xs text-sidebar-muted">No matching messages</div>
             )}
             {!searching && searchResults.length > 0 && (
               <div className="space-y-1 mb-2">
@@ -139,34 +163,36 @@ export function ConversationList() {
                   <button
                     key={result.id}
                     onClick={() => jumpToMessage(result.line_user_id, result.id)}
-                    className="w-full text-left p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                    className="w-full text-left p-2 rounded-lg bg-sidebar-accent hover:bg-sidebar-accent/80 border border-sidebar-border transition-all"
                   >
-                    <div className="text-[11px] text-slate-200 font-medium truncate">
+                    <div className="text-[11px] text-sidebar-fg font-medium truncate">
                       {result.display_name || result.line_user_id}
                     </div>
-                    <div className="text-[11px] text-slate-400 truncate">{result.content}</div>
+                    <div className="text-[11px] text-sidebar-muted truncate">{result.content}</div>
                   </button>
                 ))}
               </div>
             )}
           </div>
         )}
-        {state.loading && state.conversations.length === 0 ? (
+
+        {/* Loading skeletons */}
+        {loading && conversations.length === 0 ? (
           <div className="space-y-2 p-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-3 p-3 bg-white/5 rounded-xl animate-pulse">
-                <div className="w-11 h-11 bg-slate-700/50 rounded-full" />
+              <div key={i} className="flex gap-3 p-3 bg-sidebar-accent rounded-xl animate-pulse">
+                <div className="w-10 h-10 bg-sidebar-border rounded-full" />
                 <div className="flex-1 space-y-2 py-1">
-                  <div className="h-3 bg-slate-700/50 rounded w-2/3" />
-                  <div className="h-2.5 bg-slate-700/30 rounded w-full" />
+                  <div className="h-3 bg-sidebar-border rounded w-2/3" />
+                  <div className="h-2.5 bg-sidebar-border/50 rounded w-full" />
                 </div>
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6 opacity-60">
-            <Inbox className="w-10 h-10 text-slate-500 mb-3" />
-            <span className="text-slate-400 text-sm">No conversations</span>
+            <Inbox className="w-10 h-10 text-sidebar-muted mb-3" />
+            <span className="text-sidebar-muted text-sm">No conversations</span>
           </div>
         ) : (
           <div className="space-y-1 py-2">
@@ -175,20 +201,33 @@ export function ConversationList() {
                 key={conversation.line_user_id}
                 optionId={`conversation-option-${conversation.line_user_id}`}
                 conversation={conversation}
-                selected={state.selectedId === conversation.line_user_id}
+                selected={selectedId === conversation.line_user_id}
                 formattedTime={conversation.last_message?.created_at ? formatTime(conversation.last_message.created_at) : undefined}
                 onClick={() => {
                   selectConversation(conversation.line_user_id);
                   setActiveActionMenu(null);
                 }}
-                onMenuClick={() => setActiveActionMenu(state.activeActionMenu === conversation.line_user_id ? null : conversation.line_user_id)}
+                onMenuClick={() => setActiveActionMenu(activeActionMenu === conversation.line_user_id ? null : conversation.line_user_id)}
               />
             ))}
           </div>
         )}
       </div>
-      <div className="px-4 py-2.5 border-t border-white/5 bg-black/10 text-xs text-slate-500 flex justify-center">
-        <span>{activeCount} active • {waitingCount} waiting</span>
+
+      {/* Summary bar */}
+      <div className="px-4 py-2.5 border-t border-sidebar-border bg-black/20 text-[11px] text-sidebar-muted flex items-center justify-center gap-4">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-online" />
+          {activeCount} active
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-away" />
+          {waitingCount} waiting
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-offline" />
+          {closedCount} offline
+        </span>
       </div>
     </aside>
   );

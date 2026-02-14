@@ -3,15 +3,24 @@
 import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
+import { useLiveChatStore } from '../_store/liveChatStore';
 import { useLiveChatContext } from '../_context/LiveChatContext';
 import { ChatArea } from './ChatArea';
 import { ConversationList } from './ConversationList';
 import { CustomerPanel } from './CustomerPanel';
+import { NotificationToast } from './NotificationToast';
 import { TransferDialog } from './TransferDialog';
 
 export function LiveChatShell() {
+  // Read state from Zustand
+  const selectedId = useLiveChatStore((s) => s.selectedId);
+  const currentChat = useLiveChatStore((s) => s.currentChat);
+  const showCustomerPanel = useLiveChatStore((s) => s.showCustomerPanel);
+  const showTransferDialog = useLiveChatStore((s) => s.showTransferDialog);
+  const backendOnline = useLiveChatStore((s) => s.backendOnline);
+
+  // API methods from Context
   const {
-    state,
     isMobileView,
     fetchConversations,
     setShowTransferDialog,
@@ -21,7 +30,11 @@ export function LiveChatShell() {
 
   return (
     <>
-      {!state.backendOnline && (
+      {/* Toast notifications */}
+      <NotificationToast />
+
+      {/* Connection lost banner */}
+      {!backendOnline && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60]">
           <div className="bg-gradient-to-br from-danger to-red-600 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 text-sm font-medium thai-text">
             <AlertCircle className="w-4 h-4" />
@@ -32,24 +45,25 @@ export function LiveChatShell() {
           </div>
         </div>
       )}
-      <div className="flex h-screen w-full bg-slate-100 overflow-hidden font-sans">
-        {(!isMobileView || !state.selectedId) && <ConversationList />}
-        {(!isMobileView || state.selectedId) && <ChatArea />}
-        {state.selectedId && state.showCustomerPanel && (
+
+      <div className="flex h-screen w-full bg-bg overflow-hidden font-sans">
+        {(!isMobileView || !selectedId) && <ConversationList />}
+        {(!isMobileView || selectedId) && <ChatArea />}
+        {selectedId && showCustomerPanel && (
           <div
-            className={isMobileView ? 'fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm' : ''}
+            className={isMobileView ? 'fixed inset-0 z-40 bg-black/40 backdrop-blur-sm' : ''}
             onClick={isMobileView ? () => setShowCustomerPanel(false) : undefined}
           >
             <div
               className={isMobileView ? 'absolute right-0 top-0 h-full w-[88%] max-w-sm' : 'h-full'}
               onClick={isMobileView ? (e) => e.stopPropagation() : undefined}
             >
-              <CustomerPanel currentChat={state.currentChat} onClose={() => setShowCustomerPanel(false)} />
+              <CustomerPanel currentChat={currentChat} onClose={() => setShowCustomerPanel(false)} />
             </div>
           </div>
         )}
         <TransferDialog
-          open={state.showTransferDialog}
+          open={showTransferDialog}
           onClose={() => setShowTransferDialog(false)}
           onTransfer={transferSession}
         />
