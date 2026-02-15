@@ -6,6 +6,13 @@ This document merges:
 
 It is now the single source of truth for new frontend work.
 
+## Latest Update
+- Updated: 2026-02-14
+- Scope:
+  - Sidebar nav active/hover width consistency fix (full-row hit area, no text-length jitter)
+  - Minimal scrollbar system refresh (arrow-free, theme-aligned, smoother thumb behavior)
+  - Global scrollbar button suppression (remove top/bottom arrow buttons app-wide)
+
 ## 1) Core Direction
 - Visual model: Vuexy-like enterprise UI (dark sidebar, light content, card-based surfaces)
 - Implementation model: token-first Tailwind + reusable React primitives
@@ -30,6 +37,17 @@ It is now the single source of truth for new frontend work.
 - Avoid uppercase transformations for Thai content
 - Use `.thai-text` or `.thai-no-break` for long Thai text blocks and labels
 
+### Typography Recipes (Applied)
+
+| Context | Recipe |
+|---|---|
+| Table metadata | `text-[10px] font-medium text-text-secondary` |
+| Badge label | `text-[10px] font-semibold uppercase tracking-wide` |
+| Chat timestamp | `text-[10px] text-text-tertiary` |
+| Panel section title | `text-xs font-semibold uppercase tracking-wider text-text-secondary` |
+| KPI value | `text-2xl font-bold text-text-primary` |
+| KPI label | `text-xs text-text-secondary` |
+
 ## 4) Component Standards
 - Base primitives from `frontend/components/ui`
 - Primary action hierarchy:
@@ -48,6 +66,9 @@ It is now the single source of truth for new frontend work.
   - Dark sidebar navigation
   - Glass-like top header
   - Main content as rounded card panels
+- Sidebar interaction rules:
+  - Active and hover state must occupy full row width, independent of label length
+  - Tooltip wrapping is allowed only in collapsed sidebar mode; expanded mode uses direct full-width links
 - Panel rhythm:
   - 16-24px spacing between major blocks
   - Rounded corners (`xl`/`2xl`) for cards and containers
@@ -77,6 +98,14 @@ Visual references come from `examples/templates`:
 - Adopted Thai readability requirements from research spec
 - Removed forced uppercase in badge primitive
 - Added z-index scale + Thai text utility classes
+- Standardized sidebar menu row behavior for stable active/hover visuals
+- Added theme-aware scrollbar utilities:
+  - `scrollbar-sidebar` for dark sidebar surfaces
+  - `dark-scrollbar` for dark panels
+  - `chat-scrollbar` for chat surfaces
+  - `scrollbar-thin` for light neutral areas
+  - `no-scrollbar` for intentionally hidden scrollbars
+- Added global base rule in `globals.css` to hide `::-webkit-scrollbar-button` variants across the app
 
 ## 9) Next Expansion Targets
 - Table pattern package (header, row actions, compact/comfortable density)
