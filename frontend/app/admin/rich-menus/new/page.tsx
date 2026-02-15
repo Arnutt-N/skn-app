@@ -606,7 +606,7 @@ export default function NewRichMenuPage() {
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-8 space-y-12 bg-slate-100/30">
+                        <div className="flex-1 overflow-y-auto scrollbar-thin p-8 space-y-12 bg-slate-100/30">
                             {PRESET_TEMPLATES.map((group) => (
                                 <div key={group.category} className="space-y-6">
                                     <div className="flex items-baseline gap-3">

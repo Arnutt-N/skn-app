@@ -68,7 +68,7 @@ export default function AnalyticsPage() {
     }, [fetchData]);
 
     return (
-        <div className="h-full overflow-y-auto p-6 bg-[#f8f7fa]">
+        <div className="h-full overflow-y-auto scrollbar-thin p-6 bg-[#f8f7fa]">
         <div className="max-w-7xl mx-auto space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>

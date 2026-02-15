@@ -4,6 +4,8 @@ Standard references:
 - `frontend/docs/design-system-unified.md`
 - `frontend/app/globals.css`
 
+Last updated: 2026-02-14
+
 ## Pages reviewed
 
 ### `/admin` (`frontend/app/admin/page.tsx`)
@@ -11,6 +13,12 @@ Standard references:
 - [x] Header container aligned to shared panel style (`ds-panel`, `ds-panel-body`)
 - [x] Title marked with `thai-no-break`
 - [ ] Full component/token audit for all nested dashboard widgets
+
+### `/admin` shell sidebar (`frontend/app/admin/layout.tsx`)
+- [x] Active menu background uses full-row width (not text-content width)
+- [x] Hover state uses full-row width consistently across all menu labels
+- [x] Tooltip is applied only in collapsed mode to avoid expanded-layout width shrink
+- [x] Sidebar scroll area uses `scrollbar-sidebar` (dark minimal style, no arrow buttons)
 
 ### `/admin/requests` (`frontend/app/admin/requests/page.tsx`)
 - [x] Root wrapper uses `thai-text`
@@ -45,6 +53,9 @@ Standard references:
 - [x] Thai utility classes available (`.thai-text`, `.thai-no-break`)
 - [x] Z-index token scale defined in globals
 - [x] Base body typography aligned to Thai readability baseline
+- [x] Scrollbar utility standards defined in globals:
+  - `scrollbar-sidebar`, `dark-scrollbar`, `chat-scrollbar`, `scrollbar-thin`, `no-scrollbar`
+- [x] Global scrollbar arrow buttons removed in base layer (`::-webkit-scrollbar-button` and related variants)
 
 ## Next enforcement targets
 1. Live chat shell internals (`frontend/app/admin/live-chat/_components/*`)
@@ -71,3 +82,7 @@ Standard references:
   - Added Thai readability wrappers (`thai-text`, `thai-no-break`)
   - Removed forced uppercase usage in table header styles
   - Added `focus-ring` to form and row action controls
+- [x] Scrollbar alignment updates
+  - `frontend/app/admin/live-chat/analytics/page.tsx` uses `scrollbar-thin`
+  - `frontend/components/admin/CannedResponsePicker.tsx` uses `scrollbar-thin`
+  - `frontend/app/admin/rich-menus/new/page.tsx` uses `scrollbar-thin`

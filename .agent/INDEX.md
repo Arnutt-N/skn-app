@@ -1,6 +1,6 @@
 # Skills & Workflows Index
 
-> **Last Updated:** 2026-01-26
+> **Last Updated:** 2026-02-14 (Added append-only TASK_LOG.md)
 > **Purpose:** Quick navigation to all available skills and workflows for SknApp development
 
 ---
@@ -45,8 +45,9 @@
 
 | Skill | File | When to Use |
 |-------|------|-------------|
-| **Agent Collaboration Standard** | `agent_collaboration_standard/SKILL.md` | Handover format, session lifecycle, context persistence |
-| **Cross-Platform Collaboration** | `cross_platform_collaboration/SKILL.md` | **NEW:** Handoff between ANY AI platforms (Claude, Antigravity, Open Code, Aider, Copilot, Tabby, Continue, Codeium, Codium, Sweep, CodeX, Qwen, Gemini, +Custom) |
+| **Cross-Platform Collaboration** | `cross_platform_collaboration/SKILL.md` | Handoff between ANY AI platforms (Claude, Antigravity, Kimi, CodeX, Qwen, Gemini, +Custom) |
+| **Agent Handover Skill** | `agent_handover/SKILL.md` | Automated handoff with templates and checkpoints |
+| **Agent Pickup Skill** | `agent_pickup/SKILL.md` | Automated pickup with validation steps |
 
 ---
 
@@ -56,11 +57,13 @@
 
 | Workflow | File | Purpose |
 |----------|------|---------|
-| **Pick-Up** | `pick-up.md` | Start a session and resume work from previous agent |
-| **Handover** | `agent-handover.md` | End session and prepare context for next agent |
-| **Session Summary** | `session-summary.md` | Create work summary in Thai for continuity |
-| **Universal Handoff** | `handoff-to-any.md` | **NEW:** Handoff from any platform to any platform |
-| **Universal Pickup** | `pickup-from-any.md` | **NEW:** Pickup work from any platform |
+| **🚀 Start Here** | `start-here.md` | **FIRST** - Universal entry point for ANY new agent |
+| **📋 Task Log** | `../state/TASK_LOG.md` | **APPEND-ONLY** history of all tasks from all agents |
+| **📑 Session Index** | `../state/SESSION_INDEX.md` | **Cross-platform** index of ALL session summaries |
+| **📝 Task Summary** | `task-summary.md` | Template for documenting completed work (use when finishing) |
+| **Universal Pickup** | `pickup-from-any.md` | Start session and resume work from ANY previous agent/platform |
+| **Universal Handoff** | `handoff-to-any.md` | End session and prepare context for ANY next agent/platform |
+| **Session Summary** | `session-summary.md` | Create work summary (Thai + English) for continuity |
 
 ### Development Operations
 
@@ -99,6 +102,7 @@
 
 | Goal | Use This Skill/Workflow |
 |------|------------------------|
+| **Start as new agent** | `workflows/start-here.md` |
 | Add a new API endpoint | `api_development_standard/SKILL.md` |
 | Create a database migration | `db-migration.md` |
 | Set up LINE webhook | `line_integration/SKILL.md` |
@@ -106,10 +110,8 @@
 | Test LINE webhook | `line-test.md` |
 | Deploy to production | `deploy-application.md` |
 | Run the app locally | `run-app.md` |
-| Hand off work to another agent | `agent-handover.md` |
-| Hand off to different platform (Claude/Antigravity/Open) | `handoff-to-any.md` |
-| Resume work from previous session | `pick-up.md` |
-| Pickup from different platform | `pickup-from-any.md` |
+| Hand off work to any agent/platform | `handoff-to-any.md` |
+| Resume work from any agent/platform | `pickup-from-any.md` |
 | Fix security vulnerability | `security_checklist/SKILL.md` |
 | Add authentication | `auth_rbac_security/SKILL.md` |
 | Setup monitoring/logging | `monitoring_logging/SKILL.md` |
@@ -178,11 +180,13 @@
 ├── state/                   # Cross-platform collaboration state
 │   ├── README.md            # System documentation
 │   ├── current-session.json # Current session state
-│   ├── task.md              # Current task
+│   ├── task.md              # Current task details
+│   ├── **TASK_LOG.md**      # **APPEND-ONLY: All tasks from all agents**
+│   ├── **SESSION_INDEX.md** # **Cross-platform session summary index**
 │   └── checkpoints/         # Handoff checkpoints
 │       ├── handover-*.json
 │       └── session-summary-*.md
-├── skills/                  # Knowledge repositories (16 skills)
+├── skills/                  # Knowledge repositories (35 skills)
 │   ├── fastapi_enterprise/
 │   ├── nextjs_enterprise/
 │   ├── line_integration/
@@ -200,7 +204,7 @@
 │   ├── line_messaging_advanced/
 │   ├── monitoring_logging/
 │   └── security_checklist/
-└── workflows/               # Step-by-step procedures (14 workflows)
+└── workflows/               # Step-by-step procedures (13 workflows)
     ├── pick-up.md
     ├── agent-handover.md
     ├── session-summary.md
@@ -219,12 +223,27 @@
 
 ---
 
-## Quick Start for New Agents
+## 🆕 NEW AGENT? START HERE
 
-**New to this project? Start here:**
-1. **Read**: `.agent/AGENT_PROMPT_TEMPLATE.md` - Universal template for session summary & handoff
-2. **Check**: `.agent/PROJECT_STATUS.md` - Current project status (single source of truth)
-3. **Use**: `/agent_pickup` skill or `.agent/workflows/pickup-from-any.md` - Resume from previous agent
+**Single command to get started:**
+```bash
+cat ../START_HERE.md
+```
+
+**Then follow this workflow:**
+→ `workflows/start-here.md` - Complete step-by-step entry guide
+
+**Quick reference while working:**
+→ `QUICK_START_CARD.md` - Keep this visible
+
+**📚 Additional Resources:**
+- **Universal Guide**: `../AGENT_PROMPT_TEMPLATE.md`
+- **Project Status**: `PROJECT_STATUS.md`
+- **Task History**: `state/TASK_LOG.md` (**Append-only - read full history**)
+- **Session Index**: `state/SESSION_INDEX.md` (**Find summaries from ALL platforms**)
+- **Pickup Work**: `workflows/pickup-from-any.md`
+- **Handoff Work**: `workflows/handoff-to-any.md`
+- **Collaboration**: `skills/cross_platform_collaboration/SKILL.md`
 
 ---
 
@@ -241,5 +260,5 @@
 
 - All skills follow the SKILL.md format with YAML frontmatter
 - All workflows have `description` field in their frontmatter
-- Agent collaboration workflows should be used at the start/end of each session
+- Universal collaboration workflows (`handoff-to-any.md`, `pickup-from-any.md`) work for ALL platforms
 - Development workflows can be invoked manually or as needed

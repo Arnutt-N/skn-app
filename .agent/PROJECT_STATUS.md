@@ -1,17 +1,27 @@
 # Project Status: SknApp
 
-> **Last Updated:** 2026-02-13 00:30 by Claude Code (27-step plan audit: 100% COMPLETE)
+> **Last Updated:** 2026-02-15 18:48 by CodeX (Handoff workflow completion: commit split, tag, publish, state sync)
 
 ## Thai Summary
-แผน 27 ขั้นตอน **เสร็จสมบูรณ์ 100%** — ทุกฟีเจอร์ถูก implement แล้ว
-- ขั้นตอนถัดไป: frontend lint/build gate, backend test gate, merge to main
+เนเธเธ 27 เธเธฑเนเธเธ•เธญเธ **เน€เธชเธฃเนเธเธชเธกเธเธนเธฃเธ“เน 100%** โ€” เธ—เธธเธเธเธตเน€เธเธญเธฃเนเธ–เธนเธ implement เนเธฅเนเธง
+- เธเธฑเนเธเธ•เธญเธเธ–เธฑเธ”เนเธ: frontend lint/build gate, backend test gate, merge to main
+
+## ๐• NEW AGENT? START HERE
+1. **Entry Point:** `../START_HERE.md` - Friendly welcome and quick links
+2. **Follow:** `.agent/workflows/start-here.md` - Step-by-step guide
+3. **Keep Handy:** `.agent/QUICK_START_CARD.md` - Quick reference
 
 ## Agent Collaboration Quick Reference
-- Prompt template: `.agent/AGENT_PROMPT_TEMPLATE.md`
-- Pickup workflow: `.agent/workflows/pickup-from-any.md`
-- Handoff workflow: `.agent/workflows/handoff-to-any.md`
-- Current machine state: `.agent/state/current-session.json`
-- Current task state: `.agent/state/task.md`
+- **๐€ Start Here:** `.agent/workflows/start-here.md` - Universal entry workflow
+- **Universal Prompt:** `AGENT_PROMPT_TEMPLATE.md` (project root)
+- **Quick Card:** `.agent/QUICK_START_CARD.md`
+- **Pickup Workflow:** `.agent/workflows/pickup-from-any.md`
+- **Handoff Workflow:** `.agent/workflows/handoff-to-any.md`
+- **Collaboration Standard:** `.agent/skills/cross_platform_collaboration/SKILL.md`
+- **Current Session:** `.agent/state/current-session.json`
+- **Current Task:** `.agent/state/task.md`
+- **Task History:** `.agent/state/TASK_LOG.md` (**APPEND-ONLY - all tasks from all agents**)
+- **Session Index:** `.agent/state/SESSION_INDEX.md` (**Cross-platform summary index**)
 
 ## Technical Environment (Critical)
 - OS: Windows host + WSL2 required
@@ -38,13 +48,13 @@
 - [x] 1.10 FCR O(n) optimization
 
 ### Phase 6: Sidebar & Navigation (Status: COMPLETE)
-- [x] 6.1 Center logo
+- [x] 6.1 Center logo (refined: logo left-pinned, title centered)
 - [x] 6.2 Scrollbar thin styling
-- [x] 6.3 Menu width consistency
+- [x] 6.3 Menu width consistency (fixed: Tooltip inline-flex override via wrapper div)
 
 ### Phase 7: Live Chat Refactoring (Status: PLANNED)
 - Audit completed: 2026-02-12 22:00
-- Goal: `slate-*` → `gray-*`, dark mode support
+- Goal: `slate-*` โ’ `gray-*`, dark mode support
 
 ### Phase 2: Core UX (7/7 done)
 - [x] 2.1 design system foundations
@@ -87,14 +97,37 @@
 - A handoff is **invalid** unless all items below are updated in the same session:
 - `.agent/PROJECT_STATUS.md`
 - `.agent/state/current-session.json`
-- `.agent/state/task.md`
+- **`.agent/state/TASK_LOG.md`** ← **APPEND your new task entry, never overwrite**
 - `.agent/state/checkpoints/handover-[platform]-[YYYYMMDD-HHMM].json`
 - `project-log-md/[platform]/session-summary-[YYYYMMDD-HHMM].md`
+- **`.agent/state/SESSION_INDEX.md`** ← **Update with your session**
+
+### Task Logging Rule (NEW)
+- **TASK_LOG.md is APPEND-ONLY** - Never delete or overwrite existing entries
+- Read existing entries → Find last task number → Prepend new entry with next number
+- This ensures complete history from all agents is preserved
+
+### Cross-Platform Reading Rule (NEW)
+- **MUST read summaries from ALL platforms**, not just your own
+- Use `.agent/state/SESSION_INDEX.md` to find recent summaries
+- Read at least 3 latest summaries from ANY platforms before starting
+- Work is distributed: Kimi does X, Claude does Y, Antigravity does Z
+- Reference summaries you read in your task log entry
 
 ## Latest Pickup Status
-- [2026-02-13] Full codebase audit: all 27 steps verified as implemented.
+- [2026-02-13] All 321 files committed and pushed to `origin/fix/live-chat-redesign-issues`.
 
 ## Recent Completions
+- [2026-02-15 18:48] Completed full handoff workflow after release publish: branch/tag pushed (`fix/live-chat-redesign-issues`, `v1.5.0`), state artifacts synchronized, cross-platform logs/index updated (CodeX)
+- [2026-02-15 21:00] Merged 7 agent comparison reports + created research plan + handed off to CodeX for parallel execution (Claude Code)
+- [2026-02-15 18:00] Executed Live Chat UI Migration: Zustand state management + full component restyle, 9 phases, tagged v1.4.0 (Claude Code)
+- [2026-02-14 23:00] Created Live Chat UI Migration Plan: comprehensive 5-phase plan to adapt premium UI from examples/admin-chat-system (Open Code)
+- [2026-02-14 12:51] UI polish: sidebar full-width active state, global scrollbar arrow removal, sidebar scrollbar theme tuning, dashboard KPI alignment, design-system docs sync (CodeX)
+- [2026-02-14 04:45] Cross-platform session system: SESSION_INDEX.md for finding ALL agent summaries from ALL platforms + updated all handoff/pickup workflows (Kimi Code)
+- [2026-02-14 04:00] Created universal agent onboarding system: START_HERE.md, AGENT_PROMPT_TEMPLATE.md, start-here.md workflow, QUICK_START_CARD.md (Kimi Code)
+- [2026-02-13 20:18] Executed `.agent/workflows/agent-handover.md` and generated CodeX handover note (CodeX)
+- [2026-02-13 22:00] Fix: Codex CLI dependency error + Open Code "invalid_type" version mismatch (Antigravity)
+- [2026-02-13 03:00] Sidebar menu width fix + logo alignment + commit all 321 files + push to origin (Claude Code)
 - [2026-02-13 00:30] Full 27-step audit: ALL DONE (100%) - reconciled stale task tracking (Claude Code)
 - [2026-02-12 22:20] Sidebar Refinement + Live Chat Audit (Antigravity)
 - [2026-02-11 22:30] Sidebar active width fix + Thai readability audit (Reports, Kanban, Settings) (Antigravity)
@@ -113,3 +146,4 @@
 - [ ] Automated testing pipeline
 - [ ] Production deployment setup
 - [ ] User documentation
+

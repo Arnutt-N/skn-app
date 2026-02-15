@@ -62,44 +62,46 @@ export default function StatsCard({
   const colors = colorMap[color];
 
   const Content = (
-    <div className="flex items-start justify-between">
-      <div className="flex items-center gap-4">
-        <div
-          className={cn(
-            'w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0',
-            'transition-all duration-300',
-            'group-hover:scale-110 group-hover:shadow-lg',
-            colors.iconBg,
-            colors.text,
-            colors.glow
-          )}
-        >
-          {icon}
-        </div>
+    <div className="grid grid-cols-[auto_1fr] items-start gap-4 h-full">
+      <div
+        className={cn(
+          'w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0',
+          'transition-all duration-300',
+          'group-hover:scale-110 group-hover:shadow-lg',
+          colors.iconBg,
+          colors.text,
+          colors.glow
+        )}
+      >
+        {icon}
+      </div>
 
-        <div>
-          <p className="text-gray-500 text-[11px] font-semibold uppercase tracking-wider dark:text-gray-400">
-            {title}
-          </p>
-          <p className="text-2xl font-bold text-gray-900 mt-0.5 tracking-tight dark:text-gray-100">
-            {value}
-          </p>
+      <div className="min-w-0 flex flex-col justify-start">
+        <p className="text-gray-500 text-[11px] font-semibold uppercase tracking-wider dark:text-gray-400">
+          {title}
+        </p>
+        <p className="text-2xl font-bold text-gray-900 mt-0.5 tracking-tight dark:text-gray-100">
+          {value}
+        </p>
 
+        <div className="mt-1 min-h-[18px]">
           {description && (
-            <p className="text-gray-400 text-xs mt-0.5 dark:text-gray-500">{description}</p>
+            <p className="text-gray-400 text-xs dark:text-gray-500">{description}</p>
           )}
 
           {trend && (
-            <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center gap-1">
               {trend.isPositive ? (
                 <ArrowUpRight className="w-3.5 h-3.5 text-green-500" />
               ) : (
                 <ArrowDownRight className="w-3.5 h-3.5 text-red-500" />
               )}
-              <span className={cn(
-                'text-xs font-medium',
-                trend.isPositive ? 'text-green-500' : 'text-red-500'
-              )}>
+              <span
+                className={cn(
+                  'text-xs font-medium',
+                  trend.isPositive ? 'text-green-500' : 'text-red-500'
+                )}
+              >
                 {trend.value}%
               </span>
               <span className="text-gray-400 text-xs dark:text-gray-500">vs last month</span>

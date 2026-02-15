@@ -154,7 +154,7 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
       </div>
 
       <div
-        className="overflow-y-auto flex-1 p-1"
+        className="overflow-y-auto flex-1 p-1 scrollbar-thin"
         role="listbox"
         aria-label="Canned response options"
         aria-activedescendant={activeOptionId}

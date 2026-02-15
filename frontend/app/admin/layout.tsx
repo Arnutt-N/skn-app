@@ -192,7 +192,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 scrollbar-thin">
+            <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 scrollbar-sidebar">
               {menuGroups.map((group) => (
                 <div key={group.title}>
                   {!isSidebarCollapsed && (
@@ -203,31 +203,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <ul className="space-y-1">
                     {group.items.map((item) => {
                       const isActive = activeItem ? item.href === activeItem.href : pathname === item.href;
+                      const navLink = (
+                        <Link
+                          href={item.href}
+                          target={item.external || item.openInNewTab ? '_blank' : undefined}
+                          className={cn(
+                            'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 group min-h-[40px]',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50',
+                            isActive
+                              ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
+                              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                          )}
+                          aria-current={isActive ? 'page' : undefined}
+                        >
+                          <item.icon
+                            className={cn(
+                              'flex-shrink-0 transition-colors',
+                              isSidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-5 h-5'
+                            )}
+                            aria-hidden="true"
+                          />
+                          {!isSidebarCollapsed && <span className="font-medium text-sm">{item.name}</span>}
+                        </Link>
+                      );
+
                       return (
                         <li key={item.name}>
                           <div className="w-full">
-                            <Tooltip content={isSidebarCollapsed ? item.name : ''} side="right">
-                              <Link
-                                href={item.href}
-                                target={item.external || item.openInNewTab ? '_blank' : undefined}
-                                className={cn(
-                                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group min-h-[40px]',
-                                  isActive
-                                    ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
-                                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                                )}
-                                aria-current={isActive ? 'page' : undefined}
-                              >
-                                <item.icon
-                                  className={cn(
-                                    'flex-shrink-0 transition-colors',
-                                    isSidebarCollapsed ? 'w-5 h-5 mx-auto' : 'w-5 h-5'
-                                  )}
-                                  aria-hidden="true"
-                                />
-                                {!isSidebarCollapsed && <span className="font-medium text-sm">{item.name}</span>}
-                              </Link>
-                            </Tooltip>
+                            {isSidebarCollapsed ? (
+                              <Tooltip content={item.name} side="right">
+                                {navLink}
+                              </Tooltip>
+                            ) : (
+                              navLink
+                            )}
                           </div>
                         </li>
                       );

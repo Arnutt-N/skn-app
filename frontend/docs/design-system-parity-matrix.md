@@ -12,16 +12,16 @@ Source baseline: `research/common/ui-design-system-comparison-merged.md`
 | Badge | `frontend/components/ui/Badge.tsx` | Adopted (existing) | Keep current 7-variant implementation |
 | Toast | `frontend/components/ui/Toast.tsx` | Adopted (existing) | Custom Zustand architecture retained |
 | Dialog / AlertDialog | `frontend/components/ui/Modal.tsx`, `frontend/components/ui/ModalAlert.tsx` | Adopted (equivalent) | Keep current API |
-| Table | `frontend/components/ui/Table.tsx` | Adopted (new) | Wave migration add |
-| Pagination | `frontend/components/ui/Pagination.tsx` | Adopted (new) | Wave migration add |
-| Textarea | `frontend/components/ui/Textarea.tsx` | Adopted (new) | Wave migration add |
-| Popover | `frontend/components/ui/Popover.tsx` | Adopted (new) | Wave migration add |
-| Form (RHF helpers) | `frontend/components/ui/Form.tsx` | Adopted (new) | Wave migration add |
-| Accordion | `frontend/components/ui/Accordion.tsx` | Adopted (new) | Wave migration add |
-| Calendar | `frontend/components/ui/Calendar.tsx` | Adopted (new) | Wave migration add |
-| Sheet | `frontend/components/ui/Sheet.tsx` | Adopted (new) | Wave migration add |
-| Chart wrappers | `frontend/components/ui/Chart.tsx` | Adopted (new) | Wave migration add |
-| Command palette | `frontend/components/ui/Command.tsx` | Adopted (new) | Wave migration add |
+| Table | `frontend/components/ui/Table.tsx` | Available (unused) | Available, not yet imported by any page |
+| Pagination | `frontend/components/ui/Pagination.tsx` | Available (unused) | Available, not yet imported by any page |
+| Textarea | `frontend/components/ui/Textarea.tsx` | Available (unused) | Available, not yet imported by any page |
+| Popover | `frontend/components/ui/Popover.tsx` | Available (unused) | Available, not yet imported by any page |
+| Form (RHF helpers) | `frontend/components/ui/Form.tsx` | Available (unused) | Available, not yet imported by any page |
+| Accordion | `frontend/components/ui/Accordion.tsx` | Available (unused) | Available, not yet imported by any page |
+| Calendar | `frontend/components/ui/Calendar.tsx` | Available (unused) | Available, not yet imported by any page |
+| Sheet | `frontend/components/ui/Sheet.tsx` | Available (unused) | Available, not yet imported by any page |
+| Chart wrappers | `frontend/components/ui/Chart.tsx` | Available (unused) | Available, not yet imported by any page |
+| Command palette | `frontend/components/ui/Command.tsx` | Available (unused) | Available, not yet imported by any page |
 | Sidebar pattern | `frontend/app/admin/layout.tsx` | Adopted (custom) | Inline architecture retained |
 
 ## 2. Token Parity
@@ -33,9 +33,9 @@ Source baseline: `research/common/ui-design-system-comparison-merged.md`
 | `popover` / `popover-foreground` | `surface` / `text-text-primary` | Adopted (mapped) |
 | `input` | `border-border-default` | Adopted (mapped) |
 | `ring` | `brand-500` | Adopted (mapped) |
-| `chart-1..5` | `--chart-1..5`, `--color-chart-1..5` | Adopted (new) |
-| `accent` | `--color-accent` family | Adopted (new) |
-| `sidebar-primary-fg` | `--sidebar-primary-fg`, `--color-sidebar-primary-fg` | Adopted (new) |
+| `chart-1..5` | `--chart-1..5`, `--color-chart-1..5` | Available (unused) |
+| `accent` | `--color-accent` family | Available (unused) |
+| `sidebar-primary-fg` | `--sidebar-primary-fg`, `--color-sidebar-primary-fg` | Available (unused) |
 
 ## 3. Live Chat Pattern Parity
 

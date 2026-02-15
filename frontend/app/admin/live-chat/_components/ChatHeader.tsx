@@ -6,10 +6,8 @@ import {
   Bot,
   ChevronLeft,
   ChevronRight,
-  Phone,
   Star,
   User,
-  Video,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import type { CurrentChat } from '../_types';
@@ -91,21 +89,6 @@ export function ChatHeader({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="mr-2 hidden items-center gap-1 sm:flex">
-            <button
-              className="rounded-full p-2 text-text-tertiary transition-colors hover:bg-gray-50"
-              title="Voice Call (Coming Soon)"
-            >
-              <Phone className="h-4 w-4" />
-            </button>
-            <button
-              className="rounded-full p-2 text-text-tertiary transition-colors hover:bg-gray-50"
-              title="Video Call (Coming Soon)"
-            >
-              <Video className="h-4 w-4" />
-            </button>
-          </div>
-
           <button
             onClick={() => onToggleMode(isBot ? 'HUMAN' : 'BOT')}
             className={`ring-1 ring-inset hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all md:inline-flex ${

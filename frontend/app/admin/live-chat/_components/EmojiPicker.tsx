@@ -1,28 +1,27 @@
-'use client'
+'use client';
 
-const emojiList = [
-  "😀","😂","😍","🥰","😎","🤔","👍","👎","❤️","🔥",
-  "🎉","✨","💯","🙏","👏","🤝","💪","😊","😢","😮",
-  "🚀","⭐","💡","📌","✅","❌","⏰","📎","🎯","💬",
-]
+import React from 'react';
 
 interface EmojiPickerProps {
-  onSelect: (emoji: string) => void
+  onSelect: (emoji: string) => void;
 }
+
+const COMMON_EMOJIS = ['😊', '😂', '❤️', '👍', '😭', '🙏', '🔥', '🎉', '🤔', '👀', '✨', '🥺'];
 
 export function EmojiPicker({ onSelect }: EmojiPickerProps) {
   return (
-    <div className="animate-scale-in mx-3 mt-2 grid max-h-36 grid-cols-10 gap-1 overflow-y-auto rounded-lg border border-border-default bg-surface p-2">
-      {emojiList.map((emoji, i) => (
-        <button
-          key={i}
-          type="button"
-          onClick={() => onSelect(emoji)}
-          className="flex h-8 w-8 items-center justify-center rounded-md text-lg transition-transform hover:scale-125 hover:bg-gray-100"
-        >
-          {emoji}
-        </button>
-      ))}
+    <div className="w-64 p-3 bg-white border border-border-default rounded-lg shadow-xl animate-scale-in">
+      <div className="grid grid-cols-6 gap-2">
+        {COMMON_EMOJIS.map((emoji) => (
+          <button
+            key={emoji}
+            onClick={() => onSelect(emoji)}
+            className="w-8 h-8 flex items-center justify-center text-xl hover:bg-gray-100 rounded transition-colors"
+          >
+            {emoji}
+          </button>
+        ))}
+      </div>
     </div>
-  )
+  );
 }
