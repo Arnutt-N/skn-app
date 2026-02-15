@@ -1,7 +1,20 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { Bot, Image, MessageSquareText, Maximize2, Minimize2, Paperclip, Send, Smile, Sticker, Volume2, VolumeX, Zap } from 'lucide-react';
+import {
+  Bot,
+  ImageIcon,
+  MessageSquareText,
+  Maximize2,
+  Minimize2,
+  Paperclip,
+  Send,
+  Smile,
+  Sticker,
+  Volume2,
+  VolumeX,
+  Zap,
+} from 'lucide-react';
 
 import { CannedResponsePicker } from '@/components/admin/CannedResponsePicker';
 import { useLiveChatStore } from '../_store/liveChatStore';
@@ -78,112 +91,129 @@ export function MessageInput({
   };
 
   const btnClass = (active: boolean) =>
-    `p-1.5 rounded-lg transition-colors ${active ? 'bg-brand-500/10 text-brand-600' : 'text-text-tertiary hover:text-text-primary hover:bg-gray-100'}`;
+    `p-2 rounded-lg transition-colors ${active ? 'bg-brand-50 text-brand-600' : 'text-text-tertiary hover:text-text-primary hover:bg-gray-100'}`;
 
   return (
     <footer className="bg-surface border-t border-border-default relative thai-text">
       {/* Bot mode indicator */}
       {!isHumanMode && (
-        <div className="absolute -top-8 left-0 right-0 flex justify-center pointer-events-none">
-          <span className="px-3 py-1 bg-info/10 text-info text-xs font-semibold rounded-full border border-info/20 flex items-center gap-1.5 thai-no-break">
+        <div className="absolute -top-10 left-0 right-0 flex justify-center pointer-events-none z-10">
+          <span className="px-3 py-1.5 bg-black/75 text-white backdrop-blur-sm text-xs font-semibold rounded-full shadow-lg flex items-center gap-1.5 thai-no-break animate-fade-in-up">
             <Bot className="w-3.5 h-3.5" />Bot is handling
           </span>
         </div>
       )}
 
-      {/* Canned responses picker */}
-      <CannedResponsePicker
-        isOpen={showCannedPicker}
-        onClose={onCloseCanned}
-        onSelect={onSelectCanned}
-        inputText={inputText}
-      />
+      {/* Popups Container (Absolute positioning) */}
+      <div className="absolute bottom-full left-0 mb-2 px-2 flex flex-col gap-2 z-20">
+        <CannedResponsePicker
+          isOpen={showCannedPicker}
+          onClose={onCloseCanned}
+          onSelect={onSelectCanned}
+          inputText={inputText}
+        />
+        {showEmojiPicker && <EmojiPicker onSelect={handleEmojiSelect} />}
+        {showStickerPicker && <StickerPicker onSelect={(pkg, id) => { onInputChange(`[sticker:${pkg}:${id}]`); closeAllPickers(); }} />}
+      </div>
 
       {/* Quick replies bar */}
       {showQuickReplies && <QuickReplies onSelect={handleQuickReplySelect} />}
 
-      {/* Emoji picker */}
-      {showEmojiPicker && <EmojiPicker onSelect={handleEmojiSelect} />}
+      {/* Toolbar & Input */}
+      <div className={`p-3 space-y-3 ${!isHumanMode ? 'opacity-60 pointer-events-none grayscale' : ''}`}>
 
-      {/* Sticker picker */}
-      {showStickerPicker && <StickerPicker onSelect={(url) => { onInputChange(`[sticker:${url}]`); closeAllPickers(); }} />}
+        {/* Top Toolbar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={toggleEmojiPicker} className={btnClass(showEmojiPicker)} title="Emoji">
+              <Smile className="w-5 h-5" />
+            </button>
+            <button type="button" onClick={toggleStickerPicker} className={btnClass(showStickerPicker)} title="Stickers">
+              <Sticker className="w-5 h-5" />
+            </button>
+            <button type="button" onClick={openFilePicker} className={btnClass(false)} title="Upload Image">
+              <ImageIcon className="w-5 h-5" />
+            </button>
+            <button type="button" onClick={openFilePicker} className={btnClass(false)} title="Upload File">
+              <Paperclip className="w-5 h-5" />
+            </button>
+            <div className="w-px h-5 bg-border-default mx-1" />
+            <button
+              type="button"
+              onClick={toggleQuickReplies}
+              className={btnClass(showQuickReplies)}
+              title="Quick Replies"
+            >
+              <Zap className="w-5 h-5" />
+            </button>
+            <button type="button" onClick={onToggleCannedPicker} className={btnClass(showCannedPicker)} title="Canned Responses">
+              <MessageSquareText className="w-5 h-5" />
+            </button>
+          </div>
 
-      {/* Toolbar */}
-      <div className={`flex items-center gap-0.5 px-3 py-1.5 border-b border-border-subtle ${!isHumanMode ? 'opacity-50 pointer-events-none' : ''}`}>
-        <button type="button" onClick={toggleEmojiPicker} className={btnClass(showEmojiPicker)} aria-label="Emoji">
-          <Smile className="w-4 h-4" />
-        </button>
-        <button type="button" onClick={toggleStickerPicker} className={btnClass(showStickerPicker)} aria-label="Sticker">
-          <Sticker className="w-4 h-4" />
-        </button>
-        <button type="button" onClick={openFilePicker} className={btnClass(false)} aria-label="Image">
-          <Image className="w-4 h-4" />
-        </button>
-        <button type="button" onClick={openFilePicker} className={btnClass(false)} aria-label="File">
-          <Paperclip className="w-4 h-4" />
-        </button>
-        <button type="button" onClick={toggleQuickReplies} className={btnClass(showQuickReplies)} aria-label="Quick replies">
-          <Zap className="w-4 h-4" />
-        </button>
-        <button type="button" onClick={toggleInputExpanded} className={btnClass(inputExpanded)} aria-label="Expand">
-          {inputExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-        </button>
-        <div className="flex-1" />
-        <button type="button" onClick={onToggleCannedPicker} className="p-1.5 text-text-tertiary hover:text-brand-600 rounded-lg transition-colors" aria-label="Canned responses">
-          <MessageSquareText className="w-4 h-4" />
-        </button>
-        <button type="button" onClick={onToggleSound} className="p-1.5 text-text-tertiary hover:text-text-primary rounded-lg transition-colors" aria-label={soundEnabled ? 'Mute' : 'Unmute'}>
-          {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-        </button>
-      </div>
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={onToggleSound} className={btnClass(!soundEnabled)} title={soundEnabled ? 'Mute' : 'Unmute'}>
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
 
-      {/* Input area */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSend();
-        }}
-        className={`flex gap-2 p-3 ${!isHumanMode ? 'opacity-50 pointer-events-none' : ''}`}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onSendFile(file);
-            e.currentTarget.value = '';
+        {/* Input Field Area */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSend();
           }}
-        />
-        <label htmlFor="chat-input" className="sr-only">Message</label>
-        <textarea
-          id="chat-input"
-          ref={textareaRef}
-          value={inputText}
-          onChange={(e) => {
-            onInputChange(e.target.value);
-            onTyping();
-          }}
-          onKeyDown={handleKeyDown}
-          disabled={!isHumanMode || sending}
-          placeholder="Type / for quick replies..."
-          rows={inputExpanded ? 4 : 1}
-          className="flex-1 bg-gray-50 border border-border-default rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/30 resize-none transition-all thai-no-break"
-        />
-        <button
-          type="submit"
-          disabled={!inputText.trim() || sending || !isHumanMode}
-          className={`p-3 rounded-xl transition-all ${
-            inputText.trim() && isHumanMode
-              ? 'bg-brand-600 text-white hover:bg-brand-700 active:scale-[0.97]'
-              : 'bg-gray-200 text-text-tertiary cursor-not-allowed'
-          }`}
-          aria-label="Send message"
+          className="relative flex items-end gap-2"
         >
-          <Send className="w-5 h-5" />
-        </button>
-      </form>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onSendFile(file);
+              e.currentTarget.value = '';
+            }}
+          />
+          <div className="flex-1 relative">
+            <textarea
+              ref={textareaRef}
+              value={inputText}
+              onChange={(e) => {
+                onInputChange(e.target.value);
+                onTyping();
+              }}
+              onKeyDown={handleKeyDown}
+              disabled={!isHumanMode || sending}
+              placeholder="Type a message..."
+              rows={inputExpanded ? 4 : 1}
+              className="w-full bg-gray-50 border border-border-default rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 focus:bg-white resize-none transition-all shadow-sm thai-no-break custom-scrollbar"
+              style={{ minHeight: '44px', maxHeight: '120px' }}
+            />
+            {/* Expand Toggle */}
+            <button
+              type="button"
+              onClick={toggleInputExpanded}
+              className="absolute right-2 top-2 p-1 text-text-tertiary hover:text-text-primary rounded"
+            >
+              {inputExpanded ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            disabled={!inputText.trim() || sending || !isHumanMode}
+            className={`p-3 rounded-xl shadow-sm transition-all flex-shrink-0 ${inputText.trim() && isHumanMode
+                ? 'bg-brand-600 text-white hover:bg-brand-700 hover:shadow active:scale-95'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+          >
+            <Send className="w-5 h-5" />
+          </button>
+        </form>
+      </div>
     </footer>
   );
 }

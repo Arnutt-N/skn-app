@@ -90,7 +90,7 @@ export function CustomerPanel({
         <div className="relative inline-block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={currentChat.picture_url} className="w-20 h-20 rounded-full object-cover mx-auto ring-4 ring-surface shadow-md" alt={currentChat.display_name} />
-          <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-surface ${isActive ? 'bg-online' : isWaiting ? 'bg-away' : 'bg-offline'}`} />
+          <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface ${isActive ? 'bg-online' : isWaiting ? 'bg-away' : 'bg-offline'}`} />
         </div>
         <p className="font-semibold text-text-primary text-sm mt-3 thai-no-break">{currentChat.display_name}</p>
         <div className="flex items-center justify-center gap-2 mt-1.5">

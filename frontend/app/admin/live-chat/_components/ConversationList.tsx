@@ -217,15 +217,15 @@ export function ConversationList() {
       {/* Summary bar */}
       <div className="px-4 py-2.5 border-t border-sidebar-border bg-black/20 text-[11px] text-sidebar-muted flex items-center justify-center gap-4">
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-online" />
+          <span className="h-3 w-3 rounded-full bg-online" />
           {activeCount} active
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-away" />
+          <span className="h-3 w-3 rounded-full bg-away" />
           {waitingCount} waiting
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-offline" />
+          <span className="h-3 w-3 rounded-full bg-offline" />
           {closedCount} offline
         </span>
       </div>

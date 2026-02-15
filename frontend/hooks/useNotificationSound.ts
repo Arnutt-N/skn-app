@@ -18,6 +18,10 @@ export function useNotificationSound() {
     if (!enabledRef.current || typeof window === 'undefined') return;
 
     try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(200);
+      }
+
       if (!audioRef.current) {
         audioRef.current = new Audio();
       }

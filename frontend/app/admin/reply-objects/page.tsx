@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Package, Trash2, X, SquarePen, ChevronDown } from 'lucide-react';
+import { Package, Trash2, SquarePen, ChevronDown } from 'lucide-react';
 import PageHeader from '@/app/admin/components/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';

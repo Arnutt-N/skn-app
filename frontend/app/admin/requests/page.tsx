@@ -1,27 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Alert } from '@/components/ui/Alert';
 import {
     Search,
-    Filter,
-    MoreVertical,
     Eye,
     UserPlus,
     Clock,
     CheckCircle2,
     AlertCircle,
     Calendar,
-    User,
     ChevronLeft,
     ChevronRight,
     SquarePen,
     Trash2,
-    X,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { AssignModal } from '@/components/admin/AssignModal';
@@ -49,7 +44,6 @@ interface ServiceRequest {
 export default function AdminRequestList() {
     const [requests, setRequests] = useState<ServiceRequest[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState({ status: '', category: '' });
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -57,7 +51,7 @@ export default function AdminRequestList() {
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async () => {
         setLoading(true);
         try {
             const query = new URLSearchParams();
@@ -69,12 +63,12 @@ export default function AdminRequestList() {
             if (!res.ok) throw new Error('Failed to fetch requests');
             const data = await res.json();
             setRequests(data);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE, debouncedSearch, filter.category, filter.status]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -84,8 +78,8 @@ export default function AdminRequestList() {
     }, [search]);
 
     useEffect(() => {
-        fetchRequests();
-    }, [filter, debouncedSearch]);
+        void fetchRequests();
+    }, [fetchRequests]);
 
 
     const getStatusStyles = (status: string) => {
@@ -114,7 +108,7 @@ export default function AdminRequestList() {
         setAssignModalOpen(true);
     };
 
-    const confirmAssign = async (agentId: number, agentName: string) => {
+    const confirmAssign = async (agentId: number) => {
         if (!assigningRequest) return;
         try {
             const res = await fetch(`${API_BASE}/admin/requests/${assigningRequest.id}`, {
