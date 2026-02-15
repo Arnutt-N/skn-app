@@ -27,6 +27,25 @@
   --color-info-light: hsl(213 93% 78%);
   --color-info-dark: hsl(224 76% 48%);
 
+  /* Accent Colors (migration parity with example) */
+  --color-accent: hsl(162 72% 45%);
+  --color-accent-light: hsl(162 66% 58%);
+  --color-accent-dark: hsl(162 76% 32%);
+  --color-accent-text: hsl(162 80% 24%);
+  --accent: hsl(162 72% 45%);
+
+  /* Chart Colors */
+  --color-chart-1: hsl(262 83% 66%);
+  --color-chart-2: hsl(263 70% 50%);
+  --color-chart-3: hsl(162 72% 45%);
+  --color-chart-4: hsl(38 92% 50%);
+  --color-chart-5: hsl(217 91% 60%);
+  --chart-1: hsl(262 83% 66%);
+  --chart-2: hsl(263 70% 50%);
+  --chart-3: hsl(162 72% 45%);
+  --chart-4: hsl(38 92% 50%);
+  --chart-5: hsl(217 91% 60%);
+
   /* WCAG AA Accessible Text Colors (โฅ4.5:1 on white) */
   /* Use these for text on light backgrounds instead of brand-500 / danger / success */
   --color-brand-text: hsl(263 70% 50%);     /* brand-700, ~9:1 ratio */
@@ -85,6 +104,17 @@
   --color-sidebar-muted: hsl(215 14% 34%);
   --color-sidebar-accent: hsl(217 33% 17%);
   --color-sidebar-border: hsl(215 28% 17%);
+  --color-sidebar-primary: hsl(262 83% 58%);
+  --color-sidebar-primary-fg: hsl(0 0% 100%);
+  --sidebar-primary-fg: hsl(0 0% 100%);
+
+  /* Alias tokens to ease shadcn-style class adaptation */
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(221 39% 11%);
+  --color-muted: hsl(220 14% 96%);
+  --color-muted-foreground: hsl(215 14% 34%);
+  --color-input: hsl(220 13% 91%);
+  --color-ring: hsl(262 83% 66%);
 
   /* Status Colors */
   --color-status-waiting: hsl(38 92% 50%);
