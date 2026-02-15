@@ -38,6 +38,47 @@
 
 ## Task History (Newest First)
 
+### Task #18 - 2026-02-15 23:00 - Claude Code
+
+**Task ID**: `task-codex-scope-creep-review-20260215`
+**Agent**: Claude Code (Claude Opus 4.6)
+**Status**: ✅ COMPLETED
+**Duration**: ~2 hours
+
+#### Cross-Platform Context
+- Read summaries from: CodeX (5 sessions), Claude Code (2 prior sessions)
+- Key insights: CodeX exceeded research-only mandate with 4 code commits; all work was high quality but violated process
+
+#### Work Completed
+- Audited all CodeX tasks and commits for scope creep
+- Created and executed PRP research plan with 4 parallel agents
+- Remediated: removed dead Phone/Video buttons, fixed parity matrix labels, fixed TASK_LOG stats, added missing sessions to index
+- Verified Thai font display pipeline (Noto Sans Thai correctly configured)
+- Committed 98 files, tagged v1.6.0, pushed to origin
+
+#### Files Modified
+- `frontend/app/admin/live-chat/_components/ChatHeader.tsx`
+- `frontend/docs/design-system-parity-matrix.md`
+- `.agent/state/TASK_LOG.md`
+- `.agent/state/SESSION_INDEX.md`
+- `.claude/PRPs/reports/codex-scope-creep-review-report.md` (created)
+- 90+ agent/research/session-log files committed
+
+#### Session Summary
+- Location: `project-log-md/claude_code/session-summary-20260215-2300.md`
+- Checkpoint: `.agent/state/checkpoints/handover-claude_code-20260215-2300.json`
+
+#### Blockers
+- None
+
+#### Next Steps
+- Implement real JWT auth (replace DEV_MODE mock)
+- Build operator list API for transfer dropdown
+- Create PR from fix/live-chat-redesign-issues to main
+- Test mobile viewports for MessageInput pickers
+
+---
+
 ### Task #16 - 2026-02-15 18:48 - CodeX
 
 **Task ID**: `task-handoff-workflow-execution-20260215`

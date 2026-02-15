@@ -1,6 +1,6 @@
 # Project Status: SknApp
 
-> **Last Updated:** 2026-02-15 18:48 by CodeX (Handoff workflow completion: commit split, tag, publish, state sync)
+> **Last Updated:** 2026-02-15 23:00 by Claude Code (CodeX scope creep remediation, Thai font audit, v1.6.0)
 
 ## Thai Summary
 เนเธเธ 27 เธเธฑเนเธเธ•เธญเธ **เน€เธชเธฃเนเธเธชเธกเธเธนเธฃเธ“เน 100%** โ€” เธ—เธธเธเธเธตเน€เธเธญเธฃเนเธ–เธนเธ implement เนเธฅเนเธง
@@ -118,6 +118,7 @@
 - [2026-02-13] All 321 files committed and pushed to `origin/fix/live-chat-redesign-issues`.
 
 ## Recent Completions
+- [2026-02-15 23:00] CodeX scope creep audit + remediation (removed dead UI, fixed bookkeeping), Thai font verified correct, committed 98 files, tagged v1.6.0, pushed (Claude Code)
 - [2026-02-15 18:48] Completed full handoff workflow after release publish: branch/tag pushed (`fix/live-chat-redesign-issues`, `v1.5.0`), state artifacts synchronized, cross-platform logs/index updated (CodeX)
 - [2026-02-15 21:00] Merged 7 agent comparison reports + created research plan + handed off to CodeX for parallel execution (Claude Code)
 - [2026-02-15 18:00] Executed Live Chat UI Migration: Zustand state management + full component restyle, 9 phases, tagged v1.4.0 (Claude Code)
