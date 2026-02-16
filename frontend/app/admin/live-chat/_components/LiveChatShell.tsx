@@ -46,12 +46,18 @@ export function LiveChatShell() {
         </div>
       )}
 
+      {/* 3-Column Layout: Conversation List (dark) | Chat Area (light) | Customer Panel (optional) */}
       <div className="flex h-screen w-full bg-bg overflow-hidden font-sans">
+        {/* Column 1: Conversation List - Dark sidebar, fixed 320px width */}
         {(!isMobileView || !selectedId) && <ConversationList />}
+
+        {/* Column 2: Chat Area - Light content, flexible width */}
         {(!isMobileView || selectedId) && <ChatArea />}
+        
+        {/* Column 3: Customer Profile Panel - Light, fixed 320px width, conditional */}
         {selectedId && showCustomerPanel && (
           <div
-            className={isMobileView ? 'fixed inset-0 z-40 bg-black/40 backdrop-blur-sm' : ''}
+            className={isMobileView ? 'fixed inset-0 z-40 bg-black/40 backdrop-blur-sm' : 'hidden md:flex'}
             onClick={isMobileView ? () => setShowCustomerPanel(false) : undefined}
           >
             <div
