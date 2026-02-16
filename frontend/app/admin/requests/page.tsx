@@ -6,6 +6,14 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/Table';
+import {
     Search,
     Eye,
     UserPlus,
@@ -209,40 +217,40 @@ export default function AdminRequestList() {
 
             {/* Request Table */}
             <Card glass className="border-none shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-400">
-                                <th className="px-6 py-4">ข้อมูลผู้ยื่น / หัวข้อ</th>
-                                <th className="px-6 py-4">หน่วยงาน / พื้นที่</th>
-                                <th className="px-6 py-4">วันที่ยื่น</th>
-                                <th className="px-6 py-4">สถานะ</th>
-                                <th className="px-6 py-4">เจ้าหน้าที่</th>
-                                <th className="px-6 py-4 text-right">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 bg-white/40 dark:divide-gray-700 dark:bg-transparent">
-                            {loading ? (
-                                Array(5).fill(0).map((_, i) => (
-                                    <tr key={i} className="animate-pulse">
-                                        <td colSpan={6} className="px-6 py-8">
-                                            <div className="h-4 bg-gray-100 rounded-full w-3/4 mb-3 dark:bg-gray-700"></div>
-                                            <div className="h-3 bg-gray-50 rounded-full w-1/2 dark:bg-gray-700/50"></div>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : requests.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center">
-                                        <div className="flex flex-col items-center gap-3 text-gray-400 dark:text-gray-500">
-                                            <AlertCircle className="w-12 h-12 opacity-20" />
-                                            <p className="text-sm">ไม่พบข้อมูลคำร้อง</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : requests.map((req) => (
-                                <tr key={req.id} className="hover:bg-gray-50/50 transition-colors group dark:hover:bg-gray-700/30">
-                                    <td className="px-6 py-4">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 dark:bg-gray-800/50">
+                            <TableHead className="w-[280px]">ข้อมูลผู้ยื่น / หัวข้อ</TableHead>
+                            <TableHead>หน่วยงาน / พื้นที่</TableHead>
+                            <TableHead>วันที่ยื่น</TableHead>
+                            <TableHead>สถานะ</TableHead>
+                            <TableHead>เจ้าหน้าที่</TableHead>
+                            <TableHead className="text-right">จัดการ</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                            Array(5).fill(0).map((_, i) => (
+                                <TableRow key={i} className="animate-pulse hover:bg-transparent">
+                                    <TableCell colSpan={6}>
+                                        <div className="h-4 bg-gray-100 rounded-full w-3/4 mb-3 dark:bg-gray-700"></div>
+                                        <div className="h-3 bg-gray-50 rounded-full w-1/2 dark:bg-gray-700/50"></div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : requests.length === 0 ? (
+                            <TableRow className="hover:bg-transparent">
+                                <TableCell colSpan={6} className="text-center py-12">
+                                    <div className="flex flex-col items-center gap-3 text-gray-400 dark:text-gray-500">
+                                        <AlertCircle className="w-12 h-12 opacity-20" />
+                                        <p className="text-sm">ไม่พบข้อมูลคำร้อง</p>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            requests.map((req) => (
+                                <TableRow key={req.id} className="group dark:hover:bg-gray-700/30">
+                                    <TableCell>
                                         <div className="flex items-start gap-3">
                                             <div className="w-10 h-10 bg-brand-500/10 text-brand-600 rounded-lg flex items-center justify-center font-bold text-lg shrink-0 dark:bg-brand-500/20 dark:text-brand-400">
                                                 {req.firstname?.[0] || '?'}
@@ -253,12 +261,12 @@ export default function AdminRequestList() {
                                                 <div className="text-[10px] text-gray-400 uppercase tracking-tight dark:text-gray-500">{req.topic_subcategory}</div>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    </TableCell>
+                                    <TableCell>
                                         <div className="text-[11px] font-bold text-gray-600 dark:text-gray-300">{req.agency}</div>
                                         <div className="text-[10px] text-gray-500 mt-0.5 dark:text-gray-400">{req.province} › {req.district}</div>
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    </TableCell>
+                                    <TableCell>
                                         <div className="flex items-center gap-2 text-xs text-gray-600 font-medium dark:text-gray-300">
                                             <Calendar className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
                                             {new Date(req.created_at).toLocaleDateString('th-TH', {
@@ -269,17 +277,17 @@ export default function AdminRequestList() {
                                                 minute: '2-digit'
                                             })}
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    </TableCell>
+                                    <TableCell>
                                         <Badge variant={getStatusStyles(req.status).variant} className="gap-1.5 py-1 px-2.5">
                                             {getStatusStyles(req.status).icon}
                                             {getStatusStyles(req.status).label}
                                         </Badge>
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    </TableCell>
+                                    <TableCell>
                                         {req.assignee_name ? (
                                             <div
-                                                className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1.5 rounded-lg -ml-1.5 transition-colors group/agent dark:hover:bg-gray-700"
+                                                className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1.5 rounded-lg -ml-1.5 transition-colors group/agent dark:hover:bg-gray-700 w-fit"
                                                 onClick={() => handleAssign(req)}
                                                 title="คลิกเพื่อเปลี่ยนผู้รับผิดชอบ"
                                             >
@@ -300,8 +308,8 @@ export default function AdminRequestList() {
                                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover/assign:text-brand-600 transition-colors dark:text-gray-500 dark:group-hover/assign:text-brand-400">Assign</span>
                                             </button>
                                         )}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
+                                    </TableCell>
+                                    <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-1">
                                             <ActionIconButton
                                                 icon={<Eye size={16} />}
@@ -323,12 +331,12 @@ export default function AdminRequestList() {
                                                 onClick={() => handleDelete(req)}
                                             />
                                         </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
 
                 {/* Pagination Placeholder */}
                 <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/30 flex items-center justify-between dark:border-gray-700 dark:bg-gray-800/30">

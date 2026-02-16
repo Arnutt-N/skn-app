@@ -5,6 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
+import {
   Users,
   Clock,
   MessageSquare,
@@ -402,36 +410,34 @@ export default function AnalyticsPage() {
           {operators.length === 0 ? (
             <div className="text-center py-8 text-slate-400">No operator data available.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium">Operator</th>
-                    <th className="text-center py-3 px-4 font-medium">Sessions</th>
-                    <th className="text-center py-3 px-4 font-medium">Avg First Response</th>
-                    <th className="text-center py-3 px-4 font-medium">Avg Resolution</th>
-                    <th className="text-center py-3 px-4 font-medium">Avg Queue Wait</th>
-                    <th className="text-center py-3 px-4 font-medium">Availability</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {operators.map((op) => (
-                    <tr
-                      key={op.operator_id}
-                      className={`border-b cursor-pointer hover:bg-slate-50 ${selectedOperator === op.operator_id ? "bg-slate-100" : ""}`}
-                      onClick={() => setSelectedOperator(op.operator_id)}
-                    >
-                      <td className="py-3 px-4">{op.operator_name}</td>
-                      <td className="text-center py-3 px-4">{op.total_sessions}</td>
-                      <td className="text-center py-3 px-4">{formatDuration(op.avg_first_response_seconds)}</td>
-                      <td className="text-center py-3 px-4">{formatDuration(op.avg_resolution_seconds)}</td>
-                      <td className="text-center py-3 px-4">{formatDuration(op.avg_queue_wait_seconds)}</td>
-                      <td className="text-center py-3 px-4">{op.availability_percent.toFixed(1)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Operator</TableHead>
+                  <TableHead className="text-center">Sessions</TableHead>
+                  <TableHead className="text-center">Avg First Response</TableHead>
+                  <TableHead className="text-center">Avg Resolution</TableHead>
+                  <TableHead className="text-center">Avg Queue Wait</TableHead>
+                  <TableHead className="text-center">Availability</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {operators.map((op) => (
+                  <TableRow
+                    key={op.operator_id}
+                    className={`cursor-pointer ${selectedOperator === op.operator_id ? "bg-slate-100" : ""}`}
+                    onClick={() => setSelectedOperator(op.operator_id)}
+                  >
+                    <TableCell>{op.operator_name}</TableCell>
+                    <TableCell className="text-center">{op.total_sessions}</TableCell>
+                    <TableCell className="text-center">{formatDuration(op.avg_first_response_seconds)}</TableCell>
+                    <TableCell className="text-center">{formatDuration(op.avg_resolution_seconds)}</TableCell>
+                    <TableCell className="text-center">{formatDuration(op.avg_queue_wait_seconds)}</TableCell>
+                    <TableCell className="text-center">{op.availability_percent.toFixed(1)}%</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

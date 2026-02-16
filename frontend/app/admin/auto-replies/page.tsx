@@ -3,12 +3,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Eye, SquarePen, Trash2 } from 'lucide-react';
-import { AdminTableHead, type AdminTableHeadColumn } from '@/components/admin/AdminTableHead';
 import PageHeader from '@/app/admin/components/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
 import { ActionIconButton } from '@/components/ui/ActionIconButton';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/Table';
 
 interface IntentCategory {
     id: number;
@@ -25,12 +33,6 @@ export default function IntentsPage() {
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
     const [formData, setFormData] = useState({ name: '', description: '', is_active: true });
-    const tableColumns: AdminTableHeadColumn[] = [
-        { key: 'category', label: 'Category' },
-        { key: 'keywords', label: 'Keywords' },
-        { key: 'status', label: 'สถานะ', align: 'center' },
-        { key: 'actions', label: 'จัดการ', align: 'center' },
-    ];
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -117,10 +119,10 @@ export default function IntentsPage() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">คำอธิบาย</label>
-                        <textarea
+                        <Textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                            size="md"
                             rows={3}
                         />
                     </div>
@@ -151,45 +153,52 @@ export default function IntentsPage() {
 
             {/* Table */}
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                <table className="w-full">
-                    <AdminTableHead columns={tableColumns} />
-                    <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50 dark:bg-gray-700/40 dark:border-gray-700">
+                            <TableHead className="px-5 py-3 text-xs font-semibold tracking-wider text-slate-600">Category</TableHead>
+                            <TableHead className="px-5 py-3 text-xs font-semibold tracking-wider text-slate-600">Keywords</TableHead>
+                            <TableHead className="px-5 py-3 text-center text-xs font-semibold tracking-wider text-slate-600">สถานะ</TableHead>
+                            <TableHead className="px-5 py-3 text-center text-xs font-semibold tracking-wider text-slate-600">จัดการ</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody className="divide-y divide-gray-50 dark:divide-gray-700">
                         {loading ? (
                             // Skeleton Loading
                             [...Array(5)].map((_, i) => (
-                                <tr key={i} className="animate-pulse">
-                                    <td className="px-5 py-4">
+                                <TableRow key={i} className="animate-pulse hover:bg-transparent">
+                                    <TableCell className="px-5 py-4">
                                         <div className="h-4 bg-gray-200 rounded w-32 mb-2 dark:bg-gray-700"></div>
                                         <div className="h-3 bg-gray-100 rounded w-48 dark:bg-gray-700/50"></div>
-                                    </td>
-                                    <td className="px-5 py-4">
+                                    </TableCell>
+                                    <TableCell className="px-5 py-4">
                                         <div className="h-3 bg-gray-100 rounded w-40 dark:bg-gray-700/50"></div>
-                                    </td>
-                                    <td className="px-5 py-4 text-center">
+                                    </TableCell>
+                                    <TableCell className="px-5 py-4 text-center">
                                         <div className="mx-auto h-4 w-7 bg-gray-200 rounded-full dark:bg-gray-700"></div>
-                                    </td>
-                                    <td className="px-5 py-4">
+                                    </TableCell>
+                                    <TableCell className="px-5 py-4">
                                         <div className="flex items-center justify-center gap-1">
                                             <div className="h-8 w-8 bg-gray-100 rounded-lg dark:bg-gray-700/50"></div>
                                             <div className="h-8 w-8 bg-gray-100 rounded-lg dark:bg-gray-700/50"></div>
                                             <div className="h-8 w-8 bg-gray-100 rounded-lg dark:bg-gray-700/50"></div>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))
                         ) : categories.length === 0 ? (
-                            <tr>
-                                <td colSpan={4} className="px-5 py-8 text-center text-gray-400 text-sm dark:text-gray-500">
+                            <TableRow>
+                                <TableCell colSpan={4} className="px-5 py-8 text-center text-gray-400 text-sm dark:text-gray-500">
                                     ยังไม่มี Category
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ) : (
                             categories.map((category) => (
-                                <tr key={category.id} className="hover:bg-gray-50/50 transition-colors dark:hover:bg-gray-700/30">
-                                    <td className="px-5 py-4">
+                                <TableRow key={category.id} className="hover:bg-gray-50/50 transition-colors dark:hover:bg-gray-700/30">
+                                    <TableCell className="px-5 py-4">
                                         <div className="font-medium text-gray-700 dark:text-gray-200">{category.name}</div>
-                                    </td>
-                                    <td className="px-5 py-4">
+                                    </TableCell>
+                                    <TableCell className="px-5 py-4">
                                         {category.keywords_preview && category.keywords_preview.length > 0 ? (
                                             <div className="text-sm text-gray-600 dark:text-gray-400">
                                                 {category.keywords_preview.slice(0, 3).join(', ')}
@@ -200,8 +209,8 @@ export default function IntentsPage() {
                                         ) : (
                                             <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
                                         )}
-                                    </td>
-                                    <td className="px-5 py-4 text-center">
+                                    </TableCell>
+                                    <TableCell className="px-5 py-4 text-center">
                                         <button
                                             onClick={() => handleToggleStatus(category.id, !category.is_active)}
                                             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer focus-ring ${category.is_active ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-600'
@@ -212,8 +221,8 @@ export default function IntentsPage() {
                                                     }`}
                                             />
                                         </button>
-                                    </td>
-                                    <td className="px-5 py-4">
+                                    </TableCell>
+                                    <TableCell className="px-5 py-4">
                                         <div className="flex items-center justify-center gap-1">
                                             <Link href={`/admin/auto-replies/${category.id}`}>
                                                 <ActionIconButton
@@ -236,12 +245,12 @@ export default function IntentsPage() {
                                                 onClick={() => handleDelete(category.id)}
                                             />
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))
                         )}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
         </div>
     );

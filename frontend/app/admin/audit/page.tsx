@@ -5,7 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { RefreshCw, ChevronLeft, ChevronRight, Shield } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/Pagination";
+import { RefreshCw, Shield } from "lucide-react";
 
 interface AuditLog {
   id: number;
@@ -27,15 +43,15 @@ interface AuditStats {
   period_days: number;
 }
 
-const ACTION_COLORS: Record<string, string> = {
-  "claim_session": "bg-info/12 text-info",
-  "close_session": "bg-danger/12 text-danger",
-  "send_message": "bg-success/12 text-success",
-  "create": "bg-purple-500/12 text-purple-600",
-  "update": "bg-warning/12 text-warning",
-  "delete": "bg-danger/12 text-danger",
-  "login": "bg-slate-100 text-slate-600",
-  "logout": "bg-slate-100 text-slate-600",
+const ACTION_VARIANTS: Record<string, "info" | "danger" | "success" | "warning" | "gray"> = {
+  claim_session: "info",
+  close_session: "danger",
+  send_message: "success",
+  create: "warning",
+  update: "warning",
+  delete: "danger",
+  login: "gray",
+  logout: "gray",
 };
 
 export default function AuditLogPage() {
@@ -90,17 +106,19 @@ export default function AuditLogPage() {
 
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
+  const canGoPrev = offset > 0;
+  const canGoNext = offset + limit < total;
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto space-y-6 py-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-primary" />
+          <Shield className="h-8 w-8 text-brand-600" />
           <h1 className="text-2xl font-bold">Audit Logs</h1>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-400">Last</span>
+            <span className="text-sm text-text-secondary">Last</span>
             <Input
               type="number"
               value={days}
@@ -112,7 +130,7 @@ export default function AuditLogPage() {
               min={1}
               max={90}
             />
-            <span className="text-sm text-slate-400">days</span>
+            <span className="text-sm text-text-secondary">days</span>
           </div>
           <Button variant="outline" size="sm" onClick={fetchLogs} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
@@ -126,7 +144,7 @@ export default function AuditLogPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">
+              <CardTitle className="text-sm font-medium text-text-secondary">
                 Total Actions
               </CardTitle>
             </CardHeader>
@@ -137,7 +155,7 @@ export default function AuditLogPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">
+              <CardTitle className="text-sm font-medium text-text-secondary">
                 Top Actions
               </CardTitle>
             </CardHeader>
@@ -157,7 +175,7 @@ export default function AuditLogPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">
+              <CardTitle className="text-sm font-medium text-text-secondary">
                 By Resource Type
               </CardTitle>
             </CardHeader>
@@ -178,7 +196,7 @@ export default function AuditLogPage() {
       )}
 
       {/* Filters */}
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
         <Input
           placeholder="Filter by action..."
           value={filter.action}
@@ -202,85 +220,92 @@ export default function AuditLogPage() {
       {/* Logs Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-slate-50/50">
-                  <th className="text-left py-3 px-4 font-medium">Time</th>
-                  <th className="text-left py-3 px-4 font-medium">Admin</th>
-                  <th className="text-left py-3 px-4 font-medium">Action</th>
-                  <th className="text-left py-3 px-4 font-medium">Resource</th>
-                  <th className="text-left py-3 px-4 font-medium">Details</th>
-                  <th className="text-left py-3 px-4 font-medium">IP Address</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-8 text-slate-400">
-                      No audit logs found.
-                    </td>
-                  </tr>
-                ) : (
-                  logs.map((log) => (
-                    <tr key={log.id} className="border-b hover:bg-slate-50/50">
-                      <td className="py-3 px-4 text-sm">
-                        {new Date(log.created_at).toLocaleString()}
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        {log.admin_name || `Admin ${log.admin_id}`}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge 
-                          className={ACTION_COLORS[log.action] || "bg-gray-100 text-gray-800"}
-                        >
-                          {log.action}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        <span className="text-slate-400">{log.resource_type}</span>
-                        {log.resource_id && (
-                          <span className="text-xs ml-1">({log.resource_id})</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-sm max-w-xs truncate">
-                        {log.details ? JSON.stringify(log.details).slice(0, 50) + "..." : "-"}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-slate-400">
-                        {log.ip_address}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50/70 hover:bg-gray-50/70">
+                <TableHead>Time</TableHead>
+                <TableHead>Admin</TableHead>
+                <TableHead>Action</TableHead>
+                <TableHead>Resource</TableHead>
+                <TableHead>Details</TableHead>
+                <TableHead>IP Address</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {logs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-8 text-center text-text-secondary">
+                    No audit logs found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                logs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="text-sm">
+                      {new Date(log.created_at).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {log.admin_name || `Admin ${log.admin_id}`}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={ACTION_VARIANTS[log.action] || "gray"} size="sm">
+                        {log.action}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <span className="text-text-secondary">{log.resource_type}</span>
+                      {log.resource_id && (
+                        <span className="ml-1 text-xs">({log.resource_id})</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate text-sm">
+                      {log.details ? `${JSON.stringify(log.details).slice(0, 50)}...` : "-"}
+                    </TableCell>
+                    <TableCell className="text-sm text-text-secondary">
+                      {log.ip_address}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between py-4 px-4 border-t">
-            <div className="text-sm text-slate-400">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-4">
+            <div className="text-sm text-text-secondary">
               Showing {logs.length} of {total} results
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setOffset(Math.max(0, offset - limit))}
-                disabled={offset === 0}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="text-sm">
-                Page {currentPage} of {totalPages || 1}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setOffset(offset + limit)}
-                disabled={offset + limit >= total}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
+            <Pagination className="mx-0 w-auto justify-end">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (canGoPrev) setOffset(Math.max(0, offset - limit));
+                    }}
+                    className={!canGoPrev ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#" isActive onClick={(event) => event.preventDefault()}>
+                    {currentPage}
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (canGoNext) setOffset(offset + limit);
+                    }}
+                    className={!canGoNext ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+            <div className="w-full text-right text-xs text-text-secondary md:w-auto">
+              Page {currentPage} of {totalPages || 1}
             </div>
           </div>
         </CardContent>
