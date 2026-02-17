@@ -34,8 +34,8 @@ export const ConversationItem = memo(function ConversationItem({
       aria-selected={selected}
       className={`group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all thai-text ${
         selected
-          ? 'bg-brand-500/10 ring-1 ring-brand-500/20'
-          : 'hover:bg-sidebar-accent border border-transparent'
+          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-900/30'
+          : 'text-slate-400 hover:bg-white/5 border border-transparent'
       }`}
       onClick={onClick}
     >
@@ -48,7 +48,7 @@ export const ConversationItem = memo(function ConversationItem({
           alt={conversation.display_name}
         />
         <div
-          className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar-bg ${
+          className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#0f172a] ${
             isActive ? 'bg-online' : isWaiting ? 'bg-away' : 'bg-offline'
           }`}
         />
@@ -58,32 +58,34 @@ export const ConversationItem = memo(function ConversationItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-1 min-w-0">
-            <span className={`font-semibold truncate text-sm ${selected ? 'text-sidebar-fg' : 'text-sidebar-fg/90'}`}>
+            <span className={`font-semibold truncate text-sm ${selected ? 'text-white' : 'text-slate-100'}`}>
               {conversation.display_name}
             </span>
             {isVip && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400 flex-shrink-0" />}
           </span>
-          <span className="text-[10px] text-sidebar-muted flex-shrink-0 thai-no-break">
+          <span className={`text-[10px] flex-shrink-0 thai-no-break ${selected ? 'text-white/80' : 'text-slate-400'}`}>
             {formattedTime || ''}
           </span>
         </div>
         <div className="flex items-center justify-between gap-2 mt-0.5">
-          <span className={`truncate text-xs thai-no-break ${selected ? 'text-sidebar-fg/60' : 'text-sidebar-muted'}`}>
+          <span className={`truncate text-xs thai-no-break ${selected ? 'text-white/80' : 'text-slate-400'}`}>
             {conversation.last_message?.content || 'No messages yet'}
           </span>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Mode badge */}
             <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${
-              isBot
-                ? 'bg-info/15 text-info'
-                : 'bg-online/15 text-online'
+              selected
+                ? 'bg-white/15 text-white'
+                : isBot
+                  ? 'bg-info/15 text-info'
+                  : 'bg-online/15 text-online'
             }`}>
               {isBot ? <Bot className="w-2.5 h-2.5" /> : <User className="w-2.5 h-2.5" />}
               {isBot ? 'Bot' : 'Manual'}
             </span>
             {/* Unread badge */}
             {conversation.unread_count > 0 && (
-              <span className="blink-badge min-w-[18px] h-[18px] px-1 bg-brand-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="blink-badge min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                 {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
               </span>
             )}
@@ -103,7 +105,7 @@ export const ConversationItem = memo(function ConversationItem({
               </span>
             ))}
             {conversation.tags.length > 2 && (
-              <span className="text-[10px] text-sidebar-muted">+{conversation.tags.length - 2}</span>
+              <span className={`text-[10px] ${selected ? 'text-white/80' : 'text-slate-400'}`}>+{conversation.tags.length - 2}</span>
             )}
           </div>
         )}
@@ -115,7 +117,7 @@ export const ConversationItem = memo(function ConversationItem({
           e.stopPropagation();
           onMenuClick();
         }}
-        className="p-1.5 rounded-lg cursor-pointer text-sidebar-muted hover:text-sidebar-fg opacity-0 group-hover:opacity-100 transition-opacity"
+        className={`p-1.5 rounded-lg cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity ${selected ? 'text-white/80 hover:text-white' : 'text-slate-400 hover:text-white'}`}
         aria-label={`Open actions for ${conversation.display_name}`}
       >
         <MoreVertical className="w-4 h-4" />

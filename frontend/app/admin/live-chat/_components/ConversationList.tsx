@@ -68,19 +68,23 @@ export function ConversationList() {
   ] as const;
 
   return (
-    <aside className="w-full md:w-80 bg-sidebar-bg flex flex-col flex-shrink-0 border-r border-sidebar-border thai-text">
+    <aside className="w-full md:w-80 bg-[#0f172a] text-white relative overflow-hidden flex flex-col flex-shrink-0 border-r border-white/10 thai-text">
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-[#1e1b4b] to-[#172554] opacity-100 pointer-events-none" />
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay pointer-events-none" />
+
+      <div className="relative z-10 flex h-full flex-col">
       {/* Header */}
-      <div className="h-16 px-4 border-b border-sidebar-border flex items-center gap-3">
+      <div className="h-16 px-4 border-b border-white/10 flex items-center gap-3">
         <Link
           href="/admin"
-          className="p-2 rounded-xl bg-sidebar-accent text-sidebar-muted hover:text-sidebar-fg transition-colors"
+          className="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 hover:shadow-blue-500/30 transition-shadow"
           aria-label="Back to admin dashboard"
         >
           <Home className="w-4 h-4" />
         </Link>
         <div className="flex-1">
-          <h1 className="text-sidebar-fg font-bold text-sm tracking-tight">Conversations</h1>
-          <p className="text-[11px] text-sidebar-muted flex items-center gap-1">
+          <h1 className="text-white font-bold text-sm tracking-wide">Conversations</h1>
+          <p className="text-[11px] text-slate-300 flex items-center gap-1">
             <Users className="w-3 h-3" />
             <span>{activeCount} online</span>
           </p>
@@ -90,13 +94,13 @@ export function ConversationList() {
       {/* Search + Filter */}
       <div className="px-3 py-3 space-y-2.5">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sidebar-muted" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full pl-10 pr-3 py-2 bg-sidebar-accent border border-sidebar-border text-sidebar-fg rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500/40 placeholder:text-sidebar-muted transition-all thai-no-break"
+            className="w-full pl-10 pr-3 py-2 bg-white/5 border border-white/10 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 placeholder:text-slate-400 transition-all thai-no-break"
             aria-label="Search conversations"
           />
         </div>
@@ -106,15 +110,15 @@ export function ConversationList() {
               key={btn.key ?? 'all'}
               className={`flex-1 py-1.5 px-2 text-[11px] font-semibold rounded-lg transition-all ${
                 filterStatus === btn.key
-                  ? 'bg-brand-600 text-white shadow-sm'
-                  : 'bg-sidebar-accent text-sidebar-muted hover:text-sidebar-fg'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-900/30'
+                  : 'bg-white/5 text-slate-300 hover:text-white'
               }`}
               onClick={() => setFilterStatus(btn.key)}
             >
               <span className="flex items-center justify-center gap-1">
                 {btn.label}
                 <span className={`min-w-[16px] h-4 px-1 text-[10px] rounded-full inline-flex items-center justify-center ${
-                  filterStatus === btn.key ? 'bg-white/20' : 'bg-sidebar-border'
+                  filterStatus === btn.key ? 'bg-white/20' : 'bg-white/10'
                 }`}>
                   {btn.count}
                 </span>
@@ -150,12 +154,12 @@ export function ConversationList() {
         {/* Search results */}
         {searchQuery.trim() && (
           <div className="px-1 pt-2 pb-1">
-            <div className="px-2 py-1 text-[10px] tracking-wide text-sidebar-muted font-semibold uppercase">
+            <div className="px-2 py-1 text-[10px] tracking-wide text-slate-400 font-semibold uppercase">
               Message Search
             </div>
-            {searching && <div className="px-2 py-2 text-xs text-sidebar-muted">Searching...</div>}
+            {searching && <div className="px-2 py-2 text-xs text-slate-400">Searching...</div>}
             {!searching && searchResults.length === 0 && (
-              <div className="px-2 py-2 text-xs text-sidebar-muted">No matching messages</div>
+              <div className="px-2 py-2 text-xs text-slate-400">No matching messages</div>
             )}
             {!searching && searchResults.length > 0 && (
               <div className="space-y-1 mb-2">
@@ -163,12 +167,12 @@ export function ConversationList() {
                   <button
                     key={result.id}
                     onClick={() => jumpToMessage(result.line_user_id, result.id)}
-                    className="w-full text-left p-2 rounded-lg bg-sidebar-accent hover:bg-sidebar-accent/80 border border-sidebar-border transition-all"
+                    className="w-full text-left p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
                   >
-                    <div className="text-[11px] text-sidebar-fg font-medium truncate">
+                    <div className="text-[11px] text-white font-medium truncate">
                       {result.display_name || result.line_user_id}
                     </div>
-                    <div className="text-[11px] text-sidebar-muted truncate">{result.content}</div>
+                    <div className="text-[11px] text-slate-300 truncate">{result.content}</div>
                   </button>
                 ))}
               </div>
@@ -180,19 +184,19 @@ export function ConversationList() {
         {loading && conversations.length === 0 ? (
           <div className="space-y-2 p-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-3 p-3 bg-sidebar-accent rounded-xl animate-pulse">
-                <div className="w-10 h-10 bg-sidebar-border rounded-full" />
+              <div key={i} className="flex gap-3 p-3 bg-white/5 rounded-xl animate-pulse">
+                <div className="w-10 h-10 bg-white/10 rounded-full" />
                 <div className="flex-1 space-y-2 py-1">
-                  <div className="h-3 bg-sidebar-border rounded w-2/3" />
-                  <div className="h-2.5 bg-sidebar-border/50 rounded w-full" />
+                  <div className="h-3 bg-white/10 rounded w-2/3" />
+                  <div className="h-2.5 bg-white/5 rounded w-full" />
                 </div>
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6 opacity-60">
-            <Inbox className="w-10 h-10 text-sidebar-muted mb-3" />
-            <span className="text-sidebar-muted text-sm">No conversations</span>
+            <Inbox className="w-10 h-10 text-slate-400 mb-3" />
+            <span className="text-slate-400 text-sm">No conversations</span>
           </div>
         ) : (
           <div className="space-y-1 py-2">
@@ -215,7 +219,7 @@ export function ConversationList() {
       </div>
 
       {/* Summary bar */}
-      <div className="px-4 py-2.5 border-t border-sidebar-border bg-black/20 text-[11px] text-sidebar-muted flex items-center justify-center gap-4">
+      <div className="px-4 py-2.5 border-t border-white/10 bg-black/20 text-[11px] text-slate-300 flex items-center justify-center gap-4">
         <span className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-full bg-online" />
           {activeCount} active
@@ -228,6 +232,7 @@ export function ConversationList() {
           <span className="h-3 w-3 rounded-full bg-offline" />
           {closedCount} offline
         </span>
+      </div>
       </div>
     </aside>
   );
