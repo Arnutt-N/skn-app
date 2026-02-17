@@ -64,7 +64,7 @@ export default function ReportsPage() {
 
             {/* Performance Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card className="border-none shadow-sm bg-gradient-to-br from-brand-500 to-brand-600 text-white overflow-hidden relative group">
+                <Card className="border-none shadow-sm bg-gradient-to-br from-blue-600 to-indigo-600 text-white overflow-hidden relative group">
                     <CardContent className="p-6">
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
                             <Zap className="w-24 h-24" />

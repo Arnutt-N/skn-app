@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 const variantStyles = {
-    default: 'text-brand-600 hover:bg-brand-50 hover:text-brand-700 dark:text-brand-400 dark:hover:bg-brand-500/10',
+    default: 'text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-500/10',
     warning: 'text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-500/10',
     danger: 'text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-500/10',
     success: 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-500/10',
@@ -41,7 +41,7 @@ export function ActionIconButton({
                     'cursor-pointer select-none',
                     'transition-all duration-200 ease-out',
                     'hover:scale-110',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-500/40',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-blue-500/50',
                     'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-transparent',
                     'active:scale-95',
                     variantStyles[variant],

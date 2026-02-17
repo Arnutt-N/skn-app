@@ -20,7 +20,7 @@ export function SessionActions({ session, claiming, onClaim, onClose, onTransfer
         <button
           onClick={onClaim}
           disabled={claiming}
-          className={`px-3 py-1.5 text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all focus-ring ${claiming ? 'bg-primary/70 cursor-wait' : 'bg-gradient-to-br from-primary to-primary-dark hover:shadow-lg active:scale-[0.97]'}`}
+          className={`px-3 py-1.5 text-white rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all focus-ring ${claiming ? 'bg-blue-600/70 cursor-wait' : 'bg-gradient-to-br from-blue-600 to-indigo-600 hover:shadow-lg active:scale-[0.97]'}`}
           aria-label="Claim session"
         >
           {claiming ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}

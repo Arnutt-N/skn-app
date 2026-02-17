@@ -91,7 +91,7 @@ export function MessageInput({
   };
 
   const btnClass = (active: boolean) =>
-    `p-2 rounded-lg transition-colors ${active ? 'bg-brand-50 text-brand-600' : 'text-text-tertiary hover:text-text-primary hover:bg-gray-100'}`;
+    `p-2 rounded-lg transition-colors ${active ? 'bg-blue-50 text-blue-600' : 'text-text-tertiary hover:text-text-primary hover:bg-gray-100'}`;
 
   return (
     <footer className="bg-surface border-t border-border-default relative thai-text">
@@ -189,7 +189,7 @@ export function MessageInput({
               disabled={!isHumanMode || sending}
               placeholder="Type a message..."
               rows={inputExpanded ? 4 : 1}
-              className="w-full bg-gray-50 border border-border-default rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 focus:bg-white resize-none transition-all shadow-sm thai-no-break custom-scrollbar"
+              className="w-full bg-gray-50 border border-border-default rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white resize-none transition-all shadow-sm thai-no-break custom-scrollbar"
               style={{ minHeight: '44px', maxHeight: '120px' }}
             />
             {/* Expand Toggle */}
@@ -206,7 +206,7 @@ export function MessageInput({
             type="submit"
             disabled={!inputText.trim() || sending || !isHumanMode}
             className={`p-3 rounded-xl shadow-sm transition-all flex-shrink-0 ${inputText.trim() && isHumanMode
-                ? 'bg-brand-600 text-white hover:bg-brand-700 hover:shadow active:scale-95'
+                ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow active:scale-95'
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               }`}
           >

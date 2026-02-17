@@ -37,7 +37,7 @@ function AdminAuthGate({ children }: { children: React.ReactNode }) {
   if (isLoading || !isAuthenticated) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
       </div>
     );
   }

@@ -31,7 +31,7 @@ const ACTION_COLORS: Record<string, string> = {
   "claim_session": "bg-info/12 text-info",
   "close_session": "bg-danger/12 text-danger",
   "send_message": "bg-success/12 text-success",
-  "create": "bg-purple-500/12 text-purple-600",
+  "create": "bg-indigo-500/12 text-indigo-600",
   "update": "bg-warning/12 text-warning",
   "delete": "bg-danger/12 text-danger",
   "login": "bg-slate-100 text-slate-600",

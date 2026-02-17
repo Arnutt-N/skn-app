@@ -19,9 +19,9 @@ interface StatsCardProps {
 
 const colorMap = {
   primary: {
-    iconBg: 'bg-gradient-to-br from-brand-100 to-brand-50',
-    text: 'text-brand-600',
-    glow: 'group-hover:shadow-brand-500/20',
+    iconBg: 'bg-gradient-to-br from-blue-100 to-blue-50',
+    text: 'text-blue-600',
+    glow: 'group-hover:shadow-blue-500/20',
   },
   success: {
     iconBg: 'bg-gradient-to-br from-green-100 to-green-50',
@@ -44,9 +44,9 @@ const colorMap = {
     glow: 'group-hover:shadow-blue-500/20',
   },
   purple: {
-    iconBg: 'bg-gradient-to-br from-purple-100 to-purple-50',
-    text: 'text-purple-600',
-    glow: 'group-hover:shadow-purple-500/20',
+    iconBg: 'bg-gradient-to-br from-indigo-100 to-indigo-50',
+    text: 'text-indigo-600',
+    glow: 'group-hover:shadow-indigo-500/20',
   },
 };
 

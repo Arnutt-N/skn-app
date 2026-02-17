@@ -94,7 +94,7 @@ export function ChatHeader({
             className={`ring-1 ring-inset hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all md:inline-flex ${
               isBot
                 ? 'bg-gray-100 text-text-secondary ring-gray-200 hover:bg-gray-200'
-                : 'bg-brand-50 text-brand-600 ring-brand-100 hover:bg-brand-100'
+                : 'bg-blue-50 text-blue-600 ring-blue-100 hover:bg-blue-100'
             }`}
           >
             {isBot ? <Bot className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
@@ -115,7 +115,7 @@ export function ChatHeader({
             onClick={onToggleCustomerPanel}
             className={`rounded-xl border p-2 transition-colors ${
               showCustomerPanel
-                ? 'border-brand-200 bg-brand-50 text-brand-600'
+                ? 'border-blue-200 bg-blue-50 text-blue-600'
                 : 'border-border-default bg-surface text-text-tertiary hover:bg-gray-50'
             }`}
             aria-label={showCustomerPanel ? 'Hide customer panel' : 'Show customer panel'}

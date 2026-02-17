@@ -84,7 +84,7 @@ export function ConversationList() {
         </Link>
         <div className="flex-1">
           <h1 className="text-white font-bold text-sm tracking-wide">Conversations</h1>
-          <p className="text-[11px] text-slate-300 flex items-center gap-1">
+          <p className="text-[11px] text-slate-400 flex items-center gap-1">
             <Users className="w-3 h-3" />
             <span>{activeCount} online</span>
           </p>
@@ -111,7 +111,7 @@ export function ConversationList() {
               className={`flex-1 py-1.5 px-2 text-[11px] font-semibold rounded-lg transition-all ${
                 filterStatus === btn.key
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-900/30'
-                  : 'bg-white/5 text-slate-300 hover:text-white'
+                  : 'bg-white/5 text-slate-400 hover:text-white'
               }`}
               onClick={() => setFilterStatus(btn.key)}
             >
@@ -172,7 +172,7 @@ export function ConversationList() {
                     <div className="text-[11px] text-white font-medium truncate">
                       {result.display_name || result.line_user_id}
                     </div>
-                    <div className="text-[11px] text-slate-300 truncate">{result.content}</div>
+                    <div className="text-[11px] text-slate-400 truncate">{result.content}</div>
                   </button>
                 ))}
               </div>
@@ -230,7 +230,7 @@ export function ConversationList() {
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-full bg-offline" />
-          {closedCount} offline
+          <span className="text-slate-400">{closedCount} offline</span>
         </span>
       </div>
       </div>

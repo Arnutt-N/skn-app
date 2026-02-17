@@ -387,7 +387,7 @@ export default function CategoryDetailPage() {
                                                 {index + 1}
                                             </span>
                                             <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide ${resp.reply_type === 'text' ? 'bg-blue-50 text-blue-600' :
-                                                    resp.reply_type === 'flex' ? 'bg-purple-50 text-purple-600' :
+                                                    resp.reply_type === 'flex' ? 'bg-indigo-50 text-indigo-600' :
                                                         resp.reply_type === 'image' ? 'bg-pink-50 text-pink-600' :
                                                             'bg-slate-100 text-slate-600'
                                                 }`}>

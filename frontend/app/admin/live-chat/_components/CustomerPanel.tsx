@@ -97,13 +97,13 @@ export function CustomerPanel({
           <button
             onClick={refreshProfile}
             disabled={refreshing}
-            className="text-xs text-text-tertiary hover:text-brand-600 flex items-center gap-1 disabled:opacity-60 transition-colors"
+            className="text-xs text-text-tertiary hover:text-indigo-600 flex items-center gap-1 disabled:opacity-60 transition-colors"
           >
             <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
           <span className="text-text-tertiary">·</span>
-          <button className="text-xs text-brand-600 hover:underline flex items-center gap-1">
+          <button className="text-xs text-indigo-600 hover:underline flex items-center gap-1">
             View <ExternalLink className="w-3 h-3" />
           </button>
         </div>
@@ -150,7 +150,7 @@ export function CustomerPanel({
           <p className="text-[10px] text-text-tertiary font-semibold mb-1.5 uppercase tracking-wider">LINE ID</p>
           <div className="flex items-center gap-2">
             <p className="text-xs text-text-secondary font-mono truncate flex-1">{currentChat.line_user_id}</p>
-            <button onClick={copyLineId} className="p-1 text-text-tertiary hover:text-brand-600 rounded transition-colors" aria-label="Copy LINE ID">
+            <button onClick={copyLineId} className="p-1 text-text-tertiary hover:text-indigo-600 rounded transition-colors" aria-label="Copy LINE ID">
               <Copy className="w-3 h-3" />
             </button>
           </div>
@@ -184,7 +184,7 @@ export function CustomerPanel({
           <p className="text-[10px] text-text-tertiary font-semibold uppercase tracking-wider">Internal Notes</p>
           <textarea
             placeholder="Add notes about this customer..."
-            className="w-full text-xs bg-white border border-border-default rounded-lg px-3 py-2 text-text-primary placeholder:text-text-tertiary outline-none focus:ring-2 focus:ring-brand-500/30 resize-none"
+            className="w-full text-xs bg-white border border-border-default rounded-lg px-3 py-2 text-text-primary placeholder:text-text-tertiary outline-none focus:ring-2 focus:ring-blue-500/40 resize-none"
             rows={3}
           />
         </div>
