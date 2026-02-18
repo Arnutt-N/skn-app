@@ -74,20 +74,22 @@ export function ConversationList() {
 
       <div className="relative z-10 flex h-full flex-col">
       {/* Header */}
-      <div className="h-16 px-4 border-b border-white/10 flex items-center gap-3">
+      <div className="h-20 px-4 border-b border-white/10 flex items-center gap-3">
         <Link
           href="/admin"
-          className="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 hover:shadow-blue-500/30 transition-shadow"
+          className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10 hover:shadow-blue-500/30 transition-shadow flex-shrink-0"
           aria-label="Back to admin dashboard"
         >
           <Home className="w-4 h-4" />
         </Link>
-        <div className="flex-1">
-          <h1 className="text-white font-bold text-sm tracking-wide">Conversations</h1>
-          <p className="text-[11px] text-slate-400 flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            <span>{activeCount} online</span>
-          </p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-white font-bold text-base tracking-wide">Live Chat</h1>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[9px] font-semibold text-green-400">
+              <Users className="w-2.5 h-2.5" />
+              {activeCount} online
+            </span>
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Calendar, Clock, Copy, ExternalLink, MessageSquare, RefreshCw, Star, Trash2, User, X } from 'lucide-react';
+import { Bell, Calendar, Clock, Copy, ExternalLink, MessageSquare, RefreshCw, Star, Trash2, User, X } from 'lucide-react';
 
 import type { CurrentChat } from '../_types';
 import { useAuth } from '@/contexts/AuthContext';
@@ -78,8 +78,8 @@ export function CustomerPanel({
   return (
     <aside className="w-72 bg-surface border-l border-border-default flex flex-col flex-shrink-0 z-20 thai-text">
       {/* Header */}
-      <div className="h-16 px-4 border-b border-border-default flex items-center justify-between">
-        <span className="font-semibold text-text-primary text-xs tracking-wider uppercase">User Profile</span>
+      <div className="h-20 px-4 border-b border-border-default flex items-center justify-between">
+        <span className="font-bold text-slate-800 text-xs tracking-widest uppercase">Customer Info</span>
         <button onClick={onClose} className="p-1.5 text-text-tertiary hover:text-text-primary rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close customer panel">
           <X className="w-4 h-4" />
         </button>
@@ -104,7 +104,30 @@ export function CustomerPanel({
           </button>
           <span className="text-text-tertiary">·</span>
           <button className="text-xs text-indigo-600 hover:underline flex items-center gap-1">
-            View <ExternalLink className="w-3 h-3" />
+            View Profile <ExternalLink className="w-3 h-3" />
+          </button>
+        </div>
+
+        {/* Action icon row */}
+        <div className="flex items-center justify-center gap-3 mt-4">
+          <button
+            onClick={copyLineId}
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-50 hover:bg-indigo-50 text-text-tertiary hover:text-indigo-600 border border-border-default transition-all"
+            aria-label="Copy LINE ID"
+          >
+            <Copy className="w-4 h-4" />
+          </button>
+          <button
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-50 hover:bg-indigo-50 text-text-tertiary hover:text-indigo-600 border border-border-default transition-all"
+            aria-label="Notifications"
+          >
+            <Bell className="w-4 h-4" />
+          </button>
+          <button
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-50 hover:bg-amber-50 text-text-tertiary hover:text-amber-500 border border-border-default transition-all"
+            aria-label="Mark as VIP"
+          >
+            <Star className="w-4 h-4" />
           </button>
         </div>
 

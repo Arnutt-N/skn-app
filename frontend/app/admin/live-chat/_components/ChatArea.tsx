@@ -158,7 +158,7 @@ export function ChatArea() {
     const activeCount = conversations.filter((c) => c.session?.status === 'ACTIVE').length;
     return (
       <div className="flex-1 flex flex-col">
-        <header className="h-16 px-5 bg-surface border-b border-border-default flex items-center justify-between">
+        <header className="h-20 px-5 bg-white/80 backdrop-blur-sm border-b border-border-default flex items-center justify-between">
           <span className="font-semibold text-text-primary text-sm">Live Chat Console</span>
           <div className="flex items-center gap-3">
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${connectionStatus.className}`} aria-live="polite">

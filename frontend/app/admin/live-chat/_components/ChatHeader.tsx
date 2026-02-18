@@ -3,11 +3,11 @@
 import React from 'react';
 import {
   ArrowLeft,
-  Bot,
   ChevronLeft,
   ChevronRight,
   Star,
   User,
+  Zap,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import type { CurrentChat } from '../_types';
@@ -47,8 +47,9 @@ export function ChatHeader({
   const fallback = displayName.charAt(0) || 'U';
 
   return (
-    <header className="h-16 border-b border-border-default bg-surface px-4 thai-text">
+    <header className="h-20 border-b border-border-default bg-white/80 backdrop-blur-sm px-5 thai-text">
       <div className="flex h-full items-center justify-between">
+        {/* Left: back + avatar + name + mode label */}
         <div className="flex items-center gap-3">
           {isMobileView && (
             <button
@@ -66,40 +67,59 @@ export function ChatHeader({
             aria-label="Toggle customer panel"
           >
             <Avatar
-              size="md"
+              size="lg"
               src={currentChat?.picture_url}
               alt={displayName}
               fallback={fallback}
-              className="border border-border-subtle"
+              className="border-2 border-white ring-2 ring-indigo-500/20"
             />
             <span
-              className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface ${statusColor}`}
+              className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${statusColor}`}
             />
           </button>
 
           <div>
             <div className="flex items-center gap-1.5">
-              <p className="thai-no-break text-sm font-semibold text-text-primary">{displayName}</p>
+              <p className="thai-no-break text-base font-bold text-slate-800">{displayName}</p>
               {isVip && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />}
             </div>
-            <p className="thai-no-break text-xs text-text-tertiary">
+            <p className="thai-no-break text-xs text-slate-500">
               {isBot ? 'Bot Mode' : 'Manual Mode'}
             </p>
           </div>
         </div>
 
+        {/* Right: mode toggle + session actions + panel toggle */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onToggleMode(isBot ? 'HUMAN' : 'BOT')}
-            className={`ring-1 ring-inset hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all md:inline-flex ${
-              isBot
-                ? 'bg-gray-100 text-text-secondary ring-gray-200 hover:bg-gray-200'
-                : 'bg-blue-50 text-blue-600 ring-blue-100 hover:bg-blue-100'
-            }`}
-          >
-            {isBot ? <Bot className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
-            {isBot ? 'BOT' : 'MANUAL'}
-          </button>
+          {/* Two-button segmented mode control */}
+          <div className="hidden md:flex items-center gap-1 p-1 bg-gray-100 rounded-full">
+            <button
+              onClick={() => onToggleMode('BOT')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+                isBot
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/20'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+              aria-label="Switch to Auto (Bot) mode"
+              aria-pressed={isBot}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Auto
+            </button>
+            <button
+              onClick={() => onToggleMode('HUMAN')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+                !isBot
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/20'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+              aria-label="Switch to Manual mode"
+              aria-pressed={!isBot}
+            >
+              <User className="h-3.5 w-3.5" />
+              Manual
+            </button>
+          </div>
 
           <div className="mx-1 hidden h-6 w-px bg-border-default sm:block" />
 
@@ -115,7 +135,7 @@ export function ChatHeader({
             onClick={onToggleCustomerPanel}
             className={`rounded-xl border p-2 transition-colors ${
               showCustomerPanel
-                ? 'border-blue-200 bg-blue-50 text-blue-600'
+                ? 'border-indigo-200 bg-indigo-50 text-indigo-600'
                 : 'border-border-default bg-surface text-text-tertiary hover:bg-gray-50'
             }`}
             aria-label={showCustomerPanel ? 'Hide customer panel' : 'Show customer panel'}
