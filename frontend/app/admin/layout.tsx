@@ -37,7 +37,7 @@ function AdminAuthGate({ children }: { children: React.ReactNode }) {
   if (isLoading || !isAuthenticated) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -56,9 +56,9 @@ function ThemeToggle() {
         onClick={toggleTheme}
         className={cn(
           'p-2 rounded-xl transition-all duration-200',
-          'text-slate-400 hover:text-indigo-600 hover:bg-slate-50',
-          'dark:text-gray-400 dark:hover:text-indigo-400 dark:hover:bg-gray-800',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50'
+          'text-text-tertiary hover:text-brand-600 hover:bg-gray-50',
+          'dark:hover:text-brand-400 dark:hover:bg-gray-800',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50'
         )}
         aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       >
@@ -283,13 +283,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsMobileMenuOpen(true)}
-                  className="lg:hidden p-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-100 dark:border-gray-700 text-slate-600 dark:text-gray-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                  className="lg:hidden p-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-100 dark:border-gray-700 text-text-secondary dark:text-gray-400 hover:text-brand-600 transition-colors cursor-pointer"
                   aria-label="Open menu"
                 >
                   <Menu className="w-5 h-5" />
                 </button>
 
-                <div className="hidden md:flex items-center bg-slate-100/50 dark:bg-gray-700/50 rounded-xl px-4 py-2.5 border border-slate-200 dark:border-gray-600 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900 transition-all w-64">
+                <div className="hidden md:flex items-center bg-slate-100/50 dark:bg-gray-700/50 rounded-xl px-4 py-2.5 border border-slate-200 dark:border-gray-600 focus-within:ring-2 focus-within:ring-brand-100 dark:focus-within:ring-brand-900 transition-all w-64">
                   <Search className="w-4 h-4 text-slate-400 mr-2 flex-shrink-0" />
                   <input
                     type="text"
@@ -304,7 +304,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                 <Tooltip content="Notifications">
                   <button
-                    className="p-2.5 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-gray-700 transition-all relative"
+                    className="p-2.5 rounded-xl text-text-tertiary hover:text-brand-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all relative"
                     aria-label="Notifications"
                   >
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-gray-800 animate-pulse" />
