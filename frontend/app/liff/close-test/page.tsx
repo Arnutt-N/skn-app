@@ -71,7 +71,7 @@ export default function CloseTestPage() {
     }, [timeLeft])
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans p-4 flex items-center justify-center">
+        <div className="min-h-screen bg-bg pb-20 font-sans p-4 flex items-center justify-center">
             <Head>
                 <title>Test Close Window</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />

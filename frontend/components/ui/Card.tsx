@@ -13,27 +13,27 @@ const cardVariants = cva(
     variants: {
       variant: {
         default: [
-          'bg-white border border-gray-100',
-          'shadow-md shadow-gray-200/50',
+          'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700',
+          'shadow-md shadow-gray-200/50 dark:shadow-none',
         ],
         elevated: [
-          'bg-white border border-gray-100',
-          'shadow-lg shadow-gray-200/60',
+          'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700',
+          'shadow-lg shadow-gray-200/60 dark:shadow-none',
         ],
         glass: [
-          'bg-white/70 backdrop-blur-xl backdrop-saturate-150',
-          'border border-white/50',
-          'shadow-lg shadow-gray-200/50',
+          'bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl backdrop-saturate-150',
+          'border border-white/50 dark:border-gray-700/50',
+          'shadow-lg shadow-gray-200/50 dark:shadow-none',
         ],
         outlined: [
-          'bg-transparent border-2 border-gray-200',
+          'bg-transparent border-2 border-gray-200 dark:border-gray-600',
         ],
         filled: [
-          'bg-gray-50 border border-gray-100',
+          'bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700',
         ],
         gradient: [
-          'bg-gradient-to-br from-white to-gray-50',
-          'border border-gray-100 shadow-md',
+          'bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900',
+          'border border-gray-100 dark:border-gray-700 shadow-md dark:shadow-none',
         ],
       },
       radius: {
@@ -122,7 +122,7 @@ const CardHeader = React.forwardRef<
     ref={ref}
     className={cn(
       'flex flex-col space-y-1.5',
-      divider && 'pb-5 border-b border-gray-100',
+      divider && 'pb-5 border-b border-gray-100 dark:border-gray-700',
       className
     )}
     {...props}
@@ -139,7 +139,7 @@ const CardTitle = React.forwardRef<
     ref={ref}
     className={cn(
       'text-lg font-semibold tracking-tight',
-      gradient ? 'text-gradient' : 'text-gray-900',
+      gradient ? 'text-gradient' : 'text-gray-900 dark:text-gray-100',
       className
     )}
     {...props}
@@ -154,7 +154,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn('text-sm text-gray-500', className)}
+    className={cn('text-sm text-gray-500 dark:text-gray-400', className)}
     {...props}
   />
 ));
@@ -190,7 +190,7 @@ const CardFooter = React.forwardRef<
       className={cn(
         'flex items-center gap-3',
         alignClasses[align],
-        divider && 'pt-5 border-t border-gray-100 mt-5',
+        divider && 'pt-5 border-t border-gray-100 dark:border-gray-700 mt-5',
         className
       )}
       {...props}

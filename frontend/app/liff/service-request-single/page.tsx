@@ -336,7 +336,7 @@ export default function LiffServiceRequestSingle() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+            <div className="min-h-screen flex items-center justify-center bg-bg">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-4 text-gray-500 font-medium">กำลังโหลดระบบ...</p>
@@ -347,7 +347,7 @@ export default function LiffServiceRequestSingle() {
 
     if (success) {
         return (
-            <div className="min-h-screen p-6 bg-[#F8FAFC] flex items-center justify-center">
+            <div className="min-h-screen p-6 bg-bg flex items-center justify-center">
                 <Card glass className="max-w-sm w-full text-center py-8">
                     <CardContent>
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -369,7 +369,7 @@ export default function LiffServiceRequestSingle() {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans text-gray-900">
+        <div className="min-h-screen bg-bg pb-24 font-sans text-gray-900">
             <Head>
                 <title>ยื่นคำร้อง - JSK 4.0</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />

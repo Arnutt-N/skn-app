@@ -429,7 +429,7 @@ export default function LiffServiceRequestV2() {
 
     if (success) {
         return (
-            <div className="min-h-screen p-6 bg-[#F8FAFC] flex items-center justify-center">
+            <div className="min-h-screen p-6 bg-bg flex items-center justify-center">
                 <Card glass className="max-w-sm w-full text-center py-8">
                     <CardContent>
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -475,7 +475,7 @@ export default function LiffServiceRequestV2() {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
+        <div className="min-h-screen bg-bg pb-20 font-sans">
             <Head>
                 <title>ยื่นคำร้อง - JSK 4.0</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />

@@ -266,11 +266,11 @@
   }
 
   .ds-panel {
-    @apply rounded-2xl border border-gray-100 bg-white shadow-sm;
+    @apply rounded-2xl border border-gray-100 bg-white shadow-sm dark:bg-gray-800 dark:border-gray-700 dark:shadow-none;
   }
 
   .ds-panel-header {
-    @apply flex items-center justify-between border-b border-gray-100 px-5 py-4;
+    @apply flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-700;
   }
 
   .ds-panel-body {

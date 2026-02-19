@@ -314,16 +314,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                 <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1" />
 
-                <div className="bg-gradient-to-tr from-blue-500 to-indigo-600 p-[2px] rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow">
-                  <div className="bg-white dark:bg-gray-800 rounded-[10px]">
-                    <Avatar size="sm" fallback="AD" status="online" />
-                  </div>
-                </div>
+                <Avatar
+                  size="sm"
+                  fallback="AD"
+                  status="online"
+                  className="ring-2 ring-blue-500/40 ring-offset-1 ring-offset-white dark:ring-offset-gray-800"
+                />
               </div>
             </header>
 
             {/* Page content */}
-            <main id="main-content" className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 scrollbar-thin">
+            <main id="main-content" className="flex-1 overflow-y-auto px-4 sm:px-6 pt-6 pb-6 scrollbar-thin">
               <div className="animate-fade-in-up">
                 {children}
               </div>
