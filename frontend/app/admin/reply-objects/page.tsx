@@ -1,7 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+import { Package, Trash2, SquarePen, ChevronDown } from 'lucide-react';
+import PageHeader from '@/app/admin/components/PageHeader';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ActionIconButton } from '@/components/ui/ActionIconButton';
 
 interface ReplyObject {
     id: number;
@@ -9,7 +14,7 @@ interface ReplyObject {
     name: string;
     object_type: string;
     category?: string;
-    payload: any;
+    payload: unknown;
     alt_text?: string;
     is_active: boolean;
     created_at: string;
@@ -33,11 +38,7 @@ export default function ReplyObjectsPage() {
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-    useEffect(() => {
-        fetchObjects();
-    }, []);
-
-    const fetchObjects = async () => {
+    const fetchObjects = useCallback(async () => {
         try {
             const res = await fetch(`${API_BASE}/admin/reply-objects`);
             if (res.ok) setObjects(await res.json());
@@ -46,7 +47,14 @@ export default function ReplyObjectsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            void fetchObjects();
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [fetchObjects]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -73,7 +81,7 @@ export default function ReplyObjectsPage() {
                 const error = await res.json();
                 alert(error.detail || 'Error saving');
             }
-        } catch (error) {
+        } catch {
             alert('Invalid JSON payload');
         }
     };
@@ -108,82 +116,71 @@ export default function ReplyObjectsPage() {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-800">Reply Objects</h1>
-                    <p className="text-slate-500 font-medium">Manage reusable message templates</p>
-                </div>
-                <button
-                    onClick={() => setShowForm(true)}
-                    className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl hover:from-indigo-500 hover:to-purple-500 transition-all font-bold shadow-lg shadow-indigo-600/20 active:scale-95 text-white"
-                >
+        <div className="space-y-6 animate-in fade-in duration-500 thai-text">
+            <PageHeader title="Reply Objects" subtitle="Manage reusable message templates">
+                <Button onClick={() => setShowForm(true)}>
                     + New Template
-                </button>
-            </div>
+                </Button>
+            </PageHeader>
 
             {/* Objects Grid */}
             {loading ? (
-                <div className="flex flex-col items-center justify-center min-h-[400px]">
-                    <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
-                    <p className="mt-4 text-slate-400 font-bold tracking-widest text-xs uppercase">Loading Assets...</p>
-                </div>
+                <LoadingSpinner label="Loading Assets..." />
             ) : objects.length === 0 ? (
-                <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-[3rem] border border-slate-200 border-dashed p-20 text-center">
-                    <div className="w-32 h-32 bg-indigo-50 rounded-full flex items-center justify-center mb-10 border border-indigo-100 shadow-inner">
-                        <svg className="w-12 h-12 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
+                <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-2xl border border-dashed border-gray-200 p-20 text-center dark:bg-gray-800 dark:border-gray-600">
+                    <div className="w-32 h-32 bg-brand-50 rounded-full flex items-center justify-center mb-10 border border-brand-100 shadow-inner dark:bg-brand-500/10 dark:border-brand-500/20">
+                        <Package className="w-12 h-12 text-brand-300 dark:text-brand-400" />
                     </div>
-                    <h3 className="text-3xl font-black text-slate-800 mb-4 tracking-tight">Empty Repository</h3>
-                    <p className="text-slate-500 text-lg max-w-sm leading-relaxed">No reusable templates found. Create your first template to simplify your automated responses.</p>
+                    <h3 className="text-3xl font-black text-gray-800 mb-4 tracking-tight dark:text-gray-100">Empty Repository</h3>
+                    <p className="text-gray-500 text-lg max-w-sm leading-relaxed dark:text-gray-400">No reusable templates found. Create your first template to simplify your automated responses.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {objects.map((obj) => (
                         <div
                             key={obj.id}
-                            className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden hover:border-indigo-200 transition-all duration-300 group relative shadow-lg hover:shadow-xl"
+                            className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:border-brand-200 transition-all duration-300 group relative shadow-sm hover:shadow-lg dark:bg-gray-800 dark:border-gray-700 dark:hover:border-brand-500/30"
                         >
-                            <div className="p-8">
-                                <div className="flex items-start justify-between mb-6">
+                            <div className="p-6">
+                                <div className="flex items-start justify-between mb-4">
                                     <div>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-indigo-500 font-black font-mono text-sm tracking-tighter">${obj.object_id}</span>
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                            <span className="text-brand-600 font-black font-mono text-sm tracking-tighter dark:text-brand-400">${obj.object_id}</span>
                                         </div>
-                                        <h3 className="text-xl font-bold text-slate-800 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{obj.name}</h3>
+                                        <h3 className="text-lg font-bold text-gray-800 group-hover:text-brand-600 transition-colors tracking-tight dark:text-gray-100 dark:group-hover:text-brand-400">{obj.name}</h3>
                                     </div>
-                                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm ${obj.object_type === 'flex' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
-                                        obj.object_type === 'image' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                            obj.object_type === 'sticker' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
-                                                'bg-slate-50 text-slate-500 border-slate-100'
+                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border shadow-sm ${obj.object_type === 'flex' ? 'bg-brand-50 text-brand-600 border-brand-100 dark:bg-brand-500/10 dark:text-brand-400 dark:border-brand-500/20' :
+                                        obj.object_type === 'image' ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' :
+                                            obj.object_type === 'sticker' ? 'bg-yellow-50 text-yellow-600 border-yellow-100 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20' :
+                                                'bg-gray-50 text-gray-500 border-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600'
                                         }`}>
                                         {obj.object_type}
                                     </span>
                                 </div>
 
                                 {obj.category && (
-                                    <div className="flex items-center gap-2 mb-6 text-slate-400 uppercase tracking-widest text-[9px] font-bold">
-                                        <span className="w-1 h-1 bg-slate-400 rounded-full" />
+                                    <div className="flex items-center gap-2 mb-4 text-gray-400 uppercase tracking-widest text-[9px] font-bold dark:text-gray-500">
+                                        <span className="w-1 h-1 bg-gray-400 rounded-full dark:bg-gray-500" />
                                         {obj.category}
                                     </div>
                                 )}
 
-                                <div className="flex gap-3 h-12">
-                                    <button
+                                <div className="flex gap-2 h-10">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="flex-1"
+                                        leftIcon={<SquarePen className="w-3.5 h-3.5" />}
                                         onClick={() => handleEdit(obj)}
-                                        className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold transition-all border border-slate-100 uppercase tracking-widest hover:text-indigo-600"
                                     >
                                         Modify
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <ActionIconButton
+                                        icon={<Trash2 className="w-4 h-4" />}
+                                        label="ลบ"
+                                        variant="danger"
                                         onClick={() => handleDelete(obj.object_id)}
-                                        className="px-4 bg-red-50 hover:bg-red-100 text-red-400 hover:text-red-500 rounded-xl transition-all border border-red-100"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -192,115 +189,102 @@ export default function ReplyObjectsPage() {
             )}
 
             {/* Form Modal */}
-            {showForm && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 w-full max-w-3xl flex flex-col max-h-[90vh] shadow-2xl overflow-hidden scale-in-95 animate-in duration-300">
-                        <div className="p-10 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50">
-                            <div>
-                                <p className="text-indigo-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Configuration</p>
-                                <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">
-                                    {editingId ? 'Edit Object' : 'New Template'}
-                                </h2>
-                            </div>
-                            <button onClick={resetForm} className="p-3 bg-white hover:bg-slate-100 rounded-2xl text-slate-400 hover:text-slate-600 transition-colors shadow-sm border border-slate-100">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
+            <Modal
+                isOpen={showForm}
+                onClose={resetForm}
+                title={editingId ? 'Edit Object' : 'New Template'}
+                maxWidth="2xl"
+            >
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1 dark:text-gray-400">Universal ID *</label>
+                            <input
+                                type="text"
+                                value={formData.object_id}
+                                onChange={(e) => setFormData({ ...formData, object_id: e.target.value })}
+                                disabled={!!editingId}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:bg-white disabled:opacity-50 transition-all font-mono dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                                placeholder="flex_welcome"
+                                required
+                            />
                         </div>
-
-                        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-10 space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Universal ID *</label>
-                                    <input
-                                        type="text"
-                                        value={formData.object_id}
-                                        onChange={(e) => setFormData({ ...formData, object_id: e.target.value })}
-                                        disabled={!!editingId}
-                                        className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white disabled:opacity-50 transition-all font-mono"
-                                        placeholder="flex_welcome"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Internal Name *</label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all"
-                                        placeholder="Welcome Message 2.0"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Message Protocol *</label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.object_type}
-                                            onChange={(e) => setFormData({ ...formData, object_type: e.target.value })}
-                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all cursor-pointer"
-                                        >
-                                            {OBJECT_TYPES.map(t => (
-                                                <option key={t} value={t} className="bg-white text-slate-800">{t.toUpperCase()}</option>
-                                            ))}
-                                        </select>
-                                        <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Grouping Category</label>
-                                    <input
-                                        type="text"
-                                        value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all"
-                                        placeholder="Marketing / Support"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Alt Text (Mobile/Tablet accessibility)</label>
-                                <input
-                                    type="text"
-                                    value={formData.alt_text}
-                                    onChange={(e) => setFormData({ ...formData, alt_text: e.target.value })}
-                                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all"
-                                    placeholder="Brief description of the message"
-                                />
-                            </div>
-
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">JSON Payload *</label>
-                                <textarea
-                                    value={formData.payload}
-                                    onChange={(e) => setFormData({ ...formData, payload: e.target.value })}
-                                    rows={12}
-                                    className="w-full px-8 py-6 bg-slate-900 border border-slate-800 rounded-[2rem] text-indigo-300 font-mono text-xs focus:outline-none focus:border-indigo-500/50 transition-all overscroll-contain"
-                                    placeholder="{ ... }"
-                                    required
-                                />
-                            </div>
-
-                            <div className="pt-6 shrink-0">
-                                <button
-                                    type="submit"
-                                    className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-3xl font-black uppercase tracking-[0.3em] transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98]"
-                                >
-                                    {editingId ? 'Save Modifications' : 'Initialize Template'}
-                                </button>
-                            </div>
-                        </form>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1 dark:text-gray-400">Internal Name *</label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                                placeholder="Welcome Message 2.0"
+                                required
+                            />
+                        </div>
                     </div>
-                </div>
-            )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1 dark:text-gray-400">Message Protocol *</label>
+                            <div className="relative">
+                                <select
+                                    value={formData.object_type}
+                                    onChange={(e) => setFormData({ ...formData, object_type: e.target.value })}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 font-bold appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                                >
+                                    {OBJECT_TYPES.map(t => (
+                                        <option key={t} value={t} className="bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100">{t.toUpperCase()}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                                    <ChevronDown className="w-4 h-4" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1 dark:text-gray-400">Grouping Category</label>
+                            <input
+                                type="text"
+                                value={formData.category}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                                placeholder="Marketing / Support"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1 dark:text-gray-400">Alt Text (Mobile/Tablet accessibility)</label>
+                        <input
+                            type="text"
+                            value={formData.alt_text}
+                            onChange={(e) => setFormData({ ...formData, alt_text: e.target.value })}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                            placeholder="Brief description of the message"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1 dark:text-gray-400">JSON Payload *</label>
+                        <textarea
+                            value={formData.payload}
+                            onChange={(e) => setFormData({ ...formData, payload: e.target.value })}
+                            rows={10}
+                            className="w-full px-6 py-4 bg-gray-900 border border-gray-800 rounded-xl text-green-400 font-mono text-xs focus:outline-none focus:border-brand-500/50 transition-all overscroll-contain"
+                            placeholder="{ ... }"
+                            required
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                        <Button type="submit" className="flex-1">
+                            {editingId ? 'Save Modifications' : 'Initialize Template'}
+                        </Button>
+                        <Button type="button" variant="ghost" onClick={resetForm}>
+                            Cancel
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }

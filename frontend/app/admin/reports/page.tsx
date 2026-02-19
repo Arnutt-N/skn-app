@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import PageHeader from '@/app/admin/components/PageHeader';
 import {
     Users,
     Zap,
@@ -49,20 +51,20 @@ export default function ReportsPage() {
             }
         };
         fetchData();
-    }, []);
+    }, [API_BASE]);
 
-    if (loading) return <div className="p-8 text-center text-slate-400">Loading Analytics...</div>;
+    if (loading) return <LoadingSpinner label="Loading Analytics..." />;
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            <div>
-                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">รายงานวิเคราะห์ประสิทธิภาพ</h1>
-                <p className="text-sm text-slate-500 text-balance">ติดตามภาระงานรายบุคคลและประสิทธิภาพการให้บริการเฉลี่ยของทีม</p>
-            </div>
+        <div className="thai-text space-y-6 animate-in fade-in duration-500">
+            <PageHeader
+                title="รายงานวิเคราะห์ประสิทธิภาพ"
+                subtitle="ติดตามภาระงานรายบุคคลและประสิทธิภาพการให้บริการเฉลี่ยของทีม"
+            />
 
             {/* Performance Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card className="border-none shadow-sm bg-primary text-white overflow-hidden relative group">
+                <Card className="border-none shadow-sm bg-gradient-to-br from-blue-600 to-indigo-600 text-white overflow-hidden relative group">
                     <CardContent className="p-6">
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
                             <Zap className="w-24 h-24" />
@@ -77,32 +79,32 @@ export default function ReportsPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="border-none shadow-sm bg-white overflow-hidden group">
+                <Card className="border-none shadow-sm bg-white overflow-hidden group dark:bg-gray-800">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
+                            <div className="p-2 bg-blue-50 text-blue-500 rounded-lg dark:bg-blue-500/10">
                                 <Clock className="w-5 h-5" />
                             </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Average</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter dark:text-gray-500">Average</span>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-none mb-1">Cycle Time</p>
-                            <h2 className="text-3xl font-black text-slate-800">{perf?.avg_cycle_time_days || 0} วัน</h2>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest leading-none mb-1 dark:text-gray-400">Cycle Time</p>
+                            <h2 className="text-3xl font-black text-gray-800 dark:text-gray-100">{perf?.avg_cycle_time_days || 0} วัน</h2>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="border-none shadow-sm bg-white overflow-hidden group">
+                <Card className="border-none shadow-sm bg-white overflow-hidden group dark:bg-gray-800">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-amber-50 text-amber-500 rounded-lg">
+                            <div className="p-2 bg-amber-50 text-amber-500 rounded-lg dark:bg-amber-500/10">
                                 <Activity className="w-5 h-5" />
                             </div>
                             <Badge variant="warning" className="text-[9px]">High Activity</Badge>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-none mb-1">Total Active Tasks</p>
-                            <h2 className="text-3xl font-black text-slate-800">
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest leading-none mb-1 dark:text-gray-400">Total Active Tasks</p>
+                            <h2 className="text-3xl font-black text-gray-800 dark:text-gray-100">
                                 {workload.reduce((acc, curr) => acc + curr.pending_count + curr.in_progress_count, 0)} งาน
                             </h2>
                         </div>
@@ -112,27 +114,27 @@ export default function ReportsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Workload Distribution */}
-                <Card glass className="border-none shadow-sm">
-                    <CardHeader className="border-b border-slate-50 py-4 px-6 flex flex-row items-center gap-2">
-                        <Users className="w-5 h-5 text-primary" />
-                        <CardTitle className="text-base font-bold text-slate-700">ภาระงานรายบุคคล (Workload)</CardTitle>
+                <Card className="border-none shadow-sm dark:bg-gray-800">
+                    <CardHeader className="border-b border-gray-50 py-4 px-6 flex flex-row items-center gap-2 dark:border-gray-700">
+                        <Users className="w-5 h-5 text-brand-500" />
+                        <CardTitle className="thai-no-break text-base font-bold text-gray-700 dark:text-gray-200">ภาระงานรายบุคคล (Workload)</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
                         {workload.map((item, idx) => (
                             <div key={idx} className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
                                             {item.agent_name?.[0] || '?'}
                                         </div>
-                                        <span className="text-sm font-bold text-slate-700">{item.agent_name}</span>
+                                        <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{item.agent_name}</span>
                                     </div>
                                     <div className="flex gap-2">
                                         <Badge variant="warning" className="text-[9px] py-0">{item.pending_count} รอรับเรื่อง</Badge>
                                         <Badge variant="info" className="text-[9px] py-0">{item.in_progress_count} ดำเนินการ</Badge>
                                     </div>
                                 </div>
-                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden flex dark:bg-gray-700">
                                     <div
                                         className="bg-amber-400 h-full"
                                         style={{ width: `${(item.pending_count / 10) * 100}%` }}
@@ -147,10 +149,10 @@ export default function ReportsPage() {
                     </CardContent>
                 </Card>
 
-                {/* Team Efficiency Score (Mocked visualization) */}
-                <Card glass className="border-none shadow-sm bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700 text-white">
+                {/* Team Efficiency Score */}
+                <Card className="border-none shadow-sm bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 text-white dark:from-gray-900 dark:to-black">
                     <CardHeader className="py-4 px-6 border-b border-white/10">
-                        <CardTitle className="text-base font-bold flex items-center gap-2">
+                        <CardTitle className="thai-no-break text-base font-bold flex items-center gap-2 text-white">
                             <ArrowUpRight className="w-5 h-5 text-green-400" /> สรุปผลทีมงาน
                         </CardTitle>
                     </CardHeader>
@@ -165,7 +167,7 @@ export default function ReportsPage() {
                         </div>
                         <div className="max-w-[240px]">
                             <h3 className="text-lg font-bold">Excellent Team Work</h3>
-                            <p className="text-xs text-white/50">การตอบสนองและปิดงานทำได้ดีเยี่ยมในรอบ 30 วันที่ผ่านมา</p>
+                            <p className="thai-no-break text-xs text-white/50">การตอบสนองและปิดงานทำได้ดีเยี่ยมในรอบ 30 วันที่ผ่านมา</p>
                         </div>
                         <Button className="bg-white/10 hover:bg-white/20 text-white border-none gap-2 text-xs font-bold px-6">
                             ดูรายละเอียดรายทีม <Briefcase className="w-4 h-4" />

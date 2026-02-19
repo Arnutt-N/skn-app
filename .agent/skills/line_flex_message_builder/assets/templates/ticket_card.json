@@ -1,0 +1,95 @@
+{
+  "type": "bubble",
+  "size": "kilo",
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "backgroundColor": "{{ header_color|default('#00B900') }}",
+    "paddingAll": "md",
+    "contents": [
+      {
+        "type": "text",
+        "text": "{{ ticket_id }}",
+        "color": "#ffffff",
+        "weight": "bold",
+        "size": "sm"
+      }
+    ]
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "sm",
+    "paddingAll": "lg",
+    "contents": [
+      {
+        "type": "text",
+        "text": "{{ title }}",
+        "weight": "bold",
+        "size": "lg",
+        "wrap": true
+      },
+      {
+        "type": "separator",
+        "margin": "md"
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "margin": "md",
+        "contents": [
+          {
+            "type": "text",
+            "text": "Status:",
+            "size": "sm",
+            "color": "#666666",
+            "flex": 2
+          },
+          {
+            "type": "text",
+            "text": "{{ status }}",
+            "size": "sm",
+            "color": "{{ status_color }}",
+            "weight": "bold",
+            "flex": 3
+          }
+        ]
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "text",
+            "text": "Priority:",
+            "size": "sm",
+            "color": "#666666",
+            "flex": 2
+          },
+          {
+            "type": "text",
+            "text": "{{ priority }}",
+            "size": "sm",
+            "color": "#333333",
+            "flex": 3
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "action": {
+          "type": "uri",
+          "label": "View Ticket",
+          "uri": "{{ ticket_url }}"
+        }
+      }
+    ]
+  }
+}

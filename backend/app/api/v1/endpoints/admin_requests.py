@@ -44,18 +44,23 @@ class MonthlyStats(BaseModel):
 @router.get("/stats/monthly", response_model=List[MonthlyStats])
 async def get_monthly_stats(db: AsyncSession = Depends(get_db)):
     """Get request counts grouped by month (last 12 months)."""
+    # Using text() for the order by to reference the alias
+    from sqlalchemy import text
+    month_expr = func.to_char(ServiceRequest.created_at, 'YYYY-MM')
     query = (
         select(
-            func.to_char(ServiceRequest.created_at, 'YYYY-MM').label('month'),
+            month_expr.label('month'),
             func.count(ServiceRequest.id).label('count')
         )
-        .group_by("month")
-        .order_by("month")
+        .group_by(month_expr)
+        .order_by(text('month DESC'))
         .limit(12)
     )
-    
+
     result = await db.execute(query)
-    return [MonthlyStats(month=row.month, count=row.count) for row in result.all()]
+    # Reverse to get chronological order (oldest to newest) for chart
+    stats = [MonthlyStats(month=row.month, count=row.count) for row in result.all()]
+    return stats[::-1]
 
 class WorkloadStats(BaseModel):
     agent_name: str

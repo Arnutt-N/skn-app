@@ -48,3 +48,12 @@ htmlcov/
 examples/
 secrets/
 
+backend/venv_test/
+frontend/tsconfig.tsbuildinfo
+
+
+.claude/settings*
+nul
+research/git_repo/
+nul
+cookies.txt

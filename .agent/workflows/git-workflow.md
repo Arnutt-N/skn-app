@@ -192,11 +192,19 @@ cd /d "D:\genAI\skn-app" && git push origin --tags
 cd /d "D:\genAI\skn-app" && git log -1 --pretty=format:"Hash: %%h%%nAuthor: %%an <%%ae>%%nDate: %%ci%%nMessage: %%s" && echo. && git diff HEAD~1 --name-status
 ```
 
-### Step 9: Create Log File with Timestamp (New - Auto-Creates File)
-// turbo
+### Step 9: Create Log File with Timestamp
+
+**Option A: Quick Command (Use in CMD - แนะนำ)**
 ```bash
-cd /d "D:\genAI\skn-app" && for /f "tokens=2-4 delims=/ " %%a in ('date /t') do set mydate=%%c%%b%%a && for /f "tokens=1-2 delims=/:" %%a in ('time /t') do set mytime=%%a%%b && (echo # Git Log: %date% %time% && echo. && echo ## Latest Commit && git log -1 --pretty=format:"- Hash: %%h%%n- Author: %%an <%%ae>%%n- Date: %%ci%%n- Message: %%s" && echo. && echo. && echo ## Files Changed && git diff HEAD~1 --name-status && echo. && echo ## Security: All checks passed) > "project-log-md\git-log-%mydate%-%mytime%.md"
+cd /d "D:\genAI\skn-app" && git log -1 --stat > "project-log-md\git-log-%date:~-4,4%%date:~-10,2%%date:~-7,2%-%time:~0,2%%time:~3,2%.md"
 ```
+
+**Option B: Manual Run (ถ้า Option A ไม่ทำงาน)**
+```bash
+cd /d "D:\genAI\skn-app"
+scripts\create-git-log.bat
+```
+> 💡 Batch file จะสร้างไฟล์ log อัตโนมัติที่ `project-log-md\`
 
 ### Step 10: Verify Log File Created
 // turbo
@@ -217,13 +225,18 @@ git commit -m "your message"
 git push origin main
 ```
 
-### Security Manual Check
+### Security Manual Check (Credentials & Secrets)
 ```bash
 cd /d "D:\genAI\skn-app"
-git diff --staged --name-only
-git diff --staged | findstr /I "password= secret= token="
-git check-ignore -v secrets/* .env
+# 1. Check for sensitive filenames in staged changes
+git diff --staged --name-only | findstr /I ".env .env. .pem .key .p12 .pfx id_rsa password secret token credential credentials database.yml config.ini"
+# 2. Check for hardcoded secrets/keys in code modifications
+git diff --staged | findstr /I "password= api_key= secret= token= access_token= private_key= aws_secret"
+# 3. Verify .gitignore is correctly catching secret files
+git check-ignore -v .env .env.local secrets/* 2>nul
 ```
+> 💡 **Tip:** หากรันคำสั่งที่ 1 และ 2 แล้ว **ไม่มีผลลัพธ์ปรากฏขึ้นมาเลย** แสดงว่าโค้ดชุดนี้ปลอดภัย พร้อมสำหรับการ Commit ครับ!
+
 
 ### View & Create Log
 ```bash

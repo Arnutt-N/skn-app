@@ -1,0 +1,6 @@
+@echo off
+echo Attempting to install on Python 3.12...
+py -3.12 -m pip install notebooklm-mcp-server
+echo checking...
+py -3.12 -c "import notebooklm_mcp_server; print('SUCCESS: ' + notebooklm_mcp_server.__file__)"
+py -3.12 -c "import sys; print('PATH:' + sys.executable)"

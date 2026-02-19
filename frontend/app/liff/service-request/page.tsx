@@ -54,15 +54,19 @@ const TOPIC_OPTIONS: Record<string, string[]> = {
 }
 
 export default function LiffServiceRequestV2() {
+    interface LiffProfile {
+        userId: string;
+    }
+
     // --- STATE ---
     const [step, setStep] = useState(0)
-    const [loading, setLoading] = useState(false) // Start as false to render immediately
+    const [, setLoading] = useState(false) // Start as false to render immediately
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-    const [profile, setProfile] = useState<any>(null)
+    const [profile, setProfile] = useState<LiffProfile | null>(null)
     const [isInLineApp, setIsInLineApp] = useState(false)
 
     // Location Data State
@@ -133,7 +137,7 @@ export default function LiffServiceRequestV2() {
                     liff.login()
                     return
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('LIFF Init Error:', err)
                 // Don't show error to user immediately, just log it. 
                 // We'll fallback to manual inputs if LIFF fails.
@@ -152,9 +156,9 @@ export default function LiffServiceRequestV2() {
                 }
                 const data = await res.json()
                 setProvinces(data)
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error("Provinces fetch error:", err)
-                setError(err.message) // Show detail to user for debugging
+                setError(err instanceof Error ? err.message : 'Failed to load provinces') // Show detail to user for debugging
             } finally {
                 // Unblock UI as soon as provinces are loaded (or failed)
                 // We don't wait for LIFF anymore
@@ -364,7 +368,7 @@ export default function LiffServiceRequestV2() {
             let data
             try {
                 data = JSON.parse(resText)
-            } catch (jsonErr) {
+            } catch {
                 // If response is not JSON (e.g. 500 HTML or text)
                 throw new Error(resText || `Server Error: ${res.status} ${res.statusText}`)
             }
@@ -376,9 +380,9 @@ export default function LiffServiceRequestV2() {
             setSuccess(true)
             setShowConfirm(false)
             window.scrollTo(0, 0)
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Submit Error:", err)
-            setError(err.message)
+            setError(err instanceof Error ? err.message : 'Failed to submit')
             setShowConfirm(false)
             window.scrollTo(0, 0)
         } finally {
@@ -425,7 +429,7 @@ export default function LiffServiceRequestV2() {
 
     if (success) {
         return (
-            <div className="min-h-screen p-6 bg-[#F8FAFC] flex items-center justify-center">
+            <div className="min-h-screen p-6 bg-bg flex items-center justify-center">
                 <Card glass className="max-w-sm w-full text-center py-8">
                     <CardContent>
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -455,7 +459,7 @@ export default function LiffServiceRequestV2() {
                                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
                                     <p className="text-amber-700 text-sm font-medium">
                                         📱 หากต้องการติดตามสถานะ<br />
-                                        กรุณาพิมพ์ <strong>"ติดตาม"</strong> ใน LINE OA<br />
+                                        กรุณาพิมพ์ <strong>&quot;ติดตาม&quot;</strong> ใน LINE OA<br />
                                         แล้วใส่เบอร์โทรศัพท์ที่ใช้ยื่นเรื่อง
                                     </p>
                                 </div>
@@ -471,9 +475,9 @@ export default function LiffServiceRequestV2() {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
+        <div className="min-h-screen bg-bg pb-20 font-sans">
             <Head>
-                <title>ยื่นคำร้อง - SKN 4.0</title>
+                <title>ยื่นคำร้อง - JSK 4.0</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
             </Head>
 
@@ -486,7 +490,7 @@ export default function LiffServiceRequestV2() {
                             <h1 className="text-lg font-bold text-gray-900 tracking-tight">ยื่นคำขอรับบริการ</h1>
                         </div>
                         <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
-                            SKN 4.0 Platform • ยุติธรรมจังหวัดสกลนคร
+                            JSK 4.0 Platform • ยุติธรรมจังหวัดสกลนคร
                         </p>
                     </div>
                     <Badge variant={provinces.length > 0 ? "success" : "warning"} className="h-6">

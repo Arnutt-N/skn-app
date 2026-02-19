@@ -12,8 +12,8 @@ const DashboardCharts = dynamic(
 );
 
 interface ChartsWrapperProps {
-    statusData: any[];
-    monthlyData: any[];
+    statusData: Array<{ name: string; value: number }>;
+    monthlyData: Array<{ month: string; count: number }>;
 }
 
 export default function ChartsWrapper(props: ChartsWrapperProps) {

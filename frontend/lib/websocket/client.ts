@@ -1,0 +1,255 @@
+import {
+  MessageType,
+  WebSocketMessage,
+  ConnectionState,
+  UseWebSocketOptions
+} from './types';
+import { ExponentialBackoffStrategy } from './reconnectStrategy';
+import { MessageQueue } from './messageQueue';
+
+export class WebSocketClient {
+  private ws: WebSocket | null = null;
+  private url: string;
+  private adminId: string;
+  private token?: string;
+  private state: ConnectionState = 'disconnected';
+  private reconnectAttempt = 0;
+  private reconnectStrategy = new ExponentialBackoffStrategy();
+  private messageQueue = new MessageQueue();
+  private heartbeatInterval?: ReturnType<typeof setInterval>;
+  private reconnectTimeout?: ReturnType<typeof setTimeout>;
+
+  private onMessage?: (message: WebSocketMessage) => void;
+  private onConnect?: () => void;
+  private onDisconnect?: () => void;
+  private onError?: (error: Error) => void;
+  private onStateChange?: (state: ConnectionState) => void;
+
+  private heartbeatIntervalMs = 25000;
+  private maxReconnectAttempts = 10;
+
+  constructor(options: UseWebSocketOptions & { onStateChange?: (state: ConnectionState) => void }) {
+    this.url = options.url;
+    this.adminId = options.adminId || '1';
+    this.token = options.token;
+    this.onMessage = options.onMessage;
+    this.onConnect = options.onConnect;
+    this.onDisconnect = options.onDisconnect;
+    this.onError = options.onError;
+    this.onStateChange = options.onStateChange;
+
+    if (options.heartbeatInterval) {
+      this.heartbeatIntervalMs = options.heartbeatInterval;
+    }
+    if (options.maxReconnectAttempts) {
+      this.maxReconnectAttempts = options.maxReconnectAttempts;
+    }
+  }
+
+  private setState(state: ConnectionState): void {
+    this.state = state;
+    this.onStateChange?.(state);
+  }
+
+  connect(): void {
+    if (this.state === 'connecting' || this.state === 'connected' || this.state === 'authenticating') {
+      return;
+    }
+
+    this.setState('connecting');
+
+    try {
+      this.ws = new WebSocket(this.url);
+
+      this.ws.onopen = () => this.handleOpen();
+      this.ws.onmessage = (event) => this.handleMessage(event);
+      this.ws.onclose = () => this.handleClose();
+      this.ws.onerror = (error) => this.handleError(error as unknown as Error);
+    } catch (error) {
+      this.handleError(error as Error);
+    }
+  }
+
+  private handleOpen(): void {
+    this.setState('authenticating');
+    // Send auth message
+    this.sendRaw(MessageType.AUTH, { admin_id: this.adminId, token: this.token });
+  }
+
+  private handleMessage(event: MessageEvent): void {
+    try {
+      const message: WebSocketMessage = JSON.parse(event.data);
+
+      // Handle auth response
+      if (message.type === MessageType.AUTH_SUCCESS) {
+        this.setState('connected');
+        this.reconnectAttempt = 0;
+        this.reconnectStrategy.reset();
+        this.startHeartbeat();
+        this.processQueue();
+        this.onConnect?.();
+        return;
+      }
+
+      if (message.type === MessageType.AUTH_ERROR) {
+        this.setState('disconnected');
+        this.onError?.(new Error('Authentication failed'));
+        this.ws?.close();
+        return;
+      }
+
+      // Handle pong (heartbeat response)
+      if (message.type === MessageType.PONG) {
+        return;
+      }
+
+      this.onMessage?.(message);
+    } catch (error) {
+      console.error('Failed to parse WebSocket message:', error);
+    }
+  }
+
+  private handleClose(): void {
+    this.stopHeartbeat();
+    this.ws = null;
+
+    const wasConnected = this.state === 'connected';
+    this.setState('disconnected');
+
+    if (wasConnected) {
+      this.onDisconnect?.();
+    }
+
+    // Attempt reconnect
+    this.attemptReconnect();
+  }
+
+  private handleError(error: Error): void {
+    this.onError?.(error);
+
+    if (this.state === 'connecting' || this.state === 'authenticating') {
+      this.attemptReconnect();
+    }
+  }
+
+  private attemptReconnect(): void {
+    if (!this.reconnectStrategy.shouldRetry(this.reconnectAttempt)) {
+      this.setState('disconnected');
+      return;
+    }
+
+    this.setState('reconnecting');
+    this.reconnectAttempt++;
+
+    const delay = this.reconnectStrategy.getDelay(this.reconnectAttempt);
+
+    this.reconnectTimeout = setTimeout(() => {
+      this.connect();
+    }, delay);
+  }
+
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.heartbeatInterval = setInterval(() => {
+      if (this.state === 'connected' && this.ws?.readyState === WebSocket.OPEN) {
+        this.sendRaw(MessageType.PING, {});
+      }
+    }, this.heartbeatIntervalMs);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = undefined;
+    }
+  }
+
+  private processQueue(): void {
+    while (!this.messageQueue.isEmpty() && this.state === 'connected') {
+      const message = this.messageQueue.dequeue();
+      if (message) {
+        this.sendRaw(message.type as MessageType, message.payload);
+      }
+    }
+  }
+
+  send(type: MessageType | string, payload: unknown): boolean {
+    // Capture WebSocket reference to avoid race condition
+    const ws = this.ws;
+    if (this.state === 'connected' && ws?.readyState === WebSocket.OPEN) {
+      try {
+        this.sendRaw(type, payload);
+        return true;
+      } catch (error) {
+        console.error('Failed to send WebSocket message, queueing:', error);
+        this.messageQueue.enqueue(type, payload);
+        return false;
+      }
+    } else {
+      // Queue message if not connected
+      this.messageQueue.enqueue(type, payload);
+      return false;
+    }
+  }
+
+  private sendRaw(type: MessageType | string, payload: unknown): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    const message: WebSocketMessage = {
+      type,
+      payload,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      this.ws.send(JSON.stringify(message));
+    } catch (error) {
+      console.error('Failed to send WebSocket message:', error);
+      // Queue for retry
+      this.messageQueue.enqueue(type, payload);
+    }
+  }
+
+  disconnect(): void {
+    this.stopHeartbeat();
+
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = undefined;
+    }
+
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+
+    this.setState('disconnected');
+    this.reconnectAttempt = 0;
+    this.reconnectStrategy.reset();
+  }
+
+  reconnect(): void {
+    this.disconnect();
+    this.reconnectAttempt = 0;
+    this.reconnectStrategy.reset();
+    this.connect();
+  }
+
+  getState(): ConnectionState {
+    return this.state;
+  }
+
+  getReconnectAttempt(): number {
+    return this.reconnectAttempt;
+  }
+
+  isConnected(): boolean {
+    return this.state === 'connected';
+  }
+
+  getQueueLength(): number {
+    return this.messageQueue.length;
+  }
+}
