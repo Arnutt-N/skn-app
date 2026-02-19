@@ -18,11 +18,11 @@ export const Alert: React.FC<AlertProps> = ({
     ...props
 }) => {
     const variants = {
-        primary: 'bg-primary/8 text-primary border-l-4 border-l-primary',
-        success: 'bg-success/8 text-success border-l-4 border-l-success',
-        danger: 'bg-danger/8 text-danger border-l-4 border-l-danger',
-        warning: 'bg-warning/8 text-warning border-l-4 border-l-warning',
-        info: 'bg-info/8 text-info border-l-4 border-l-info',
+        primary: 'bg-brand-500/10 text-brand-text dark:text-brand-300 border-l-4 border-l-brand-500',
+        success: 'bg-success/10 text-success-text dark:text-success-light border-l-4 border-l-success',
+        danger:  'bg-danger/10 text-danger-text dark:text-danger-light border-l-4 border-l-danger',
+        warning: 'bg-warning/10 text-warning-text dark:text-warning-light border-l-4 border-l-warning',
+        info:    'bg-info/10 text-info-text dark:text-info-light border-l-4 border-l-info',
     };
 
     const icons = {
@@ -47,7 +47,7 @@ export const Alert: React.FC<AlertProps> = ({
             {closable && (
                 <button
                     onClick={onClose}
-                    className="absolute top-3 right-3 p-1 rounded-lg hover:bg-black/5 transition-colors"
+                    className="absolute top-3 right-3 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                     aria-label="Close"
                 >
                     <X className="w-4 h-4" />

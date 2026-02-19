@@ -54,11 +54,11 @@ export function useToast() {
 }
 
 const toastVariants = {
-  default: 'bg-white border-gray-200 text-gray-900',
-  success: 'bg-green-50 border-green-200 text-green-900',
-  error: 'bg-red-50 border-red-200 text-red-900',
-  warning: 'bg-amber-50 border-amber-200 text-amber-900',
-  info: 'bg-blue-50 border-blue-200 text-blue-900',
+  default: 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100',
+  success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700/50 text-green-900 dark:text-green-300',
+  error:   'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700/50 text-red-900 dark:text-red-300',
+  warning: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/50 text-amber-900 dark:text-amber-300',
+  info:    'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700/50 text-blue-900 dark:text-blue-300',
 };
 
 const toastIcons = {
@@ -113,7 +113,7 @@ function ToastViewport({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss: 
               </div>
               <button
                 onClick={() => onDismiss(toast.id)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
                 aria-label="Dismiss notification"
               >
                 <X className="w-4 h-4" />

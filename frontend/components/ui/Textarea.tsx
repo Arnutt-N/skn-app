@@ -6,19 +6,20 @@ import { cn } from '@/lib/utils';
 
 const textareaVariants = cva(
   [
-    'w-full rounded-xl border bg-white',
-    'text-sm text-gray-900',
-    'placeholder:text-gray-400',
+    'w-full rounded-xl border bg-white dark:bg-gray-800',
+    'text-sm text-gray-900 dark:text-gray-100',
+    'placeholder:text-gray-400 dark:placeholder:text-gray-500',
     'transition-all duration-200 ease-out',
     'focus:outline-none focus:ring-2',
-    'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50',
+    'hover:border-gray-300 dark:hover:border-gray-500',
+    'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-900',
     'resize-y',
   ],
   {
     variants: {
       variant: {
-        outline: 'border-gray-200 focus:border-brand-500 focus:ring-brand-500/20',
-        filled: 'border-transparent bg-gray-100 focus:bg-white focus:border-brand-500 focus:ring-brand-500/20',
+        outline: 'border-gray-200 dark:border-gray-600 focus:border-brand-500 focus:ring-brand-500/20',
+        filled: 'border-transparent bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-800 focus:border-brand-500 focus:ring-brand-500/20',
       },
       size: {
         sm: 'min-h-[72px] px-3 py-2 text-xs',
@@ -55,7 +56,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {...props}
       />
       {(errorMessage || helperText) && (
-        <p className={cn('mt-1.5 text-xs', errorMessage ? 'text-red-500' : 'text-gray-500')}>
+        <p className={cn('mt-1.5 text-xs', errorMessage ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400')}>
           {errorMessage || helperText}
         </p>
       )}

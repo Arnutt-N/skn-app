@@ -53,7 +53,7 @@ export function TabsList({ children, className, ...props }: TabsListProps) {
   return (
     <div
       className={cn(
-        'inline-flex h-10 items-center justify-center rounded-xl bg-gray-100 p-1',
+        'inline-flex h-10 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-700 p-1',
         className
       )}
       {...props}
@@ -79,10 +79,10 @@ export function TabsTrigger({ value, children, className, ...props }: TabsTrigge
       aria-selected={isSelected}
       onClick={() => onValueChange(value)}
       className={cn(
-        'inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium ring-offset-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50',
+        'inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium ring-offset-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50',
         isSelected
-          ? 'bg-white text-gray-900 shadow-sm'
-          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50',
+          ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-600/50',
         className
       )}
       {...props}
@@ -106,7 +106,7 @@ export function TabsContent({ value, children, className, ...props }: TabsConten
   return (
     <div
       role="tabpanel"
-      className={cn('mt-2 ring-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50', className)}
+      className={cn('mt-2 ring-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50', className)}
       {...props}
     >
       {children}
