@@ -19,6 +19,14 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # Check if table already exists
+    conn = op.get_bind()
+    result = conn.execute(sa.text(
+        "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'intent_categories')"
+    ))
+    if result.scalar():
+        return  # Tables already exist, skip creation
+
     # Create intent_categories table
     op.create_table(
         'intent_categories',

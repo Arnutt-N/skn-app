@@ -1,0 +1,25 @@
+{
+  "env": {
+    "KEEP_THIS": "value",
+    "CUSTOM_SETTING": "123"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint:*)",
+      "Bash(cd:*)",
+      "WebSearch",
+      "Bash(ls:*)",
+      "Bash(python:*)",
+      "Bash(npx tsc:*)",
+      "Bash(wsl -e bash -c \"cd /mnt/d/genAI/skn-app/backend && source venv_linux/bin/activate && python -c \"\"from app.api.v1.endpoints.ws_live_chat import router; from app.core.websocket_manager import ws_manager; from app.schemas.ws_events import WSEventType; print\\(''Backend imports OK''\\)\"\"\")",
+      "Bash(wsl -e bash -c \"cd /mnt/d/genAI/skn-app/frontend && npx tsc --noEmit 2>&1 | head -20\")",
+      "Bash(wsl -e bash -c \"cd /mnt/d/genAI/skn-app/frontend && which node || \\(source ~/.nvm/nvm.sh && which node\\)\")",
+      "Bash(wsl -e bash -c \"cd /mnt/d/genAI/skn-app/backend && source venv_linux/bin/activate && python -m pytest tests/test_websocket.py -v 2>&1 | head -50\")",
+      "Bash(wsl -e bash -c \"source ~/.nvm/nvm.sh && cd /mnt/d/genAI/skn-app/frontend && npx tsc --noEmit 2>&1 | head -30\":*)",
+      "Bash(test:*)",
+      "Bash(npm run build:*)",
+      "Bash(D:/genAI/skn-app/backend/venv/Scripts/python.exe:*)",
+      "Bash(D:/genAI/skn-app/backend/venv/Scripts/pip.exe install:*)"
+    ]
+  }
+}

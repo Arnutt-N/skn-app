@@ -1,8 +1,14 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Eye, SquarePen, Trash2 } from 'lucide-react';
+import { AdminTableHead, type AdminTableHeadColumn } from '@/components/admin/AdminTableHead';
+import PageHeader from '@/app/admin/components/PageHeader';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { ActionIconButton } from '@/components/ui/ActionIconButton';
 
 interface IntentCategory {
     id: number;
@@ -19,15 +25,16 @@ export default function IntentsPage() {
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
     const [formData, setFormData] = useState({ name: '', description: '', is_active: true });
-    const router = useRouter();
+    const tableColumns: AdminTableHeadColumn[] = [
+        { key: 'category', label: 'Category' },
+        { key: 'keywords', label: 'Keywords' },
+        { key: 'status', label: 'สถานะ', align: 'center' },
+        { key: 'actions', label: 'จัดการ', align: 'center' },
+    ];
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-    useEffect(() => {
-        fetchCategories();
-    }, []);
-
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch(`${API_BASE}/admin/intents/categories`);
@@ -37,7 +44,14 @@ export default function IntentsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            void fetchCategories();
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [fetchCategories]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -77,176 +91,150 @@ export default function IntentsPage() {
         }
     };
     return (
-        <div className="space-y-5 animate-in fade-in duration-500">
+        <div className="space-y-5 animate-in fade-in duration-500 thai-text">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-700">Intent Categories</h1>
-                    <p className="text-sm text-slate-500 mt-1">จัดการหมวดหมู่การตอบกลับอัตโนมัติ</p>
-                </div>
-                <button
-                    onClick={() => setShowAddForm(true)}
-                    className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors text-sm font-medium"
-                >
+            <PageHeader title="Intent Categories" subtitle="จัดการหมวดหมู่การตอบกลับอัตโนมัติ">
+                <Button size="sm" onClick={() => setShowAddForm(true)}>
                     + New Category
-                </button>
-            </div>
+                </Button>
+            </PageHeader>
 
             {/* Add Form Modal */}
-            {showAddForm && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl">
-                        <h2 className="text-lg font-semibold text-slate-700 mb-4">เพิ่ม Category ใหม่</h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-600 mb-1">ชื่อ Category</label>
-                                <input
-                                    type="text"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-600 mb-1">คำอธิบาย</label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    rows={3}
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.is_active}
-                                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                                    className="w-4 h-4 text-indigo-500 rounded"
-                                />
-                                <label className="text-sm text-slate-600">เปิดใช้งาน</label>
-                            </div>
-                            <div className="flex gap-2 pt-2">
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors text-sm font-medium"
-                                >
-                                    บันทึก
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddForm(false)}
-                                    className="flex-1 px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium"
-                                >
-                                    ยกเลิก
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                isOpen={showAddForm}
+                onClose={() => setShowAddForm(false)}
+                title="เพิ่ม Category ใหม่"
+            >
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">ชื่อ Category</label>
+                        <Input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                        />
                     </div>
-                </div>
-            )}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1 dark:text-gray-400">คำอธิบาย</label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                            rows={3}
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={formData.is_active}
+                            onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                            className="w-4 h-4 text-brand-600 rounded cursor-pointer focus-ring"
+                        />
+                        <label className="text-sm text-gray-600 dark:text-gray-400">เปิดใช้งาน</label>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                        <Button type="submit" className="flex-1">
+                            บันทึก
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="flex-1"
+                            onClick={() => setShowAddForm(false)}
+                        >
+                            ยกเลิก
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Table */}
-            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden shadow-sm">
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm dark:bg-gray-800 dark:border-gray-700">
                 <table className="w-full">
-                    <thead className="bg-slate-50 border-b border-slate-100">
-                        <tr>
-                            <th className="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Category</th>
-                            <th className="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Keywords</th>
-                            <th className="px-5 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">สถานะ</th>
-                            <th className="px-5 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
+                    <AdminTableHead columns={tableColumns} />
+                    <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
                         {loading ? (
                             // Skeleton Loading
                             [...Array(5)].map((_, i) => (
                                 <tr key={i} className="animate-pulse">
                                     <td className="px-5 py-4">
-                                        <div className="h-4 bg-slate-200 rounded w-32 mb-2"></div>
-                                        <div className="h-3 bg-slate-100 rounded w-48"></div>
+                                        <div className="h-4 bg-gray-200 rounded w-32 mb-2 dark:bg-gray-700"></div>
+                                        <div className="h-3 bg-gray-100 rounded w-48 dark:bg-gray-700/50"></div>
                                     </td>
                                     <td className="px-5 py-4">
-                                        <div className="h-3 bg-slate-100 rounded w-40"></div>
+                                        <div className="h-3 bg-gray-100 rounded w-40 dark:bg-gray-700/50"></div>
                                     </td>
                                     <td className="px-5 py-4 text-center">
-                                        <div className="mx-auto h-4 w-7 bg-slate-200 rounded-full"></div>
+                                        <div className="mx-auto h-4 w-7 bg-gray-200 rounded-full dark:bg-gray-700"></div>
                                     </td>
                                     <td className="px-5 py-4">
                                         <div className="flex items-center justify-center gap-1">
-                                            <div className="h-8 w-8 bg-slate-100 rounded-lg"></div>
-                                            <div className="h-8 w-8 bg-slate-100 rounded-lg"></div>
-                                            <div className="h-8 w-8 bg-slate-100 rounded-lg"></div>
+                                            <div className="h-8 w-8 bg-gray-100 rounded-lg dark:bg-gray-700/50"></div>
+                                            <div className="h-8 w-8 bg-gray-100 rounded-lg dark:bg-gray-700/50"></div>
+                                            <div className="h-8 w-8 bg-gray-100 rounded-lg dark:bg-gray-700/50"></div>
                                         </div>
                                     </td>
                                 </tr>
                             ))
                         ) : categories.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="px-5 py-8 text-center text-slate-400 text-sm">
+                                <td colSpan={4} className="px-5 py-8 text-center text-gray-400 text-sm dark:text-gray-500">
                                     ยังไม่มี Category
                                 </td>
                             </tr>
                         ) : (
                             categories.map((category) => (
-                                <tr key={category.id} className="hover:bg-slate-50/50 transition-colors">
+                                <tr key={category.id} className="hover:bg-gray-50/50 transition-colors dark:hover:bg-gray-700/30">
                                     <td className="px-5 py-4">
-                                        <div className="font-medium text-slate-700">{category.name}</div>
+                                        <div className="font-medium text-gray-700 dark:text-gray-200">{category.name}</div>
                                     </td>
                                     <td className="px-5 py-4">
                                         {category.keywords_preview && category.keywords_preview.length > 0 ? (
-                                            <div className="text-sm text-slate-600">
+                                            <div className="text-sm text-gray-600 dark:text-gray-400">
                                                 {category.keywords_preview.slice(0, 3).join(', ')}
                                                 {category.keyword_count > 3 && (
-                                                    <span className="text-slate-400"> ...</span>
+                                                    <span className="text-gray-400 dark:text-gray-500"> ...</span>
                                                 )}
                                             </div>
                                         ) : (
-                                            <span className="text-sm text-slate-400">-</span>
+                                            <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
                                         )}
                                     </td>
                                     <td className="px-5 py-4 text-center">
                                         <button
                                             onClick={() => handleToggleStatus(category.id, !category.is_active)}
-                                            className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${category.is_active ? 'bg-indigo-500' : 'bg-slate-200'
+                                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer focus-ring ${category.is_active ? 'bg-brand-500' : 'bg-gray-200 dark:bg-gray-600'
                                                 }`}
                                         >
                                             <span
-                                                className={`inline-block h-2.5 w-2.5 transform rounded-full bg-white transition-transform shadow-sm ${category.is_active ? 'translate-x-3.5' : 'translate-x-0.5'
+                                                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm ${category.is_active ? 'translate-x-4' : 'translate-x-0.5'
                                                     }`}
                                             />
                                         </button>
                                     </td>
                                     <td className="px-5 py-4">
                                         <div className="flex items-center justify-center gap-1">
-                                            <Link
-                                                href={`/admin/auto-replies/${category.id}`}
-                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                title="เรียกดู"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
+                                            <Link href={`/admin/auto-replies/${category.id}`}>
+                                                <ActionIconButton
+                                                    icon={<Eye className="w-4 h-4" />}
+                                                    label="เรียกดู"
+                                                    variant="default"
+                                                />
                                             </Link>
-                                            <Link
-                                                href={`/admin/auto-replies/${category.id}?mode=edit`}
-                                                className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                                                title="แก้ไข"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
+                                            <Link href={`/admin/auto-replies/${category.id}?mode=edit`}>
+                                                <ActionIconButton
+                                                    icon={<SquarePen className="w-4 h-4" />}
+                                                    label="แก้ไข"
+                                                    variant="muted"
+                                                />
                                             </Link>
-                                            <button
+                                            <ActionIconButton
+                                                icon={<Trash2 className="w-4 h-4" />}
+                                                label="ลบ"
+                                                variant="danger"
                                                 onClick={() => handleDelete(category.id)}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="ลบ"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
+                                            />
                                         </div>
                                     </td>
                                 </tr>

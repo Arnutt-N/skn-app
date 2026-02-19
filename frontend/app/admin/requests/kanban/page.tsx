@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import {
@@ -43,7 +43,7 @@ export default function KanbanPage() {
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async () => {
         setLoading(true);
         try {
             const url = `${API_BASE}/admin/requests?limit=200`;
@@ -65,11 +65,14 @@ export default function KanbanPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE]);
 
     useEffect(() => {
-        fetchRequests();
-    }, []);
+        const timer = window.setTimeout(() => {
+            void fetchRequests();
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [fetchRequests]);
 
     const filteredRequests = requests.filter(req =>
         (req.firstname || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -93,11 +96,11 @@ export default function KanbanPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="thai-text space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">กระดานคัดกรองงาน (Kanban Board)</h1>
-                    <p className="text-sm text-slate-500">บริหารจัดการสถานะงานแบบ Visual Overview</p>
+                    <h1 className="thai-no-break text-2xl font-bold text-slate-800 tracking-tight">กระดานคัดกรองงาน (Kanban Board)</h1>
+                    <p className="thai-no-break text-sm text-slate-500">บริหารจัดการสถานะงานแบบ Visual Overview</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="relative">

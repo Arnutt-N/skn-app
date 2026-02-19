@@ -1,0 +1,620 @@
+/**
+ * Enhanced Design System for SknApp
+ * Premium, Luxurious, Cohesive Frontend Design
+ * 
+ * This file demonstrates the recommended design system implementation.
+ * Copy relevant sections to frontend/app/globals.css
+ */
+
+@import "tailwindcss";
+
+/* ============================================
+   THEME CONFIGURATION
+   ============================================ */
+
+@theme {
+  /* === BRAND COLORS (HSL Format) ===
+     Using HSL allows for easier manipulation (darkening, lightening, alpha)
+     and creates a more maintainable color system.
+  */
+  
+  /* Primary Brand - Signature Purple */
+  --color-brand-primary: hsl(252 82% 67%);
+  --color-brand-primary-dark: hsl(252 60% 56%);
+  --color-brand-primary-light: hsl(252 88% 75%);
+  --color-brand-royal: hsl(262 70% 55%);
+  --color-brand-lavender: hsl(252 70% 95%);
+  
+  /* Semantic Colors */
+  --color-success: hsl(152 69% 47%);
+  --color-success-dark: hsl(152 60% 40%);
+  --color-success-light: hsl(152 70% 90%);
+  
+  --color-warning: hsl(32 100% 58%);
+  --color-warning-dark: hsl(32 90% 50%);
+  --color-warning-light: hsl(32 100% 92%);
+  
+  --color-danger: hsl(0 84% 60%);
+  --color-danger-dark: hsl(0 70% 52%);
+  --color-danger-light: hsl(0 85% 95%);
+  
+  --color-info: hsl(195 100% 45%);
+  --color-info-dark: hsl(195 90% 38%);
+  --color-info-light: hsl(195 100% 92%);
+  
+  /* === GRAY SCALE (Neutral Colors) ===
+     A refined gray scale provides subtle hierarchy and depth
+  */
+  --color-gray-50: hsl(240 20% 99%);
+  --color-gray-100: hsl(240 15% 97%);
+  --color-gray-200: hsl(240 12% 94%);
+  --color-gray-300: hsl(240 10% 88%);
+  --color-gray-400: hsl(240 8% 72%);
+  --color-gray-500: hsl(240 6% 56%);
+  --color-gray-600: hsl(240 8% 40%);
+  --color-gray-700: hsl(240 10% 32%);
+  --color-gray-800: hsl(240 15% 20%);
+  --color-gray-900: hsl(240 20% 12%);
+  
+  /* === BACKGROUND & SURFACE COLORS === */
+  --color-bg: hsl(240 20% 98%);
+  --color-bg-elevated: hsl(0 0% 100%);
+  --color-surface: hsl(0 0% 100%);
+  --color-surface-hover: hsl(240 15% 97%);
+  --color-surface-pressed: hsl(240 12% 94%);
+  
+  /* === TEXT COLORS === */
+  --color-text-primary: hsl(240 20% 12%);
+  --color-text-secondary: hsl(240 10% 40%);
+  --color-text-tertiary: hsl(240 8% 56%);
+  --color-text-inverse: hsl(0 0% 100%);
+  
+  /* === BORDER COLORS === */
+  --color-border-subtle: hsl(240 12% 94%);
+  --color-border-default: hsl(240 10% 88%);
+  --color-border-hover: hsl(240 10% 72%);
+  --color-border-focus: hsl(252 82% 67%);
+  
+  /* === SHADOW SYSTEM (5 Layers of Depth) ===
+     Each layer represents a different elevation level
+  */
+  
+  /* Layer 0: Flat - Background elements */
+  --shadow-none: none;
+  
+  /* Layer 1: Subtle - Cards at rest */
+  --shadow-subtle: 
+    0 1px 2px 0 rgb(0 0 0 / 0.03),
+    0 1px 1px -0.5px rgb(0 0 0 / 0.02);
+  
+  /* Layer 2: Resting - Interactive elements */
+  --shadow-resting: 
+    0 4px 6px -1px rgb(0 0 0 / 0.04),
+    0 2px 4px -2px rgb(0 0 0 / 0.02);
+  
+  /* Layer 3: Elevated - Hovered cards */
+  --shadow-elevated: 
+    0 10px 15px -3px rgb(0 0 0 / 0.06),
+    0 4px 6px -4px rgb(0 0 0 / 0.03);
+  
+  /* Layer 4: Floating - Dropdowns, popovers */
+  --shadow-floating: 
+    0 20px 25px -5px rgb(0 0 0 / 0.08),
+    0 8px 10px -6px rgb(0 0 0 / 0.04);
+  
+  /* Layer 5: Premium - Modals, overlays */
+  --shadow-premium: 
+    0 25px 50px -12px rgb(0 0 0 / 0.12),
+    0 12px 24px -8px rgb(0 0 0 / 0.06);
+  
+  /* Glow Effects */
+  --shadow-glow-primary: 0 0 20px hsl(252 82% 67% / 0.3);
+  --shadow-glow-success: 0 0 20px hsl(152 69% 47% / 0.3);
+  --shadow-glow-danger: 0 0 20px hsl(0 84% 60% / 0.3);
+  
+  /* === TYPOGRAPHY === */
+  --font-sans: var(--font-noto-thai), "Inter", system-ui, -apple-system, sans-serif;
+  
+  /* === SPACING SYSTEM (4px Base Grid) === */
+  --spacing-0: 0px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+  
+  /* === BORDER RADIUS === */
+  --radius-none: 0px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  
+  /* === ANIMATION TIMING === */
+  --duration-instant: 0ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  --duration-slower: 500ms;
+  
+  /* === EASING FUNCTIONS === */
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+@layer base {
+  :root {
+    /* Fluid Typography Scale */
+    --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    --text-sm: clamp(0.875rem, 0.8rem + 0.25vw, 1rem);
+    --text-base: clamp(1rem, 0.9rem + 0.25vw, 1.125rem);
+    --text-lg: clamp(1.125rem, 1rem + 0.5vw, 1.25rem);
+    --text-xl: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+    --text-2xl: clamp(1.5rem, 1.3rem + 0.75vw, 2rem);
+    --text-3xl: clamp(1.875rem, 1.6rem + 1vw, 2.5rem);
+    --text-4xl: clamp(2.25rem, 1.9rem + 1.25vw, 3rem);
+  }
+
+  * {
+    @apply border-border-default;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-bg text-text-primary;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.6;
+  }
+
+  /* Selection Styling */
+  ::selection {
+    background-color: hsl(252 82% 67% / 0.2);
+    color: hsl(240 20% 12%);
+  }
+}
+
+/* ============================================
+   ANIMATION KEYFRAMES
+   ============================================ */
+
+@keyframes shine {
+  from {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  to {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(252 82% 67% / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px hsl(252 82% 67% / 0);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+@layer utilities {
+  /* === Premium Scrollbar === */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(252 82% 67% / 0.15);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(252 82% 67% / 0.35);
+  }
+
+  /* Firefox Scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(252 82% 67% / 0.15) transparent;
+  }
+
+  /* === Glass Effect (Premium) === */
+  .glass {
+    background: hsl(0 0% 100% / 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(0 0% 100% / 0.3);
+  }
+
+  .glass-dark {
+    background: hsl(240 15% 12% / 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(240 15% 20% / 0.5);
+  }
+
+  /* === Gradient Text === */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, hsl(252 82% 67%), hsl(262 70% 65%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-royal {
+    background: linear-gradient(135deg, hsl(252 82% 67%), hsl(280 70% 55%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* === Focus Ring (Accessible) === */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2;
+  }
+
+  /* === Animation Utilities === */
+  .animate-shine {
+    animation: shine 2s infinite;
+  }
+
+  .animate-fade-in {
+    animation: fade-in var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  .animate-fade-in-down {
+    animation: fade-in-down var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  .animate-scale-in {
+    animation: scale-in var(--duration-normal) var(--ease-spring) forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(0 0% 100% / 0.4) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .animate-shake {
+    animation: shake 0.4s ease-in-out;
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
+  }
+
+  /* Animation Delays */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+
+  /* === Interactive States === */
+  .hover-lift {
+    @apply transition-all duration-200 ease-out;
+  }
+  .hover-lift:hover {
+    @apply -translate-y-0.5 shadow-elevated;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 ease-out;
+  }
+  .hover-scale:hover {
+    @apply scale-105;
+  }
+
+  .press-down {
+    @apply active:scale-[0.97] transition-transform duration-100;
+  }
+
+  /* === Gradient Backgrounds === */
+  .bg-gradient-premium {
+    background: linear-gradient(135deg, hsl(252 82% 67%), hsl(262 70% 55%));
+  }
+
+  .bg-gradient-subtle {
+    background: linear-gradient(180deg, hsl(240 20% 99%), hsl(240 20% 96%));
+  }
+
+  /* === Mask Utilities === */
+  .mask-fade-bottom {
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  }
+
+  /* === Reduced Motion === */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ============================================
+   COMPONENT PATTERNS
+   ============================================ */
+
+@layer components {
+  /* === Premium Card Pattern === */
+  .card-premium {
+    @apply bg-surface rounded-xl border border-border-subtle;
+    @apply shadow-resting transition-all duration-250 ease-out;
+  }
+  .card-premium:hover {
+    @apply shadow-elevated -translate-y-0.5 border-border-default;
+  }
+
+  /* === Premium Button Pattern === */
+  .btn-premium {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply font-medium transition-all duration-200;
+    @apply focus-ring;
+    @apply press-down;
+  }
+  .btn-premium-primary {
+    @apply btn-premium;
+    @apply bg-gradient-to-br from-brand-primary to-brand-primary-dark;
+    @apply text-white shadow-resting;
+    @apply hover:shadow-elevated hover:-translate-y-0.5;
+    @apply relative overflow-hidden;
+  }
+
+  /* === Form Input Pattern === */
+  .input-premium {
+    @apply w-full rounded-xl border border-border-default bg-surface;
+    @apply px-4 py-2.5 text-sm text-text-primary;
+    @apply placeholder:text-text-tertiary;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20;
+    @apply hover:border-border-hover;
+  }
+  .input-premium-error {
+    @apply input-premium;
+    @apply border-danger focus:border-danger focus:ring-danger/20;
+    @apply animate-shake;
+  }
+
+  /* === Badge Pattern === */
+  .badge-premium {
+    @apply inline-flex items-center justify-center;
+    @apply px-2.5 py-0.5 rounded-full;
+    @apply text-[11px] font-semibold uppercase tracking-wider;
+  }
+
+  /* === Navigation Item Pattern === */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl;
+    @apply text-text-secondary transition-all duration-200;
+    @apply hover:bg-surface-hover hover:text-text-primary;
+  }
+  .nav-item-active {
+    @apply nav-item;
+    @apply bg-brand-primary text-white;
+    @apply shadow-resting;
+  }
+
+  /* === Stats Card Pattern === */
+  .stats-card {
+    @apply card-premium p-5;
+  }
+  .stats-card-icon {
+    @apply w-12 h-12 rounded-2xl flex items-center justify-center;
+    @apply transition-transform duration-300;
+  }
+  .stats-card:hover .stats-card-icon {
+    @apply scale-105;
+  }
+}
+
+/* ============================================
+   DARK MODE SUPPORT
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: hsl(240 15% 8%);
+    --color-bg-elevated: hsl(240 12% 12%);
+    --color-surface: hsl(240 12% 14%);
+    --color-surface-hover: hsl(240 10% 18%);
+    --color-surface-pressed: hsl(240 10% 22%);
+    
+    --color-text-primary: hsl(240 10% 95%);
+    --color-text-secondary: hsl(240 8% 72%);
+    --color-text-tertiary: hsl(240 6% 56%);
+    
+    --color-border-subtle: hsl(240 10% 18%);
+    --color-border-default: hsl(240 10% 22%);
+    --color-border-hover: hsl(240 10% 30%);
+    
+    --shadow-resting: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  }
+}
+
+/* Manual dark mode class */
+.dark {
+  --color-bg: hsl(240 15% 8%);
+  --color-bg-elevated: hsl(240 12% 12%);
+  --color-surface: hsl(240 12% 14%);
+  --color-surface-hover: hsl(240 10% 18%);
+  --color-surface-pressed: hsl(240 10% 22%);
+  
+  --color-text-primary: hsl(240 10% 95%);
+  --color-text-secondary: hsl(240 8% 72%);
+  --color-text-tertiary: hsl(240 6% 56%);
+  
+  --color-border-subtle: hsl(240 10% 18%);
+  --color-border-default: hsl(240 10% 22%);
+  --color-border-hover: hsl(240 10% 30%);
+  
+  --shadow-resting: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+}

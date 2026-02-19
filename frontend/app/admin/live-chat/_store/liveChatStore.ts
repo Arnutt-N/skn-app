@@ -1,0 +1,206 @@
+import { create } from 'zustand'
+import { devtools } from 'zustand/middleware'
+import type { Message } from '@/lib/websocket/types'
+import type { Conversation, CurrentChat } from '../_types'
+
+// ──────────────────────────────────────────────
+// UI state for new features (not in current reducer)
+// ──────────────────────────────────────────────
+export interface ToastNotification {
+  id: string
+  title: string
+  message: string
+  avatar?: string
+  type: 'message' | 'system'
+  timestamp: number
+}
+
+// ──────────────────────────────────────────────
+// Full store: mirrors ChatState + UI extensions
+// ──────────────────────────────────────────────
+interface LiveChatState {
+  // Core data (mirrors useChatReducer exactly)
+  conversations: Conversation[]
+  selectedId: string | null
+  currentChat: CurrentChat | null
+  messages: Message[]
+  loading: boolean
+  backendOnline: boolean
+  filterStatus: string | null
+  searchQuery: string
+  inputText: string
+  sending: boolean
+  claiming: boolean
+  showCustomerPanel: boolean
+  activeActionMenu: string | null
+  showTransferDialog: boolean
+  showCannedPicker: boolean
+  soundEnabled: boolean
+  pendingMessages: Set<string>
+  failedMessages: Map<string, string>
+  hasMoreHistory: boolean
+  isLoadingHistory: boolean
+
+  // UI extensions (new features)
+  showEmojiPicker: boolean
+  showStickerPicker: boolean
+  showQuickReplies: boolean
+  inputExpanded: boolean
+  notifications: ToastNotification[]
+}
+
+interface LiveChatActions {
+  // Data actions
+  setConversations: (conversations: Conversation[]) => void
+  selectChat: (id: string | null) => void
+  setCurrentChat: (chat: CurrentChat | null) => void
+  setMessages: (messages: Message[]) => void
+  addMessage: (message: Message) => void
+  prependMessages: (messages: Message[]) => void
+  setLoading: (loading: boolean) => void
+  setBackendOnline: (online: boolean) => void
+  setFilterStatus: (status: string | null) => void
+  setSearchQuery: (query: string) => void
+  setInputText: (text: string) => void
+  setSending: (sending: boolean) => void
+  setClaiming: (claiming: boolean) => void
+  setShowCustomerPanel: (show: boolean) => void
+  toggleCustomerPanel: () => void
+  setActiveActionMenu: (id: string | null) => void
+  setShowTransferDialog: (show: boolean) => void
+  setShowCannedPicker: (show: boolean) => void
+  setSoundEnabled: (enabled: boolean) => void
+  addPending: (tempId: string) => void
+  removePending: (tempId: string) => void
+  setFailed: (tempId: string, error: string) => void
+  clearFailed: (tempId: string) => void
+  setHasMoreHistory: (hasMore: boolean) => void
+  setIsLoadingHistory: (loading: boolean) => void
+
+  // UI extension actions
+  toggleEmojiPicker: () => void
+  toggleStickerPicker: () => void
+  toggleQuickReplies: () => void
+  toggleInputExpanded: () => void
+  closeAllPickers: () => void
+  addNotification: (notification: Omit<ToastNotification, 'id' | 'timestamp'>) => void
+  removeNotification: (id: string) => void
+}
+
+type LiveChatStore = LiveChatState & LiveChatActions
+
+const initialState: LiveChatState = {
+  conversations: [],
+  selectedId: null,
+  currentChat: null,
+  messages: [],
+  loading: true,
+  backendOnline: true,
+  filterStatus: null,
+  searchQuery: '',
+  inputText: '',
+  sending: false,
+  claiming: false,
+  showCustomerPanel: true,
+  activeActionMenu: null,
+  showTransferDialog: false,
+  showCannedPicker: false,
+  soundEnabled: true,
+  pendingMessages: new Set(),
+  failedMessages: new Map(),
+  hasMoreHistory: true,
+  isLoadingHistory: false,
+  showEmojiPicker: false,
+  showStickerPicker: false,
+  showQuickReplies: false,
+  inputExpanded: false,
+  notifications: [],
+}
+
+export const useLiveChatStore = create<LiveChatStore>()(
+  devtools(
+    (set) => ({
+      ...initialState,
+
+      // Data actions (1:1 with reducer cases)
+      setConversations: (conversations) => set({ conversations }),
+      selectChat: (id) => set({ selectedId: id }),
+      setCurrentChat: (chat) => set({ currentChat: chat }),
+      setMessages: (messages) => set({ messages }),
+      addMessage: (message) => set((s) => ({ messages: [...s.messages, message] })),
+      prependMessages: (messages) => set((s) => ({ messages: [...messages, ...s.messages] })),
+      setLoading: (loading) => set({ loading }),
+      setBackendOnline: (online) => set({ backendOnline: online }),
+      setFilterStatus: (status) => set({ filterStatus: status }),
+      setSearchQuery: (query) => set({ searchQuery: query }),
+      setInputText: (text) => set((s) => ({
+        inputText: text,
+        showCannedPicker: text === '/' ? true : text.startsWith('/') ? s.showCannedPicker : false,
+      })),
+      setSending: (sending) => set({ sending }),
+      setClaiming: (claiming) => set({ claiming }),
+      setShowCustomerPanel: (show) => set({ showCustomerPanel: show }),
+      toggleCustomerPanel: () => set((s) => ({ showCustomerPanel: !s.showCustomerPanel })),
+      setActiveActionMenu: (id) => set({ activeActionMenu: id }),
+      setShowTransferDialog: (show) => set({ showTransferDialog: show }),
+      setShowCannedPicker: (show) => set({ showCannedPicker: show }),
+      setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
+      addPending: (tempId) => set((s) => {
+        const next = new Set(s.pendingMessages)
+        next.add(tempId)
+        return { pendingMessages: next }
+      }),
+      removePending: (tempId) => set((s) => {
+        const next = new Set(s.pendingMessages)
+        next.delete(tempId)
+        return { pendingMessages: next }
+      }),
+      setFailed: (tempId, error) => set((s) => {
+        const next = new Map(s.failedMessages)
+        next.set(tempId, error)
+        return { failedMessages: next }
+      }),
+      clearFailed: (tempId) => set((s) => {
+        const next = new Map(s.failedMessages)
+        next.delete(tempId)
+        return { failedMessages: next }
+      }),
+      setHasMoreHistory: (hasMore) => set({ hasMoreHistory: hasMore }),
+      setIsLoadingHistory: (loading) => set({ isLoadingHistory: loading }),
+
+      // UI extension actions
+      toggleEmojiPicker: () => set((s) => ({
+        showEmojiPicker: !s.showEmojiPicker,
+        showStickerPicker: false,
+        showQuickReplies: false,
+      })),
+      toggleStickerPicker: () => set((s) => ({
+        showStickerPicker: !s.showStickerPicker,
+        showEmojiPicker: false,
+        showQuickReplies: false,
+      })),
+      toggleQuickReplies: () => set((s) => ({
+        showQuickReplies: !s.showQuickReplies,
+        showEmojiPicker: false,
+        showStickerPicker: false,
+      })),
+      toggleInputExpanded: () => set((s) => ({ inputExpanded: !s.inputExpanded })),
+      closeAllPickers: () => set({
+        showEmojiPicker: false,
+        showStickerPicker: false,
+        showQuickReplies: false,
+      }),
+      addNotification: (notification) => set((s) => ({
+        notifications: [...s.notifications, {
+          ...notification,
+          id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          timestamp: Date.now(),
+        }],
+      })),
+      removeNotification: (id) => set((s) => ({
+        notifications: s.notifications.filter((n) => n.id !== id),
+      })),
+    }),
+    { name: 'LiveChatStore' }
+  )
+)

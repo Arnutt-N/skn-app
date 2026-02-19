@@ -1,0 +1,58 @@
+"""Tests for friend profile refresh behavior."""
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from app.services.friend_service import FriendService
+
+
+@pytest.mark.asyncio
+async def test_refresh_profile_skips_when_not_stale():
+    service = FriendService()
+    recent_user = SimpleNamespace(
+        line_user_id="U123",
+        display_name="Existing",
+        picture_url="old.png",
+        profile_updated_at=datetime.now(timezone.utc),
+    )
+    mock_db = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = recent_user
+    mock_db.execute.return_value = mock_result
+
+    user = await service.refresh_profile("U123", mock_db, force=False, stale_after_hours=24)
+
+    assert user is recent_user
+    mock_db.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_refresh_profile_updates_when_stale():
+    service = FriendService()
+    stale_user = SimpleNamespace(
+        line_user_id="U456",
+        display_name="Old Name",
+        picture_url="old.png",
+        profile_updated_at=datetime.now(timezone.utc) - timedelta(days=2),
+    )
+    mock_db = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = stale_user
+    mock_db.execute.return_value = mock_result
+
+    profile = SimpleNamespace(display_name="Fresh Name", picture_url="fresh.png")
+
+    with pytest.MonkeyPatch.context() as mp:
+        mock_api = AsyncMock()
+        mock_api.get_profile = AsyncMock(return_value=profile)
+        mp.setattr("app.core.line_client.get_line_bot_api", lambda: mock_api)
+        user = await service.refresh_profile("U456", mock_db, force=False, stale_after_hours=24)
+
+    assert user.display_name == "Fresh Name"
+    assert user.picture_url == "fresh.png"
+    assert isinstance(user.profile_updated_at, datetime)
+    mock_db.commit.assert_awaited_once()
+    mock_db.refresh.assert_awaited_once_with(stale_user)
+

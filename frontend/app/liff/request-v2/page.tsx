@@ -44,12 +44,16 @@ const TOPIC_OPTIONS: Record<string, string[]> = {
 }
 
 export default function LiffServiceRequestV2() {
+    interface LiffProfile {
+        userId: string;
+    }
+
     // --- STATE ---
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
-    const [profile, setProfile] = useState<any>(null)
+    const [profile, setProfile] = useState<LiffProfile | null>(null)
 
     // Location Data State
     const [provinces, setProvinces] = useState<Province[]>([])
@@ -110,7 +114,7 @@ export default function LiffServiceRequestV2() {
                     console.warn("LIFF SDK not found. Running in browser mode?")
                     // Mock profile for dev if needed
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('LIFF Init Error:', err)
                 setError('Failed to initialize LIFF. You might be opening this outside LINE.')
             } finally {
@@ -269,8 +273,8 @@ export default function LiffServiceRequestV2() {
 
             setSuccess(true)
             window.scrollTo(0, 0)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to submit')
             window.scrollTo(0, 0)
         } finally {
             setSubmitting(false)

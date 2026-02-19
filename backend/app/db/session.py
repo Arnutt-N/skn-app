@@ -5,7 +5,7 @@ from app.core.config import settings
 
 engine = create_async_engine(
     str(settings.DATABASE_URL),
-    echo=True, # Set to False in production
+    echo=False, # Set to True for SQL query debugging
     future=True,
 )
 

@@ -10,15 +10,12 @@ import { Badge } from '@/components/ui/Badge'
 import { Alert } from '@/components/ui/Alert'
 import {
     User,
-    MapPin,
     MessageSquare,
     Paperclip,
     CheckCircle2,
     Upload,
     X,
     Shield,
-    FileText,
-    LogOut,
     Building2
 } from 'lucide-react'
 
@@ -48,6 +45,10 @@ const TOPIC_OPTIONS: Record<string, string[]> = {
 }
 
 export default function LiffServiceRequestSingle() {
+    interface LiffProfile {
+        userId: string;
+    }
+
     // --- STATE ---
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
@@ -55,7 +56,7 @@ export default function LiffServiceRequestSingle() {
     const [success, setSuccess] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-    const [profile, setProfile] = useState<any>(null)
+    const [profile, setProfile] = useState<LiffProfile | null>(null)
 
     // Location Data State
     const [provinces, setProvinces] = useState<Province[]>([])
@@ -106,7 +107,7 @@ export default function LiffServiceRequestSingle() {
                         setProfile(userProfile)
                     }
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('LIFF Init Error:', err)
             } finally {
                 setLoading(false)
@@ -285,7 +286,7 @@ export default function LiffServiceRequestSingle() {
             let data
             try {
                 data = JSON.parse(resText)
-            } catch (jsonErr) {
+            } catch {
                 throw new Error(resText || `Server Error: ${res.status}`)
             }
 
@@ -296,8 +297,8 @@ export default function LiffServiceRequestSingle() {
             setSuccess(true)
             setShowConfirm(false)
             window.scrollTo(0, 0)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to submit')
             setShowConfirm(false)
             window.scrollTo(0, 0)
         } finally {
@@ -306,7 +307,7 @@ export default function LiffServiceRequestSingle() {
     }
 
     const handleClose = () => {
-        const liff = (window as any).liff
+        const liff = window.liff
         try {
             if (liff?.isInClient()) {
                 liff.closeWindow()
@@ -335,7 +336,7 @@ export default function LiffServiceRequestSingle() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+            <div className="min-h-screen flex items-center justify-center bg-bg">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-4 text-gray-500 font-medium">กำลังโหลดระบบ...</p>
@@ -346,7 +347,7 @@ export default function LiffServiceRequestSingle() {
 
     if (success) {
         return (
-            <div className="min-h-screen p-6 bg-[#F8FAFC] flex items-center justify-center">
+            <div className="min-h-screen p-6 bg-bg flex items-center justify-center">
                 <Card glass className="max-w-sm w-full text-center py-8">
                     <CardContent>
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -368,9 +369,9 @@ export default function LiffServiceRequestSingle() {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans text-gray-900">
+        <div className="min-h-screen bg-bg pb-24 font-sans text-gray-900">
             <Head>
-                <title>ยื่นคำร้อง - SKN 4.0</title>
+                <title>ยื่นคำร้อง - JSK 4.0</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
             </Head>
             <Script src="https://static.line-scdn.net/liff/edge/2/sdk.js" strategy="beforeInteractive" />
@@ -384,7 +385,7 @@ export default function LiffServiceRequestSingle() {
                             <h1 className="text-lg font-bold text-gray-900 tracking-tight">ยื่นคำขอรับบริการ</h1>
                         </div>
                         <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
-                            SKN 4.0 Platform • ยุติธรรมจังหวัดสกลนคร
+                            JSK 4.0 Platform • ยุติธรรมจังหวัดสกลนคร
                         </p>
                     </div>
                     <Badge variant={provinces.length > 0 ? "success" : "warning"} className="h-6">

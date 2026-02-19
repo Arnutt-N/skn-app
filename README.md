@@ -1,26 +1,35 @@
-# SknApp - LINE Official Account System
+# JskApp - LINE Official Account System
 
 A modern LINE Official Account system with LIFF integration for Community Justice Services.
 
 ## Tech Stack
 
+> [!IMPORTANT]
+> **WSL Development Environment Required**
+> This project requires **WSL (Windows Subsystem for Linux)** for all development.
+> - **Backend**: Must run in WSL using `backend/venv_linux`.
+> - **Frontend**: Must run in WSL.
+> - **System**: Windows OS is the host, but execution happens in WSL.
+
 ### Backend
-- **FastAPI** (Python 3.11+)
+
+### Backend
+- **FastAPI** (Python 3.13+)
 - **PostgreSQL** (Database)
 - **SQLAlchemy** (ORM with Async support)
 - **Alembic** (Migrations)
 - **Redis** (Caching & Rate Limiting)
 
 ### Frontend
-- **Next.js 14** (App Router)
-- **React 18**
+- **Next.js 16** (App Router)
+- **React 19**
 - **TypeScript**
-- **Tailwind CSS**
+- **Tailwind CSS v4**
 
 ## Project Structure
 
 ```
-skn-app/
+jsk-app/
 ├── backend/
 │   ├── app/
 │   │   ├── api/          # API endpoints
@@ -41,18 +50,18 @@ skn-app/
 ## Getting Started
 
 ### Prerequisites
-- **Python 3.9+** (Python 3.13+ recommended for best performance)
-- Node.js 20+
+- **Python 3.13+**
+- Node.js 22+
 - PostgreSQL 16+
 - Redis 7+
 
 ### Backend Setup
 
-1. Create virtual environment:
+1. Create virtual environment in WSL:
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python3.13 -m venv venv_linux
+source venv_linux/bin/activate
 ```
 
 2. Install dependencies:

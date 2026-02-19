@@ -1,0 +1,135 @@
+# 🧹 Workflow & Skill Cleanup Summary
+
+> **Date**: 2026-02-13T20:15:00+07:00  
+> **Agent**: Kimi Code CLI  
+> **Action**: Removed duplicate workflows and skills, kept best versions
+
+---
+
+## 📋 Duplicates Removed
+
+### Workflows Archived (.OLD)
+
+| Removed File | Replacement | Reason |
+|--------------|-------------|--------|
+| `workflows/agent-handover.md` | `workflows/handoff-to-any.md` | Universal version is more comprehensive with 6 detailed steps and validation gates |
+| `workflows/pick-up.md` | `workflows/pickup-from-any.md` | Universal version has consistency checks and detailed pickup checklist |
+
+### Skills Archived (.OLD)
+
+| Removed Directory | Replacement | Reason |
+|-------------------|-------------|--------|
+| `skills/agent_collaboration_standard/` | `skills/cross_platform_collaboration/` | Newer skill has 502 lines vs 58 lines, includes all platforms, complete templates, bilingual support |
+
+---
+
+## ✅ Final Structure (After Cleanup)
+
+### Workflows (12 files)
+```
+workflows/
+├── handoff-to-any.md           ⭐ USE THIS for handoffs (universal)
+├── pickup-from-any.md          ⭐ USE THIS for pickups (universal)
+├── session-summary.md          Session summary format
+├── run-app.md                  Run app in WSL
+├── sync-and-run-wsl.md         Sync & run
+├── migrate-to-wsl.md           WSL setup
+├── db-migration.md             Database migrations
+├── backup-restore.md           DB backup/restore
+├── deploy-application.md       Deploy to production
+├── media-management.md         Media for Flex messages
+├── line-test.md                Test LINE webhook
+└── git-workflow.md             Git operations
+```
+
+### Skills (27 directories)
+```
+skills/
+├── cross_platform_collaboration/    ⭐ USE THIS for agent collaboration
+├── agent_handover/                   Skill for handoff automation
+├── agent_pickup/                     Skill for pickup automation
+├── fastapi_enterprise/
+├── nextjs_enterprise/
+├── line_integration/
+├── line_messaging_advanced/
+├── api_development_standard/
+├── database_postgresql_standard/
+├── auth_rbac_security/
+├── testing_standards/
+├── deployment_devops/
+├── enterprise_architecture_standards/
+├── api_documentation/
+├── security_checklist/
+├── monitoring_logging/
+├── frontend_architecture/
+├── react_19_patterns/
+├── responsive-design/
+├── tailwind-design-system/
+├── senior-frontend/
+├── frontend-design/
+├── fastapi-templates/
+├── database-schema-designer/
+├── database_migration/
+├── websocket_live_chat/
+├── line_flex_message_builder/
+├── line_messaging_types/
+├── line_mini_app/
+├── error_handling/
+├── git_workflow/
+└── notebooklm/
+```
+
+---
+
+## 🎯 Quick Reference - What to Use
+
+| Task | Use This File |
+|------|---------------|
+| **Handoff to another agent** | `workflows/handoff-to-any.md` |
+| **Pickup from previous agent** | `workflows/pickup-from-any.md` |
+| **Learn collaboration standards** | `skills/cross_platform_collaboration/SKILL.md` |
+| **Automated handoff skill** | `skills/agent_handover/SKILL.md` |
+| **Automated pickup skill** | `skills/agent_pickup/SKILL.md` |
+| **Run the application** | `workflows/run-app.md` |
+| **Database migration** | `workflows/db-migration.md` |
+| **FastAPI development** | `skills/fastapi_enterprise/SKILL.md` |
+| **Next.js development** | `skills/nextjs_enterprise/SKILL.md` |
+| **LINE integration** | `skills/line_integration/SKILL.md` |
+
+---
+
+## 📊 Stats
+
+| Category | Before | After | Removed |
+|----------|--------|-------|---------|
+| Workflows | 14 | 12 | 2 |
+| Skills | 28 | 27 | 1 |
+| **Total** | **42** | **39** | **3** |
+
+---
+
+## 🗂️ Archived Files Location
+
+The old duplicate files are archived with `.OLD` extension:
+- `.agent/workflows/agent-handover.md.OLD`
+- `.agent/workflows/pick-up.md.OLD`
+- `.agent/skills/agent_collaboration_standard.OLD/`
+
+To permanently delete them later:
+```powershell
+Remove-Item .agent/workflows/*.OLD
+Remove-Item .agent/skills/*.OLD -Recurse
+```
+
+---
+
+## ✨ Benefits of Cleanup
+
+1. **No confusion** - Only one "best" version of each workflow/skill
+2. **Clear guidance** - Universal workflows work for all platforms
+3. **Comprehensive** - Kept the more detailed, feature-rich versions
+4. **Maintainable** - Single source of truth for each function
+
+---
+
+*Cleanup completed by Kimi Code CLI*

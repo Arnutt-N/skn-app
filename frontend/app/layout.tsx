@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
-import { Noto_Sans_Thai } from 'next/font/google'
+import { Inter, Noto_Sans_Thai } from 'next/font/google'
 import './globals.css'
+import { Providers } from '@/components/providers'
 
 const notoThai = Noto_Sans_Thai({
     subsets: ['thai', 'latin'],
@@ -8,8 +9,13 @@ const notoThai = Noto_Sans_Thai({
     variable: '--font-noto-thai',
 })
 
+const inter = Inter({
+    subsets: ['latin'],
+    variable: '--font-inter',
+})
+
 export const metadata: Metadata = {
-    title: 'SknApp - Community Justice Services',
+    title: 'JskApp - Community Justice Services',
     description: 'LINE Official Account for Community Justice Center',
 }
 
@@ -19,8 +25,12 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="th" suppressHydrationWarning className={`${notoThai.variable}`}>
-            <body className="font-sans antialiased text-foreground bg-background">{children}</body>
+        <html lang="th" suppressHydrationWarning className={`${notoThai.variable} ${inter.variable}`}>
+            <body suppressHydrationWarning className="font-sans antialiased">
+                <Providers>
+                    {children}
+                </Providers>
+            </body>
         </html>
     )
 }

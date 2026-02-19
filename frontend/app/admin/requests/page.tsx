@@ -1,30 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Alert } from '@/components/ui/Alert';
 import {
     Search,
-    Filter,
-    MoreVertical,
     Eye,
     UserPlus,
     Clock,
     CheckCircle2,
     AlertCircle,
     Calendar,
-    User,
     ChevronLeft,
     ChevronRight,
     SquarePen,
     Trash2,
-    X,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { AssignModal } from '@/components/admin/AssignModal';
+import { ActionIconButton } from '@/components/ui/ActionIconButton';
+import PageHeader from '@/app/admin/components/PageHeader';
 
 interface ServiceRequest {
     id: string;
@@ -47,7 +44,6 @@ interface ServiceRequest {
 export default function AdminRequestList() {
     const [requests, setRequests] = useState<ServiceRequest[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState({ status: '', category: '' });
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -55,7 +51,7 @@ export default function AdminRequestList() {
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async () => {
         setLoading(true);
         try {
             const query = new URLSearchParams();
@@ -67,12 +63,12 @@ export default function AdminRequestList() {
             if (!res.ok) throw new Error('Failed to fetch requests');
             const data = await res.json();
             setRequests(data);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE, debouncedSearch, filter.category, filter.status]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -82,8 +78,8 @@ export default function AdminRequestList() {
     }, [search]);
 
     useEffect(() => {
-        fetchRequests();
-    }, [filter, debouncedSearch]);
+        void fetchRequests();
+    }, [fetchRequests]);
 
 
     const getStatusStyles = (status: string) => {
@@ -112,7 +108,7 @@ export default function AdminRequestList() {
         setAssignModalOpen(true);
     };
 
-    const confirmAssign = async (agentId: number, agentName: string) => {
+    const confirmAssign = async (agentId: number) => {
         if (!assigningRequest) return;
         try {
             const res = await fetch(`${API_BASE}/admin/requests/${assigningRequest.id}`, {
@@ -163,37 +159,31 @@ export default function AdminRequestList() {
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-in fade-in duration-500 thai-text">
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">รายการคำร้องขอรับบริการ</h1>
-                    <p className="text-sm text-slate-500">จัดการและติดตามสถานะคำร้องจากประชาชนผ่าน LINE OA</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => fetchRequests()}>
-                        Refresh
-                    </Button>
-                </div>
-            </div>
+            <PageHeader title="รายการคำร้องขอรับบริการ" subtitle="จัดการและติดตามสถานะคำร้องจากประชาชนผ่าน LINE OA">
+                <Button variant="outline" size="sm" onClick={() => fetchRequests()}>
+                    Refresh
+                </Button>
+            </PageHeader>
 
             {/* Filters & Search */}
             <Card glass className="border-none shadow-sm">
                 <CardContent className="p-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="relative col-span-1 md:col-span-2">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="ค้นหาชื่อ, เบอร์โทรศัพท์ หรือรายละเอียด..."
-                                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
 
                         <select
-                            className="bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm outline-none"
+                            className="bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-sm outline-none cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
                             value={filter.status}
                             onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value }))}
                         >
@@ -204,7 +194,7 @@ export default function AdminRequestList() {
                             <option value="rejected">ปฏิเสธ</option>
                         </select>
                         <select
-                            className="bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm outline-none"
+                            className="bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-sm outline-none cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
                             value={filter.category}
                             onChange={(e) => setFilter(prev => ({ ...prev, category: e.target.value }))}
                         >
@@ -222,7 +212,7 @@ export default function AdminRequestList() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-slate-50/50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            <tr className="bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-400">
                                 <th className="px-6 py-4">ข้อมูลผู้ยื่น / หัวข้อ</th>
                                 <th className="px-6 py-4">หน่วยงาน / พื้นที่</th>
                                 <th className="px-6 py-4">วันที่ยื่น</th>
@@ -231,46 +221,46 @@ export default function AdminRequestList() {
                                 <th className="px-6 py-4 text-right">จัดการ</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 bg-white/40">
+                        <tbody className="divide-y divide-gray-100 bg-white/40 dark:divide-gray-700 dark:bg-transparent">
                             {loading ? (
                                 Array(5).fill(0).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
                                         <td colSpan={6} className="px-6 py-8">
-                                            <div className="h-4 bg-slate-100 rounded-full w-3/4 mb-3"></div>
-                                            <div className="h-3 bg-slate-50 rounded-full w-1/2"></div>
+                                            <div className="h-4 bg-gray-100 rounded-full w-3/4 mb-3 dark:bg-gray-700"></div>
+                                            <div className="h-3 bg-gray-50 rounded-full w-1/2 dark:bg-gray-700/50"></div>
                                         </td>
                                     </tr>
                                 ))
                             ) : requests.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center">
-                                        <div className="flex flex-col items-center gap-3 text-slate-400">
+                                        <div className="flex flex-col items-center gap-3 text-gray-400 dark:text-gray-500">
                                             <AlertCircle className="w-12 h-12 opacity-20" />
                                             <p className="text-sm">ไม่พบข้อมูลคำร้อง</p>
                                         </div>
                                     </td>
                                 </tr>
                             ) : requests.map((req) => (
-                                <tr key={req.id} className="hover:bg-slate-50/50 transition-colors group">
+                                <tr key={req.id} className="hover:bg-gray-50/50 transition-colors group dark:hover:bg-gray-700/30">
                                     <td className="px-6 py-4">
                                         <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center font-bold text-lg shrink-0">
+                                            <div className="w-10 h-10 bg-brand-500/10 text-brand-600 rounded-lg flex items-center justify-center font-bold text-lg shrink-0 dark:bg-brand-500/20 dark:text-brand-400">
                                                 {req.firstname?.[0] || '?'}
                                             </div>
                                             <div>
-                                                <div className="text-sm font-bold text-slate-700">{req.firstname || 'ไม่ระบุชื่อ'} {req.lastname || ''}</div>
-                                                <div className="text-xs text-slate-500 mt-0.5 font-medium">{req.topic_category}</div>
-                                                <div className="text-[10px] text-slate-400 uppercase tracking-tight">{req.topic_subcategory}</div>
+                                                <div className="text-sm font-bold text-gray-700 dark:text-gray-200">{req.firstname || 'ไม่ระบุชื่อ'} {req.lastname || ''}</div>
+                                                <div className="text-xs text-gray-500 mt-0.5 font-medium dark:text-gray-400">{req.topic_category}</div>
+                                                <div className="text-[10px] text-gray-400 uppercase tracking-tight dark:text-gray-500">{req.topic_subcategory}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-[11px] font-bold text-slate-600">{req.agency}</div>
-                                        <div className="text-[10px] text-slate-500 mt-0.5">{req.province} › {req.district}</div>
+                                        <div className="text-[11px] font-bold text-gray-600 dark:text-gray-300">{req.agency}</div>
+                                        <div className="text-[10px] text-gray-500 mt-0.5 dark:text-gray-400">{req.province} › {req.district}</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
-                                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                        <div className="flex items-center gap-2 text-xs text-gray-600 font-medium dark:text-gray-300">
+                                            <Calendar className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
                                             {new Date(req.created_at).toLocaleDateString('th-TH', {
                                                 day: '2-digit',
                                                 month: 'short',
@@ -289,51 +279,49 @@ export default function AdminRequestList() {
                                     <td className="px-6 py-4">
                                         {req.assignee_name ? (
                                             <div
-                                                className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 p-1.5 rounded-lg -ml-1.5 transition-colors group/agent"
+                                                className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1.5 rounded-lg -ml-1.5 transition-colors group/agent dark:hover:bg-gray-700"
                                                 onClick={() => handleAssign(req)}
                                                 title="คลิกเพื่อเปลี่ยนผู้รับผิดชอบ"
                                             >
-                                                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-[10px] font-bold text-blue-600 group-hover/agent:bg-blue-200 transaction-colors">
+                                                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-[10px] font-bold text-blue-600 group-hover/agent:bg-blue-200 transition-colors dark:bg-blue-500/20 dark:text-blue-400">
                                                     {req.assignee_name[0]}
                                                 </div>
-                                                <span className="text-xs font-medium text-slate-600 group-hover/agent:text-blue-700">{req.assignee_name}</span>
+                                                <span className="text-xs font-medium text-gray-600 group-hover/agent:text-blue-700 dark:text-gray-300">{req.assignee_name}</span>
                                             </div>
                                         ) : (
                                             <button
                                                 onClick={() => handleAssign(req)}
-                                                className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 p-1 rounded-full pr-2.5 border border-transparent hover:border-slate-200 transition-all group/assign"
+                                                className="flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded-full pr-2.5 border border-transparent hover:border-gray-200 transition-all group/assign dark:hover:bg-gray-700 dark:hover:border-gray-600"
                                                 title="มอบหมายเจ้าหน้าที่"
                                             >
-                                                <div className="w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 group-hover/assign:bg-primary group-hover/assign:text-white transition-colors shadow-sm">
+                                                <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover/assign:bg-brand-500 group-hover/assign:text-white transition-colors shadow-sm dark:bg-gray-700">
                                                     <UserPlus className="w-3 h-3" />
                                                 </div>
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider group-hover/assign:text-primary transition-colors">Assign</span>
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover/assign:text-brand-600 transition-colors dark:text-gray-500 dark:group-hover/assign:text-brand-400">Assign</span>
                                             </button>
                                         )}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-1">
-                                            <button
+                                            <ActionIconButton
+                                                icon={<Eye size={16} />}
+                                                label="เรียกดู"
+                                                variant="default"
                                                 onClick={() => handleView(req)}
-                                                className="inline-flex items-center justify-center h-8 w-8 rounded-md bg-transparent text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
-                                                title="เรียกดู"
-                                            >
-                                                <Eye size={16} />
-                                            </button>
-                                            <Link
-                                                href={`/admin/requests/${req.id}`}
-                                                className="inline-flex items-center justify-center h-8 w-8 rounded-md bg-transparent text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
-                                                title="แก้ไข"
-                                            >
-                                                <SquarePen size={16} />
+                                            />
+                                            <Link href={`/admin/requests/${req.id}`}>
+                                                <ActionIconButton
+                                                    icon={<SquarePen size={16} />}
+                                                    label="แก้ไข"
+                                                    variant="warning"
+                                                />
                                             </Link>
-                                            <button
+                                            <ActionIconButton
+                                                icon={<Trash2 size={16} />}
+                                                label="ลบ"
+                                                variant="danger"
                                                 onClick={() => handleDelete(req)}
-                                                className="inline-flex items-center justify-center h-8 w-8 rounded-md bg-transparent text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                                                title="ลบ"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            />
                                         </div>
                                     </td>
                                 </tr>
@@ -343,8 +331,8 @@ export default function AdminRequestList() {
                 </div>
 
                 {/* Pagination Placeholder */}
-                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
-                    <p className="text-xs text-slate-500 font-medium">Showing {requests.length} requests</p>
+                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/30 flex items-center justify-between dark:border-gray-700 dark:bg-gray-800/30">
+                    <p className="text-xs text-gray-500 font-medium dark:text-gray-400">Showing {requests.length} requests</p>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled>
                             <ChevronLeft className="w-4 h-4" />
@@ -362,15 +350,15 @@ export default function AdminRequestList() {
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs text-slate-500">ชื่อ-นามสกุล</label>
-                                <p className="text-sm font-bold text-slate-800">{selectedRequest.firstname} {selectedRequest.lastname}</p>
+                                <label className="text-xs text-gray-500 dark:text-gray-400">ชื่อ-นามสกุล</label>
+                                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{selectedRequest.firstname} {selectedRequest.lastname}</p>
                             </div>
                             <div>
-                                <label className="text-xs text-slate-500">หมวดหมู่</label>
-                                <p className="text-sm font-medium text-slate-700">{selectedRequest.topic_category}</p>
+                                <label className="text-xs text-gray-500 dark:text-gray-400">หมวดหมู่</label>
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{selectedRequest.topic_category}</p>
                             </div>
                             <div>
-                                <label className="text-xs text-slate-500">สถานะ</label>
+                                <label className="text-xs text-gray-500 dark:text-gray-400">สถานะ</label>
                                 <div className="mt-1">
                                     <Badge variant={getStatusStyles(selectedRequest.status).variant}>
                                         {getStatusStyles(selectedRequest.status).label}
@@ -378,18 +366,18 @@ export default function AdminRequestList() {
                                 </div>
                             </div>
                             <div>
-                                <label className="text-xs text-slate-500">วันที่ยื่น</label>
-                                <p className="text-sm font-medium text-slate-700">
+                                <label className="text-xs text-gray-500 dark:text-gray-400">วันที่ยื่น</label>
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                     {new Date(selectedRequest.created_at).toLocaleDateString('th-TH')}
                                 </p>
                             </div>
                             <div className="col-span-2">
-                                <label className="text-xs text-slate-500">หน่วยงาน</label>
-                                <p className="text-sm text-slate-700">{selectedRequest.agency}</p>
-                                <p className="text-xs text-slate-500">{selectedRequest.province} › {selectedRequest.district}</p>
+                                <label className="text-xs text-gray-500 dark:text-gray-400">หน่วยงาน</label>
+                                <p className="text-sm text-gray-700 dark:text-gray-300">{selectedRequest.agency}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedRequest.province} › {selectedRequest.district}</p>
                             </div>
                         </div>
-                        <div className="pt-4 border-t border-slate-100 flex justify-end">
+                        <div className="pt-4 border-t border-gray-100 flex justify-end dark:border-gray-700">
                             <Link href={`/admin/requests/${selectedRequest.id}`}>
                                 <Button className="gap-2">
                                     ดูรายละเอียดเต็ม <ChevronRight className="w-4 h-4" />
@@ -403,7 +391,7 @@ export default function AdminRequestList() {
             {/* Delete Modal */}
             <Modal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="ยืนยันการลบ" maxWidth="sm">
                 <div className="space-y-4">
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                         คุณต้องการลบคำร้องของ <b>{selectedRequest?.firstname} {selectedRequest?.lastname}</b> ใช่หรือไม่?
                         <br /><span className="text-xs text-red-500 mt-2 block">* การกระทำนี้ไม่สามารถย้อนกลับได้</span>
                     </p>

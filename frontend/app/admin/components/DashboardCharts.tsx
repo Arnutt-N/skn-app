@@ -13,17 +13,17 @@ import {
 } from 'recharts';
 
 interface DashboardChartsProps {
-    statusData: any[];
-    monthlyData: any[];
+    statusData: Array<{ name: string; value: number }>;
+    monthlyData: Array<{ month: string; count: number }>;
 }
 
 export default function DashboardCharts({ statusData, monthlyData }: DashboardChartsProps) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
             {/* Request Status Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100/60">
                 <h3 className="text-lg font-semibold text-slate-700 mb-6 flex items-center gap-2">
-                    <span className="w-1 h-5 bg-indigo-500 rounded-full"></span>
+                    <span className="w-1 h-5 bg-primary rounded-full"></span>
                     Request Status Distribution
                 </h3>
                 <div className="h-[300px]">
@@ -57,7 +57,7 @@ export default function DashboardCharts({ statusData, monthlyData }: DashboardCh
             </div>
 
             {/* Monthly Trends Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100/60">
                 <h3 className="text-lg font-semibold text-slate-700 mb-6 flex items-center gap-2">
                     <span className="w-1 h-5 bg-green-500 rounded-full"></span>
                     Monthly Request Trends

@@ -7,7 +7,7 @@ import psycopg2
 # Connection string (sync driver)
 conn = psycopg2.connect(
     host="localhost",
-    database="skn_app_db",
+    database="jsk_app_db",
     user="postgres",
     password="password"
 )

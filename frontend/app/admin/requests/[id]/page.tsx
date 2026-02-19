@@ -1,15 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     User,
     Clock,
     FileText,
-    AlertCircle,
     CheckCircle2,
-    XCircle,
     Calendar,
     Building2,
     Paperclip,
@@ -57,9 +55,14 @@ interface ServiceRequestDetail {
     assignee_name?: string;
 }
 
+type RequestUpdatePayload = Record<string, unknown>;
+
+function getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Unknown error';
+}
+
 export default function RequestDetailPage() {
     const params = useParams();
-    const router = useRouter();
     const [activeTab, setActiveTab] = useState('details');
     const [request, setRequest] = useState<ServiceRequestDetail | null>(null);
     // Local state for Manage Tab (Bulk Save)
@@ -79,7 +82,7 @@ export default function RequestDetailPage() {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
     // --- API Fetching ---
-    const fetchDetail = async () => {
+    const fetchDetail = useCallback(async () => {
         try {
             const res = await fetch(`${API_BASE}/admin/requests/${params.id}`);
             if (!res.ok) throw new Error('Failed to fetch request detail');
@@ -93,14 +96,14 @@ export default function RequestDetailPage() {
                 due_date: data.due_date ? data.due_date.split('T')[0] : '',
                 comment: '' // Reset comment on reload
             }));
-        } catch (err: any) {
-            console.error(err.message);
+        } catch (err: unknown) {
+            console.error(getErrorMessage(err));
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE, params.id]);
 
-    const fetchComments = async () => {
+    const fetchComments = useCallback(async () => {
         try {
             const res = await fetch(`${API_BASE}/admin/requests/${params.id}/comments`);
             if (!res.ok) throw new Error('Failed to fetch comments');
@@ -109,9 +112,9 @@ export default function RequestDetailPage() {
         } catch (err) {
             console.error(err);
         }
-    };
+    }, [API_BASE, params.id]);
 
-    const fetchCurrentUser = async () => {
+    const fetchCurrentUser = useCallback(async () => {
         try {
             const res = await fetch(`${API_BASE}/admin/users`);
             if (res.ok) {
@@ -133,18 +136,21 @@ export default function RequestDetailPage() {
             // On error, also fallback
             setCurrentUserId(1);
         }
-    };
+    }, [API_BASE]);
 
     useEffect(() => {
         if (params.id) {
-            fetchDetail();
-            fetchComments();
-            fetchCurrentUser();
+            const timer = window.setTimeout(() => {
+                void fetchDetail();
+                void fetchComments();
+                void fetchCurrentUser();
+            }, 0);
+            return () => window.clearTimeout(timer);
         }
-    }, [params.id]);
+    }, [fetchComments, fetchCurrentUser, fetchDetail, params.id]);
 
     // --- Handlers ---
-    const handleUpdateField = async (fieldData: any) => {
+    const handleUpdateField = async (fieldData: RequestUpdatePayload) => {
         try {
             const res = await fetch(`${API_BASE}/admin/requests/${params.id}`, {
                 method: 'PATCH',
@@ -156,8 +162,8 @@ export default function RequestDetailPage() {
                 throw new Error(errorData.detail || 'Update failed');
             }
             await fetchDetail();
-        } catch (err: any) {
-            alert(`Update Error: ${err.message}`);
+        } catch (err: unknown) {
+            alert(`Update Error: ${getErrorMessage(err)}`);
             throw err; // Re-throw to handle in caller
         }
     };
@@ -167,7 +173,7 @@ export default function RequestDetailPage() {
         if (!request) return;
 
         // 1. Prepare data for update (only if changed)
-        const updates: any = {};
+        const updates: Record<string, string | null> = {};
         if (manageFormData.status !== request.status) updates.status = manageFormData.status;
         if (manageFormData.priority !== request.priority) updates.priority = manageFormData.priority;
 
@@ -212,8 +218,8 @@ export default function RequestDetailPage() {
                 setManageFormData(prev => ({ ...prev, comment: '' }));
             }
 
-        } catch (err: any) {
-            alert(`Save Failed: ${err.message}`);
+        } catch (err: unknown) {
+            alert(`Save Failed: ${getErrorMessage(err)}`);
         } finally {
             setLoading(false);
         }
@@ -249,14 +255,14 @@ export default function RequestDetailPage() {
             if (!res.ok) throw new Error('Failed to post comment');
             setNewComment('');
             fetchComments();
-        } catch (err: any) {
-            alert(err.message);
+        } catch (err: unknown) {
+            alert(getErrorMessage(err));
         } finally {
             setSubmittingComment(false);
         }
     };
 
-    const handleAssignRequest = async (agentId: number, agentName: string) => {
+    const handleAssignRequest = async (agentId: number) => {
         // For assignment, we update immediately as it's a specific modal action
         await handleUpdateField({
             assigned_agent_id: agentId,
@@ -278,7 +284,7 @@ export default function RequestDetailPage() {
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-screen bg-slate-50">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
         </div>
     );
 
@@ -362,7 +368,7 @@ export default function RequestDetailPage() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition-all border-b-2 whitespace-nowrap outline-none cursor-pointer ${activeTab === tab.id
-                                ? 'border-indigo-600 text-indigo-600'
+                                ? 'border-primary text-primary'
                                 : 'border-transparent text-slate-400 hover:text-slate-600'
                                 }`}
                         >
@@ -380,7 +386,7 @@ export default function RequestDetailPage() {
                         <div className="space-y-6 animate-in fade-in duration-300">
                             {/* Card Header: Category info V2 */}
                             <div className="pb-6 border-b border-slate-100 flex items-start gap-4">
-                                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-indigo-200 shadow-lg shrink-0">
+                                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-dark rounded-2xl flex items-center justify-center text-white shadow-primary/20 shadow-lg shrink-0">
                                     <CheckCircle2 size={24} />
                                 </div>
                                 <div className="flex items-center gap-6 h-12">
@@ -447,8 +453,8 @@ export default function RequestDetailPage() {
                                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ไฟล์แนบ ({request.attachments?.length || 0})</label>
                                 <div className="flex flex-wrap gap-2">
                                     {request.attachments?.map((file, idx) => (
-                                        <a key={idx} href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all cursor-pointer">
-                                            <Paperclip size={14} className="text-indigo-500" /> {file.name}
+                                        <a key={idx} href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:border-primary/40 hover:text-primary hover:bg-primary/8 transition-all cursor-pointer">
+                                            <Paperclip size={14} className="text-primary" /> {file.name}
                                         </a>
                                     ))}
                                     {(!request.attachments || request.attachments.length === 0) && (
@@ -463,11 +469,11 @@ export default function RequestDetailPage() {
                     {activeTab === 'contact' && (
                         <div className="space-y-8 animate-in fade-in duration-300">
                             <div className="flex flex-col items-center p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                                <div className="w-24 h-24 rounded-full border-4 border-white shadow-md mb-4 bg-indigo-100 flex items-center justify-center text-indigo-600 text-3xl font-bold">
+                                <div className="w-24 h-24 rounded-full border-4 border-white shadow-md mb-4 bg-primary/12 flex items-center justify-center text-primary text-3xl font-bold">
                                     {request.firstname[0]}
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-800">{request.prefix}{request.firstname} {request.lastname}</h3>
-                                <p className="text-sm text-indigo-600 font-bold">{request.agency}</p>
+                                <p className="text-sm text-primary font-bold">{request.agency}</p>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="p-4 border border-slate-100 rounded-xl flex items-center gap-4">
@@ -509,7 +515,7 @@ export default function RequestDetailPage() {
                                     const isAdmin = comment.display_name?.toUpperCase().includes('ADMIN');
 
                                     const dotColor = isSystem ? 'bg-amber-400 shadow-amber-100' :
-                                        isAdmin ? 'bg-indigo-500 shadow-indigo-100' :
+                                        isAdmin ? 'bg-primary shadow-primary/10' :
                                             'bg-slate-400 shadow-slate-100';
 
                                     return (
@@ -519,7 +525,7 @@ export default function RequestDetailPage() {
 
                                             {/* Header */}
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className={`text-xs font-bold uppercase tracking-wider ${isSystem ? 'text-amber-500' : isAdmin ? 'text-indigo-600' : 'text-slate-600'}`}>
+                                                <span className={`text-xs font-bold uppercase tracking-wider ${isSystem ? 'text-amber-500' : isAdmin ? 'text-primary' : 'text-slate-600'}`}>
                                                     {comment.display_name}
                                                 </span>
                                                 <span className="text-[10px] font-bold text-slate-300">
@@ -547,13 +553,13 @@ export default function RequestDetailPage() {
                                         value={newComment}
                                         onChange={(e) => setNewComment(e.target.value)}
                                         placeholder="พิมพ์ความเห็นหรือบันทึกการดำเนินงาน..."
-                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50/50 transition-all resize-none min-h-[120px]"
+                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all resize-none min-h-[120px]"
                                     ></textarea>
                                     <div className="flex justify-end">
                                         <button
                                             onClick={handleAddComment}
                                             disabled={!newComment.trim() || submittingComment}
-                                            className={`flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 ${!newComment.trim() || submittingComment ? 'opacity-50 shadow-none cursor-default' : 'cursor-pointer'}`}
+                                            className={`flex items-center gap-2 px-6 py-2.5 bg-gradient-to-br from-primary to-primary-dark text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 ${!newComment.trim() || submittingComment ? 'opacity-50 shadow-none cursor-default' : 'cursor-pointer'}`}
                                             title={!currentUserId ? "User ID not loaded yet" : "Save Comment"}
                                         >
                                             <Send size={16} /> บันทึกข้อมูล
@@ -585,7 +591,7 @@ export default function RequestDetailPage() {
                                         {[
                                             { value: 'PENDING', label: 'รอดำเนินการ', activeClass: 'bg-amber-50 text-amber-700 border-amber-400', dotClass: 'bg-amber-500' },
                                             { value: 'IN_PROGRESS', label: 'กำลังดำเนินการ', activeClass: 'bg-blue-50 text-blue-700 border-blue-400', dotClass: 'bg-blue-500' },
-                                            { value: 'AWAITING_APPROVAL', label: 'รออนุมัติ', activeClass: 'bg-indigo-50 text-indigo-700 border-indigo-400', dotClass: 'bg-indigo-500' },
+                                            { value: 'AWAITING_APPROVAL', label: 'รออนุมัติ', activeClass: 'bg-primary/8 text-primary border-primary/40', dotClass: 'bg-primary' },
                                             { value: 'COMPLETED', label: 'เสร็จสิ้น', activeClass: 'bg-emerald-50 text-emerald-700 border-emerald-400', dotClass: 'bg-emerald-500' }
                                         ].map((s) => (
                                             <button
@@ -633,7 +639,7 @@ export default function RequestDetailPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                                 <div className="space-y-3">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                                        <UserPlus size={14} className="text-indigo-500" /> มอบหมายงานให้
+                                        <UserPlus size={14} className="text-primary" /> มอบหมายงานให้
                                     </label>
                                     <div
                                         onClick={() => setAssignModalOpen(true)}
@@ -667,7 +673,7 @@ export default function RequestDetailPage() {
                                     value={manageFormData.comment}
                                     onChange={(e) => setManageFormData(prev => ({ ...prev, comment: e.target.value }))}
                                     placeholder="ระบุรายละเอียดการดำเนินการ, เหตุผลการยกเลิก, หรือข้อความถึงผู้เกี่ยวข้อง..."
-                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50/50 transition-all resize-none min-h-[100px]"
+                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all resize-none min-h-[100px]"
                                 ></textarea>
                             </div>
 
@@ -681,7 +687,7 @@ export default function RequestDetailPage() {
                                 </button>
                                 <button
                                     onClick={handleSaveManage}
-                                    className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 cursor-pointer flex items-center gap-2"
+                                    className="px-6 py-2.5 bg-gradient-to-br from-primary to-primary-dark text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 cursor-pointer flex items-center gap-2"
                                 >
                                     <CheckCircle2 size={18} /> บันทึก
                                 </button>
@@ -695,8 +701,8 @@ export default function RequestDetailPage() {
                 <div className="mt-6 px-4 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                     <p>© 2026 Admin Portal</p>
                     <div className="flex gap-4">
-                        <span className="cursor-pointer hover:text-indigo-500">Manual</span>
-                        <span className="cursor-pointer hover:text-indigo-500">Support</span>
+                        <span className="cursor-pointer hover:text-primary">Manual</span>
+                        <span className="cursor-pointer hover:text-primary">Support</span>
                     </div>
                 </div>
 
