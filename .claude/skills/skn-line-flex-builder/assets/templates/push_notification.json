@@ -1,0 +1,50 @@
+{
+  "_comment": "SKN App: Compact push notification bubble. Use for status updates, reminders, system alerts.",
+  "_placeholders": {
+    "title": "Short title (Thai OK)",
+    "message": "Body text (Thai OK, wrap=true)",
+    "accent_color": "Header/accent color (defaults to LINE green #1DB446)",
+    "timestamp": "Formatted datetime string"
+  },
+  "type": "bubble",
+  "size": "micro",
+  "header": {
+    "type": "box",
+    "layout": "horizontal",
+    "backgroundColor": "{{ accent_color|default('#1DB446') }}",
+    "paddingAll": "sm",
+    "contents": [
+      {
+        "type": "text",
+        "text": "{{ title }}",
+        "color": "#ffffff",
+        "weight": "bold",
+        "size": "sm",
+        "flex": 1,
+        "wrap": true
+      }
+    ]
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "paddingAll": "md",
+    "contents": [
+      {
+        "type": "text",
+        "text": "{{ message }}",
+        "size": "sm",
+        "color": "#333333",
+        "wrap": true
+      },
+      {
+        "type": "text",
+        "text": "{{ timestamp }}",
+        "size": "xxs",
+        "color": "#aaaaaa",
+        "margin": "sm",
+        "align": "end"
+      }
+    ]
+  }
+}
