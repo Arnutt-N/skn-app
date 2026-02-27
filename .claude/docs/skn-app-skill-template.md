@@ -827,6 +827,7 @@ Then:  [expected handling]
 | `skn-backend-infra` | Backend | **DONE** ✅ | "add new router", "register endpoint in api.py", "fix api.py", "health check", "backend startup sequence", "CORS config", "/uploads static files", "fix friends page 404", "admin_friends not registered", "login page", "reports page", "เพิ่ม router ใหม่", "ลงทะเบียน endpoint" |
 | `skn-core-runtime` | Backend | **DONE** ✅ | "check business hours", "send CSAT", "CSAT postback", "SLA alert", "SLA threshold", "add handoff keyword", "use redis_client", "use AsyncSessionLocal", "session cleanup timeout", "session auto-close", "rate limiter", "settings env var", "เช็คเวลาทำการ", "handoff keyword ภาษาไทย", "ส่ง CSAT", "auto close session" |
 | `skn-data-models` | Backend | **DONE** ✅ | "add field to model", "add new model", "what fields does User have", "Booking model", "Organization model", "add FK", "JSONB field", "models/__init__.py", "alembic autogenerate empty", "resolve media URL", "url_utils", "LINE image broken", "strip flex body", "เพิ่ม field ใน model", "สร้าง model ใหม่" |
+| `skn-devtools` | DevOps | **DONE** ✅ | "start docker", "seed admin", "create admin user", "run tests", "write a test", "test WebSocket", "conftest", "TestClient", "drain_auth_responses", "debug routes", "verify DB", "hashed_secret not working", "seed_admin_sync wrong DB", "docker-compose", "รัน tests", "เริ่ม Docker", "seed ข้อมูล admin" |
 
 ---
 
