@@ -6,8 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from typing import List
 
-from app.api.deps import get_db
+from app.api.deps import get_db, get_current_admin
 from app.models.reply_object import ReplyObject, ObjectType
+from app.models.user import User
 from app.schemas.reply_object import (
     ReplyObjectCreate,
     ReplyObjectUpdate,
@@ -23,7 +24,8 @@ async def list_reply_objects(
     limit: int = 100,
     category: str = None,
     object_type: str = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """List all reply objects with optional filtering."""
     query = select(ReplyObject).order_by(ReplyObject.created_at.desc())
@@ -41,7 +43,8 @@ async def list_reply_objects(
 @router.get("/{object_id}", response_model=ReplyObjectResponse)
 async def get_reply_object(
     object_id: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """Get a single reply object by its object_id."""
     result = await db.execute(
@@ -56,7 +59,8 @@ async def get_reply_object(
 @router.post("", response_model=ReplyObjectResponse, status_code=201)
 async def create_reply_object(
     data: ReplyObjectCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """Create a new reply object."""
     # Check if object_id already exists
@@ -85,7 +89,8 @@ async def create_reply_object(
 async def update_reply_object(
     object_id: str,
     data: ReplyObjectUpdate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """Update an existing reply object."""
     result = await db.execute(
@@ -110,7 +115,8 @@ async def update_reply_object(
 @router.delete("/{object_id}", status_code=204)
 async def delete_reply_object(
     object_id: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """Delete a reply object."""
     result = await db.execute(

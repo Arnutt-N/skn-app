@@ -217,9 +217,11 @@ class LineService:
             data = bytes(resp.data) if resp and resp.data is not None else b""
             content_type = resp.headers.get("Content-Type") if resp and resp.headers else None
             return data, content_type
-        except ApiException:
+        except ApiException as e:
+            logger.warning("Failed to download LINE media %s (ApiException): %s", message_id, e)
             return b"", None
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to download LINE media %s: %s", message_id, e)
             return b"", None
 
     async def persist_line_media(

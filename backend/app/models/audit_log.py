@@ -14,7 +14,7 @@ class AuditLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     admin_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     action = Column(String(50), index=True)  # e.g., claim_session, close_session, send_message
-    resource_type = Column(String(50))  # e.g., chat_session, message, user
+    resource_type = Column(String(50), index=True)  # e.g., chat_session, message, user
     resource_id = Column(String(100))
     details = Column(JSONB, default={})  # Additional context
     ip_address = Column(String(50), nullable=True)

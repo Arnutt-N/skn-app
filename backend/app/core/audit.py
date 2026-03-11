@@ -51,7 +51,7 @@ def audit_action(action: str, resource_type: str):
                         resource_id = kwargs['line_user_id']
                     elif len(args) >= 2:
                         resource_id = str(args[1])  # Often the first arg after self
-                    
+
                     # Create audit log
                     log = AuditLog(
                         admin_id=int(operator_id) if isinstance(operator_id, (int, str)) else None,
@@ -67,11 +67,13 @@ def audit_action(action: str, resource_type: str):
                     if inspect.isawaitable(maybe_add):
                         await maybe_add
                     # Note: We don't commit here - let the caller handle transaction
-                    
+
                 except Exception as e:
                     # Don't let audit logging break the main functionality
                     logger.error(f"Failed to create audit log: {e}")
-            
+            else:
+                logger.warning("audit_action skipped for %s: missing db=%s or operator_id=%s (kwargs: %s)", func.__name__, db is not None, operator_id, list(kwargs.keys()))
+
             return result
         
         return async_wrapper

@@ -1,4 +1,6 @@
 """Analytics service for calculating KPIs and metrics."""
+import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import and_, exists, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +12,9 @@ from app.models.user import User, ChatMode
 from app.models.message import Message, MessageDirection
 from app.core.redis_client import redis_client
 from app.core.config import settings
+from app.db.session import AsyncSessionLocal
+
+logger = logging.getLogger(__name__)
 
 class AnalyticsService:
     """Service for calculating live chat analytics and KPIs."""
@@ -98,19 +103,29 @@ class AnalyticsService:
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
-    async def emit_live_kpis_update(self, db: AsyncSession):
-        """Emit live KPI updates to WebSocket analytics subscribers."""
-        from app.core.websocket_manager import ws_manager
-        from app.schemas.ws_events import WSEventType
+    async def emit_live_kpis_update(self, db: AsyncSession = None) -> None:
+        """Emit live KPI updates to WebSocket analytics subscribers.
 
-        kpis = await self.get_live_kpis(db)
-        await ws_manager.broadcast_analytics_update(
-            {
-                "type": WSEventType.ANALYTICS_UPDATE.value,
-                "payload": kpis,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            }
-        )
+        Uses its own DB session so callers are never disrupted by a
+        broadcast failure.  The ``db`` parameter is accepted for
+        backward-compatibility but ignored — a fresh session is always
+        created internally.
+        """
+        try:
+            from app.core.websocket_manager import ws_manager
+            from app.schemas.ws_events import WSEventType
+
+            async with AsyncSessionLocal() as session:
+                kpis = await self.get_live_kpis(session)
+                await ws_manager.broadcast_analytics_update(
+                    {
+                        "type": WSEventType.ANALYTICS_UPDATE.value,
+                        "payload": kpis,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
+        except Exception as e:
+            logger.warning("KPI broadcast failed (non-fatal): %s", e)
 
     async def calculate_fcr_rate(self, db: AsyncSession, days: int = 7) -> float:
         """
@@ -444,13 +459,42 @@ class AnalyticsService:
         }
 
     async def get_dashboard(self, db: AsyncSession, days: int = 7) -> dict:
-        """Aggregated analytics payload for dashboard UI."""
+        """Aggregated analytics payload for dashboard UI.
+
+        Each sub-query runs in its own DB session via ``asyncio.gather``
+        for true parallel execution across separate connections.
+        """
+
+        async def _trends():
+            async with AsyncSessionLocal() as s:
+                return await self.get_kpi_trends(s)
+
+        async def _volume():
+            async with AsyncSessionLocal() as s:
+                return await self.get_session_volume(s, days=days)
+
+        async def _peak():
+            async with AsyncSessionLocal() as s:
+                return await self.get_peak_hours_heatmap(s, days=days)
+
+        async def _funnel():
+            async with AsyncSessionLocal() as s:
+                return await self.get_conversation_funnel(s, days=days)
+
+        async def _percentiles():
+            async with AsyncSessionLocal() as s:
+                return await self.get_percentiles(s, days=days)
+
+        trends, session_volume, peak_hours, funnel, percentiles = await asyncio.gather(
+            _trends(), _volume(), _peak(), _funnel(), _percentiles(),
+        )
+
         return {
-            "trends": await self.get_kpi_trends(db),
-            "session_volume": await self.get_session_volume(db, days=days),
-            "peak_hours": await self.get_peak_hours_heatmap(db, days=days),
-            "funnel": await self.get_conversation_funnel(db, days=days),
-            "percentiles": await self.get_percentiles(db, days=days),
+            "trends": trends,
+            "session_volume": session_volume,
+            "peak_hours": peak_hours,
+            "funnel": funnel,
+            "percentiles": percentiles,
         }
 
     async def calculate_sla_breach_events(self, db: AsyncSession, hours: int = 24) -> int:

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { X, MessageSquare, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLiveChatStore } from '../_store/liveChatStore'
@@ -9,13 +9,33 @@ export function NotificationToast() {
   const notifications = useLiveChatStore((s) => s.notifications)
   const removeNotification = useLiveChatStore((s) => s.removeNotification)
 
+  const timerRefs = useRef<Map<string, NodeJS.Timeout>>(new Map())
+
   useEffect(() => {
-    if (notifications.length === 0) return
-    const timer = setTimeout(() => {
-      removeNotification(notifications[0].id)
-    }, 5000)
-    return () => clearTimeout(timer)
+    // Set timers for new notifications
+    notifications.forEach((notif) => {
+      if (!timerRefs.current.has(notif.id)) {
+        const timer = setTimeout(() => {
+          removeNotification(notif.id)
+          timerRefs.current.delete(notif.id)
+        }, 5000)
+        timerRefs.current.set(notif.id, timer)
+      }
+    })
+    // Clean up timers for removed notifications
+    timerRefs.current.forEach((timer, id) => {
+      if (!notifications.find(n => n.id === id)) {
+        clearTimeout(timer)
+        timerRefs.current.delete(id)
+      }
+    })
   }, [notifications, removeNotification])
+
+  useEffect(() => {
+    return () => {
+      timerRefs.current.forEach(timer => clearTimeout(timer))
+    }
+  }, [])
 
   if (notifications.length === 0) return null
 

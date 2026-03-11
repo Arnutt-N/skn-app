@@ -149,15 +149,17 @@ export default function AnalyticsPage() {
     return `${protocol}//${window.location.host}/api/v1/ws/live-chat`;
   }, []);
 
+  const handleWebSocketMessage = useCallback((message: WebSocketMessage) => {
+    if (message.type === MessageType.ANALYTICS_UPDATE) {
+      setKpis(message.payload as KPIData);
+    }
+  }, []);
+
   const { connectionState, send } = useWebSocket({
     url: wsUrl,
     adminId: user?.id || "1",
     token: token || undefined,
-    onMessage: (message: WebSocketMessage) => {
-      if (message.type === MessageType.ANALYTICS_UPDATE) {
-        setKpis(message.payload as KPIData);
-      }
-    },
+    onMessage: handleWebSocketMessage,
   });
 
   useEffect(() => {

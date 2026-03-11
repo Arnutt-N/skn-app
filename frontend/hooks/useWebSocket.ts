@@ -52,7 +52,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     };
   }, [adminId, onConnect, onDisconnect, onError, onMessage, token, url]);
 
-  const send = useCallback((type: MessageType | string, payload: unknown) => {
+  const send = useCallback((type: MessageType, payload: unknown) => {
     clientRef.current?.send(type, payload);
   }, []);
 

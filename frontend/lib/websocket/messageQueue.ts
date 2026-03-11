@@ -2,7 +2,7 @@ import { MessageType } from './types';
 
 interface QueuedMessage {
   id: string;
-  type: MessageType | string;
+  type: MessageType;
   payload: unknown;
   timestamp: number;
   retries: number;
@@ -13,7 +13,7 @@ export class MessageQueue {
   private maxRetries = 3;
   private maxSize = 100;
 
-  enqueue(type: MessageType | string, payload: unknown): string {
+  enqueue(type: MessageType, payload: unknown): string {
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Prevent queue overflow

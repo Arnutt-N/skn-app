@@ -46,6 +46,34 @@ function AdminAuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Sidebar User Info Component (uses auth context)
+function SidebarUserInfo({ isCollapsed }: { isCollapsed: boolean }) {
+  const { user, logout } = useAuth();
+  const displayName = user?.display_name || user?.username || 'Administrator';
+  const email = '';
+  const initials = displayName.substring(0, 2).toUpperCase();
+
+  return (
+    <div className="relative z-10 p-3 border-t border-white/10 bg-slate-800/50">
+      <div
+        className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group"
+        onClick={() => logout?.()}
+      >
+        <Avatar size="sm" fallback={initials} />
+        {!isCollapsed && (
+          <>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">{displayName}</p>
+              {email && <p className="text-xs text-slate-400 truncate">{email}</p>}
+            </div>
+            <LogOut className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Theme Toggle Button Component
 function ThemeToggle() {
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -215,20 +243,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </nav>
 
             {/* User Section */}
-            <div className="relative z-10 p-3 border-t border-white/10 bg-slate-800/50">
-              <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
-                <Avatar size="sm" fallback="AD" />
-                {!isSidebarCollapsed && (
-                  <>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">Administrator</p>
-                      <p className="text-xs text-slate-400 truncate">admin@jsk.go.th</p>
-                    </div>
-                    <LogOut className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
-                  </>
-                )}
-              </div>
-            </div>
+            <SidebarUserInfo isCollapsed={isSidebarCollapsed} />
 
             {/* Bottom collapse toggle — HR-IMS style */}
             <button

@@ -6,8 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
 
-from app.api.deps import get_db
+from app.api.deps import get_db, get_current_admin
 from app.models.auto_reply import AutoReply, MatchType, ReplyType
+from app.models.user import User
 from app.schemas.auto_reply import (
     AutoReplyCreate,
     AutoReplyUpdate,
@@ -22,7 +23,8 @@ async def list_auto_replies(
     skip: int = 0,
     limit: int = 100,
     keyword: str = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """List all auto-reply rules with optional filtering."""
     query = select(AutoReply).order_by(AutoReply.created_at.desc())
@@ -38,7 +40,8 @@ async def list_auto_replies(
 @router.get("/{reply_id}", response_model=AutoReplyResponse)
 async def get_auto_reply(
     reply_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """Get a single auto-reply rule by ID."""
     result = await db.execute(
@@ -53,7 +56,8 @@ async def get_auto_reply(
 @router.post("", response_model=AutoReplyResponse, status_code=201)
 async def create_auto_reply(
     data: AutoReplyCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """Create a new auto-reply rule."""
     # Check if keyword already exists
@@ -80,7 +84,8 @@ async def create_auto_reply(
 async def update_auto_reply(
     reply_id: int,
     data: AutoReplyUpdate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """Update an existing auto-reply rule."""
     result = await db.execute(
@@ -107,7 +112,8 @@ async def update_auto_reply(
 @router.delete("/{reply_id}", status_code=204)
 async def delete_auto_reply(
     reply_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """Delete an auto-reply rule."""
     result = await db.execute(

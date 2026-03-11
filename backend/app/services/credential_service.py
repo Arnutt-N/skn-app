@@ -1,5 +1,6 @@
 from cryptography.fernet import Fernet
 import json
+import logging
 from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
@@ -8,18 +9,25 @@ from app.schemas.credential import CredentialCreate, CredentialUpdate, Credentia
 from app.core.config import settings
 import httpx
 
+logger = logging.getLogger(__name__)
+
 class CredentialService:
     def __init__(self):
-        # We need a fallback if ENCRYPTION_KEY is not a valid Fernet key
-        try:
-            self.cipher = Fernet(settings.ENCRYPTION_KEY.encode())
-        except Exception:
-            # For development, if key is invalid, we might want a stable but insecure fallback
-            # In production, this should fail early.
-            import base64
-            # A 32-byte key is required for Fernet
-            fake_key = base64.urlsafe_b64encode(b"dev_encryption_key_32_bytes_long")
-            self.cipher = Fernet(fake_key)
+        key = getattr(settings, 'ENCRYPTION_KEY', '')
+        if key:
+            try:
+                self.cipher = Fernet(key.encode())
+            except Exception as e:
+                logger.critical("Invalid ENCRYPTION_KEY: %s", e)
+                raise
+        else:
+            if getattr(settings, 'ENVIRONMENT', 'production') == 'development':
+                logger.warning("ENCRYPTION_KEY not set — using insecure dev key. DO NOT use in production.")
+                import base64
+                fake_key = base64.urlsafe_b64encode(b"dev_encryption_key_32_bytes_long")
+                self.cipher = Fernet(fake_key)
+            else:
+                raise RuntimeError("ENCRYPTION_KEY must be set in production. Add it to your .env file.")
 
     def encrypt_credentials(self, data: dict) -> str:
         """Encrypt credentials dict to string"""

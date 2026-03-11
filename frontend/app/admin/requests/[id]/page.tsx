@@ -22,6 +22,7 @@ import {
     Activity
 } from 'lucide-react';
 import { AssignModal } from '@/components/admin/AssignModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Interfaces for API Data
 interface Comment {
@@ -77,7 +78,8 @@ export default function RequestDetailPage() {
     const [loading, setLoading] = useState(true);
     const [submittingComment, setSubmittingComment] = useState(false);
     const [assignModalOpen, setAssignModalOpen] = useState(false);
-    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const { user: authUser } = useAuth();
+    const currentUserId = authUser?.id || '1';
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
@@ -114,40 +116,15 @@ export default function RequestDetailPage() {
         }
     }, [API_BASE, params.id]);
 
-    const fetchCurrentUser = useCallback(async () => {
-        try {
-            const res = await fetch(`${API_BASE}/admin/users`);
-            if (res.ok) {
-                const users = await res.json();
-                console.log("Fetched users:", users); // Debug
-                if (users.length > 0) {
-                    // Use the first user found as the current user
-                    setCurrentUserId(users[0].id);
-                    console.log("Set Current User ID:", users[0].id); // Debug
-                } else {
-                    console.warn("No users found in DB. Using fallback ID=1");
-                    // Fallback: Create a basic user ID to allow testing
-                    // This should ideally be handled by seeding, but for prototype, use ID=1
-                    setCurrentUserId(1);
-                }
-            }
-        } catch (err) {
-            console.error("Failed to fetch current user", err);
-            // On error, also fallback
-            setCurrentUserId(1);
-        }
-    }, [API_BASE]);
-
     useEffect(() => {
         if (params.id) {
             const timer = window.setTimeout(() => {
                 void fetchDetail();
                 void fetchComments();
-                void fetchCurrentUser();
             }, 0);
             return () => window.clearTimeout(timer);
         }
-    }, [fetchComments, fetchCurrentUser, fetchDetail, params.id]);
+    }, [fetchComments, fetchDetail, params.id]);
 
     // --- Handlers ---
     const handleUpdateField = async (fieldData: RequestUpdatePayload) => {
@@ -240,8 +217,6 @@ export default function RequestDetailPage() {
         if (!newComment.trim()) return;
 
         if (!currentUserId) {
-            alert("ไม่พบข้อมูลผู้ใช้งาน (User ID Missing) - กรุณารีเฟรชหน้าจอ");
-            fetchCurrentUser(); // Retry
             return;
         }
 

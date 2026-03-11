@@ -87,7 +87,7 @@ export function useSessionTimeout(onLogout: () => void): UseSessionTimeoutReturn
       });
       clearAllTimers();
     };
-  }, [resetTimer, clearAllTimers, showWarning]);
+  }, [resetTimer, clearAllTimers]);
 
   const extendSession = useCallback(() => {
     resetTimer();

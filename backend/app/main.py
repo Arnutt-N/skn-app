@@ -5,7 +5,7 @@ from app.core.config import settings
 from app.core.redis_client import redis_client
 from app.core.websocket_manager import ws_manager
 from app.services.business_hours_service import business_hours_service
-from app.tasks import start_cleanup_task
+from app.tasks import start_cleanup_task, stop_cleanup_task
 from app.api.v1.api import api_router
 
 tags_metadata = [
@@ -80,6 +80,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on application shutdown."""
+    await stop_cleanup_task()
     from app.core.pubsub_manager import pubsub_manager
     await pubsub_manager.disconnect()
     await redis_client.disconnect()
