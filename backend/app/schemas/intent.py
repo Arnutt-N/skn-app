@@ -1,34 +1,20 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from enum import Enum
 from uuid import UUID
-
-class MatchTypeEnum(str, Enum):
-    exact = "exact"
-    contains = "contains"
-    regex = "regex"
-    starts_with = "starts_with"
-
-class ReplyTypeEnum(str, Enum):
-    text = "text"
-    flex = "flex"
-    image = "image"
-    sticker = "sticker"
-    video = "video"
-    template = "template"
+from app.models.intent import MatchType, ReplyType
 
 # --- Keywords ---
 class IntentKeywordBase(BaseModel):
     keyword: str = Field(..., min_length=1, max_length=255)
-    match_type: MatchTypeEnum = MatchTypeEnum.contains
+    match_type: MatchType = MatchType.CONTAINS
 
 class IntentKeywordCreate(IntentKeywordBase):
     category_id: int
 
 class IntentKeywordUpdate(BaseModel):
     keyword: Optional[str] = None
-    match_type: Optional[MatchTypeEnum] = None
+    match_type: Optional[MatchType] = None
 
 class IntentKeywordResponse(IntentKeywordBase):
     id: int
@@ -41,7 +27,7 @@ class IntentKeywordResponse(IntentKeywordBase):
 
 # --- Responses ---
 class IntentResponseBase(BaseModel):
-    reply_type: ReplyTypeEnum = ReplyTypeEnum.text
+    reply_type: ReplyType = ReplyType.TEXT
     text_content: Optional[str] = None
     media_id: Optional[UUID] = None
     payload: Optional[Dict[str, Any]] = None
@@ -52,7 +38,7 @@ class IntentResponseCreate(IntentResponseBase):
     category_id: int
 
 class IntentResponseUpdate(BaseModel):
-    reply_type: Optional[ReplyTypeEnum] = None
+    reply_type: Optional[ReplyType] = None
     text_content: Optional[str] = None
     media_id: Optional[UUID] = None
     payload: Optional[Dict[str, Any]] = None

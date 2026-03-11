@@ -61,30 +61,35 @@ async def process_webhook_events(events):
     """Process webhook events with deduplication support."""
     async with AsyncSessionLocal() as db:
         for event in events:
-            # Deduplication check using webhookEventId
-            event_id = getattr(event, 'webhook_event_id', None)
-            if event_id:
-                cache_key = f"{WEBHOOK_EVENT_KEY_PREFIX}{event_id}"
-                if await redis_client.exists(cache_key):
-                    logger.info(f"Duplicate webhook event {event_id}, skipping")
-                    continue
-                # Mark as processed with TTL
-                await redis_client.setex(
-                    cache_key, 
-                    settings.WEBHOOK_EVENT_TTL, 
-                    "1"
-                )
-                logger.debug(f"Marked event {event_id} as processed")
-            
-            # Process the event
-            if isinstance(event, MessageEvent):
-                await handle_message_event(event, db)
-            elif isinstance(event, PostbackEvent):
-                await handle_postback_event(event, db)
-            elif isinstance(event, FollowEvent):
-                await handle_follow_event(event, db)
-            elif isinstance(event, UnfollowEvent):
-                await handle_unfollow_event(event, db)
+            try:
+                # Deduplication check using webhookEventId
+                event_id = getattr(event, 'webhook_event_id', None)
+                if event_id:
+                    cache_key = f"{WEBHOOK_EVENT_KEY_PREFIX}{event_id}"
+                    if await redis_client.exists(cache_key):
+                        logger.info(f"Duplicate webhook event {event_id}, skipping")
+                        continue
+                    # Mark as processed with TTL
+                    await redis_client.setex(
+                        cache_key,
+                        settings.WEBHOOK_EVENT_TTL,
+                        "1"
+                    )
+                    logger.debug(f"Marked event {event_id} as processed")
+
+                # Process the event
+                if isinstance(event, MessageEvent):
+                    await handle_message_event(event, db)
+                elif isinstance(event, PostbackEvent):
+                    await handle_postback_event(event, db)
+                elif isinstance(event, FollowEvent):
+                    await handle_follow_event(event, db)
+                elif isinstance(event, UnfollowEvent):
+                    await handle_unfollow_event(event, db)
+            except Exception as e:
+                event_id = getattr(event, 'webhook_event_id', 'unknown')
+                logger.error("Failed to process event %s (%s): %s", event_id, type(event).__name__, e, exc_info=True)
+                continue
 
 
 async def handle_follow_event(event: FollowEvent, db: AsyncSession):
@@ -480,7 +485,7 @@ async def handle_postback_event(event: PostbackEvent, db: AsyncSession):
         await handle_csat_response(line_user_id, data, event.reply_token, db)
     else:
         # Handle other postbacks if any
-        pass
+        logger.info("Unhandled postback data '%s' from user %s", data, line_user_id)
 
 
 async def handle_csat_response(line_user_id: str, data: str, reply_token: str, db: AsyncSession):

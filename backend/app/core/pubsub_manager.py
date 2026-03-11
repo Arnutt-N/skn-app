@@ -150,6 +150,24 @@ class PubSubManager:
             logger.debug("Pub/Sub listener cancelled")
         except Exception as e:
             logger.error(f"Pub/Sub listener error: {e}")
+            # Attempt reconnect with backoff
+            for attempt in range(5):
+                wait_time = min(2 ** attempt, 30)
+                logger.info("Pub/Sub reconnect attempt %d in %ds...", attempt + 1, wait_time)
+                await asyncio.sleep(wait_time)
+                try:
+                    await self.disconnect()
+                    if await self.connect():
+                        # Re-subscribe to all channels
+                        for channel in list(self._callbacks.keys()):
+                            await self._pubsub.subscribe(channel)
+                        logger.info("Pub/Sub reconnected successfully")
+                        # Restart listener loop
+                        self._listener_task = asyncio.create_task(self._listen())
+                        return
+                except Exception as reconnect_err:
+                    logger.error("Pub/Sub reconnect attempt %d failed: %s", attempt + 1, reconnect_err)
+            logger.critical("Pub/Sub listener permanently dead after 5 reconnect attempts. Cross-server WS broadcasting is offline.")
 
     @property
     def is_connected(self) -> bool:

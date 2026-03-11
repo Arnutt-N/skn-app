@@ -77,6 +77,12 @@ class HandoffService:
             return True
         except Exception as e:
             logger.error(f"Failed to initiate handoff for user {user.line_user_id}: {e}")
+            # Try to notify the user that handoff failed
+            try:
+                from app.services.line_service import line_service
+                await line_service.reply_text(reply_token, "ขออภัย ไม่สามารถเชื่อมต่อเจ้าหน้าที่ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง")
+            except Exception:
+                pass  # Best-effort notification
             return False
     
     async def get_configurable_keywords(self, db: AsyncSession) -> list[str]:

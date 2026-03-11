@@ -241,7 +241,8 @@ class ConnectionManager:
                 await ws.send_json(data)
                 success = True
                 await self.touch_presence(admin_id)
-            except Exception:
+            except Exception as e:
+                logger.debug("send_to_admin failed for admin %s: %s", admin_id, e)
                 disconnected.append(ws)
 
         for ws in disconnected:
@@ -510,14 +511,18 @@ class ConnectionManager:
         if not redis_client.is_connected or not redis_client._redis:
             return admin_id in self.rooms.get(room_id, set())
 
-        servers_key = f"{self.REDIS_ADMIN_SERVERS_PREFIX}:{admin_id}"
-        server_ids = await redis_client._redis.smembers(servers_key)
-        for sid in server_ids:
-            rooms_key = f"{self.REDIS_ADMIN_ROOMS_PREFIX}:{admin_id}:{sid}"
-            in_room = await redis_client._redis.sismember(rooms_key, room_id)
-            if in_room:
-                return True
-        return False
+        try:
+            servers_key = f"{self.REDIS_ADMIN_SERVERS_PREFIX}:{admin_id}"
+            server_ids = await redis_client._redis.smembers(servers_key)
+            for sid in server_ids:
+                rooms_key = f"{self.REDIS_ADMIN_ROOMS_PREFIX}:{admin_id}:{sid}"
+                in_room = await redis_client._redis.sismember(rooms_key, room_id)
+                if in_room:
+                    return True
+            return False
+        except Exception as e:
+            logger.warning("Redis check for admin %s in room %s failed: %s", admin_id, room_id, e)
+            return admin_id in self.rooms.get(room_id, set())
 
     @classmethod
     def _operator_online_key(cls, admin_id: str) -> str:

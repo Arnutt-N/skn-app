@@ -12,6 +12,7 @@ class ClosedBy(str, Enum):
     OPERATOR = "OPERATOR"
     SYSTEM = "SYSTEM"
     USER = "USER"
+    SYSTEM_TIMEOUT = "SYSTEM_TIMEOUT"
 
 class ChatSessionBase(BaseModel):
     line_user_id: str

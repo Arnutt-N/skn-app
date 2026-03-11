@@ -51,16 +51,34 @@ class ServiceRequestCreate(BaseModel):
             }
         }
 
-class ServiceRequestResponse(ServiceRequestCreate):
+class ServiceRequestResponse(BaseModel):
     id: int
+    requester_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+    line_user_id: Optional[str] = None
+    agency: Optional[str] = None
+    province: Optional[str] = None
+    district: Optional[str] = None
+    sub_district: Optional[str] = None
+    prefix: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    topic_category: Optional[str] = None
+    topic_subcategory: Optional[str] = None
+    description: Optional[str] = None
+    attachments: Optional[list] = None
+    category: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[str] = None
-    due_date: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    details: Optional[dict] = None
     assigned_agent_id: Optional[int] = None
     assigned_by_id: Optional[int] = None
     assignee_name: Optional[str] = None
-    created_at: datetime
+    due_date: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

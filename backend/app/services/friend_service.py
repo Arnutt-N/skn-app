@@ -30,6 +30,7 @@ class FriendService:
                 )
             except Exception as e:
                 # Fallback if profile fetch fails
+                logger.warning("Failed to fetch LINE profile for %s: %s", line_user_id, e)
                 user = User(
                     line_user_id=line_user_id,
                     display_name="LINE User",

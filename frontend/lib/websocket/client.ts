@@ -18,6 +18,7 @@ export class WebSocketClient {
   private messageQueue = new MessageQueue();
   private heartbeatInterval?: ReturnType<typeof setInterval>;
   private reconnectTimeout?: ReturnType<typeof setTimeout>;
+  private intentionalDisconnect = false;
 
   private onMessage?: (message: WebSocketMessage) => void;
   private onConnect?: () => void;
@@ -56,6 +57,7 @@ export class WebSocketClient {
       return;
     }
 
+    this.intentionalDisconnect = false;
     this.setState('connecting');
 
     try {
@@ -120,6 +122,12 @@ export class WebSocketClient {
       this.onDisconnect?.();
     }
 
+    // Skip reconnect if this was an intentional disconnect
+    if (this.intentionalDisconnect) {
+      this.intentionalDisconnect = false;
+      return;
+    }
+
     // Attempt reconnect
     this.attemptReconnect();
   }
@@ -168,12 +176,12 @@ export class WebSocketClient {
     while (!this.messageQueue.isEmpty() && this.state === 'connected') {
       const message = this.messageQueue.dequeue();
       if (message) {
-        this.sendRaw(message.type as MessageType, message.payload);
+        this.sendRaw(message.type, message.payload);
       }
     }
   }
 
-  send(type: MessageType | string, payload: unknown): boolean {
+  send(type: MessageType, payload: unknown): boolean {
     // Capture WebSocket reference to avoid race condition
     const ws = this.ws;
     if (this.state === 'connected' && ws?.readyState === WebSocket.OPEN) {
@@ -192,7 +200,7 @@ export class WebSocketClient {
     }
   }
 
-  private sendRaw(type: MessageType | string, payload: unknown): void {
+  private sendRaw(type: MessageType, payload: unknown): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       return;
     }
@@ -221,6 +229,7 @@ export class WebSocketClient {
     }
 
     if (this.ws) {
+      this.intentionalDisconnect = true;
       this.ws.close();
       this.ws = null;
     }
