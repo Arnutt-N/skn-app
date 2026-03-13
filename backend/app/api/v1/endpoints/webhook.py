@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 # Webhook event deduplication cache key prefix
 WEBHOOK_EVENT_KEY_PREFIX = "webhook:event:"
+WEBHOOK_EVENT_LOCK_SUFFIX = ":lock"
 
 @router.post("/webhook")
 async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_line_signature: str = Header(None)):
@@ -61,6 +62,8 @@ async def process_webhook_events(events):
     """Process webhook events with deduplication support."""
     async with AsyncSessionLocal() as db:
         for event in events:
+            cache_key = None
+            lock_key = None
             try:
                 # Deduplication check using webhookEventId
                 event_id = getattr(event, 'webhook_event_id', None)
@@ -69,13 +72,16 @@ async def process_webhook_events(events):
                     if await redis_client.exists(cache_key):
                         logger.info(f"Duplicate webhook event {event_id}, skipping")
                         continue
-                    # Mark as processed with TTL
-                    await redis_client.setex(
-                        cache_key,
-                        settings.WEBHOOK_EVENT_TTL,
-                        "1"
+                    lock_key = f"{cache_key}{WEBHOOK_EVENT_LOCK_SUFFIX}"
+                    lock_acquired = await redis_client.set(
+                        lock_key,
+                        "1",
+                        seconds=settings.WEBHOOK_EVENT_TTL,
+                        nx=True,
                     )
-                    logger.debug(f"Marked event {event_id} as processed")
+                    if not lock_acquired:
+                        logger.info(f"Webhook event {event_id} is already being processed, skipping duplicate delivery")
+                        continue
 
                 # Process the event
                 if isinstance(event, MessageEvent):
@@ -86,10 +92,22 @@ async def process_webhook_events(events):
                     await handle_follow_event(event, db)
                 elif isinstance(event, UnfollowEvent):
                     await handle_unfollow_event(event, db)
+
+                if cache_key:
+                    await redis_client.setex(
+                        cache_key,
+                        settings.WEBHOOK_EVENT_TTL,
+                        "1"
+                    )
+                    logger.debug(f"Marked event {event_id} as processed")
             except Exception as e:
+                await db.rollback()
                 event_id = getattr(event, 'webhook_event_id', 'unknown')
                 logger.error("Failed to process event %s (%s): %s", event_id, type(event).__name__, e, exc_info=True)
                 continue
+            finally:
+                if lock_key:
+                    await redis_client.delete(lock_key)
 
 
 async def handle_follow_event(event: FollowEvent, db: AsyncSession):

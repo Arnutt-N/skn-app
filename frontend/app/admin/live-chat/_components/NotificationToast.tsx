@@ -32,8 +32,10 @@ export function NotificationToast() {
   }, [notifications, removeNotification])
 
   useEffect(() => {
+    const timers = timerRefs.current
     return () => {
-      timerRefs.current.forEach(timer => clearTimeout(timer))
+      timers.forEach(timer => clearTimeout(timer))
+      timers.clear()
     }
   }, [])
 

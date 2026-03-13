@@ -14,7 +14,9 @@ class TestWebhookDeduplication:
         """Mock Redis client."""
         with patch('app.api.v1.endpoints.webhook.redis_client') as mock:
             mock.exists = AsyncMock(return_value=False)
+            mock.set = AsyncMock(return_value=True)
             mock.setex = AsyncMock()
+            mock.delete = AsyncMock()
             yield mock
 
     @pytest.fixture
@@ -58,6 +60,7 @@ class TestWebhookDeduplication:
             await process_webhook_events(events)
             
             # Assert
+            mock_redis.set.assert_called_once()
             mock_redis.setex.assert_called_once()
             cache_key = mock_redis.setex.call_args[0][0]
             assert "test-event-id-12345" in cache_key
@@ -72,6 +75,7 @@ class TestWebhookDeduplication:
         
         # Assert: Redis should not be called for events without ID
         mock_redis.exists.assert_not_called()
+        mock_redis.set.assert_not_called()
         mock_redis.setex.assert_not_called()
 
     @pytest.mark.asyncio
@@ -101,6 +105,80 @@ class TestWebhookDeduplication:
         cache_key = mock_redis.setex.call_args[0][0]
         assert "new-id" in cache_key
 
+    @pytest.mark.asyncio
+    async def test_handler_failure_rolls_back_and_continues(self, mock_redis, monkeypatch):
+        """A failed event should rollback the session before the next event runs."""
+        from app.api.v1.endpoints import webhook as webhook_module
+
+        class FakeMessageEvent:
+            pass
+
+        class FakeSessionContext:
+            def __init__(self, db):
+                self.db = db
+
+            async def __aenter__(self):
+                return self.db
+
+            async def __aexit__(self, exc_type, exc, tb):
+                return False
+
+        db = AsyncMock()
+        event_one = FakeMessageEvent()
+        event_one.webhook_event_id = "evt-1"
+        event_two = FakeMessageEvent()
+        event_two.webhook_event_id = "evt-2"
+
+        handler = AsyncMock(side_effect=[RuntimeError("boom"), None])
+
+        monkeypatch.setattr(webhook_module, "MessageEvent", FakeMessageEvent)
+        monkeypatch.setattr(webhook_module, "AsyncSessionLocal", lambda: FakeSessionContext(db))
+        monkeypatch.setattr(webhook_module, "handle_message_event", handler)
+
+        await process_webhook_events([event_one, event_two])
+
+        assert handler.await_count == 2
+        db.rollback.assert_awaited_once()
+        assert mock_redis.setex.call_count == 1
+        processed_key = mock_redis.setex.call_args[0][0]
+        assert processed_key.endswith("evt-2")
+
+    @pytest.mark.asyncio
+    async def test_handler_failure_does_not_mark_event_processed(self, mock_redis, monkeypatch):
+        """A failed event should release its lock without caching success."""
+        from app.api.v1.endpoints import webhook as webhook_module
+
+        class FakeMessageEvent:
+            pass
+
+        class FakeSessionContext:
+            def __init__(self, db):
+                self.db = db
+
+            async def __aenter__(self):
+                return self.db
+
+            async def __aexit__(self, exc_type, exc, tb):
+                return False
+
+        db = AsyncMock()
+        event = FakeMessageEvent()
+        event.webhook_event_id = "evt-fail"
+
+        monkeypatch.setattr(webhook_module, "MessageEvent", FakeMessageEvent)
+        monkeypatch.setattr(webhook_module, "AsyncSessionLocal", lambda: FakeSessionContext(db))
+        monkeypatch.setattr(
+            webhook_module,
+            "handle_message_event",
+            AsyncMock(side_effect=RuntimeError("boom")),
+        )
+
+        await process_webhook_events([event])
+
+        mock_redis.set.assert_awaited_once()
+        mock_redis.setex.assert_not_awaited()
+        mock_redis.delete.assert_awaited()
+
 
 class TestRedisClient:
     """Test Redis client functionality."""
@@ -121,6 +199,12 @@ class TestRedisClient:
         """Test setex() silently fails when not connected."""
         # Should not raise exception
         await redis_client.setex("key", 300, "value")
+
+    @pytest.mark.asyncio
+    async def test_set_with_no_connection(self, redis_client):
+        """Test set() returns False when not connected."""
+        result = await redis_client.set("key", "value", seconds=300, nx=True)
+        assert result is False
 
     @pytest.mark.asyncio
     async def test_is_connected_property(self, redis_client):

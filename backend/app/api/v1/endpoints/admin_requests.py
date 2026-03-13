@@ -239,31 +239,28 @@ from app.models.request_comment import RequestComment
 async def create_comment(
     request_id: int,
     comment_data: RequestCommentCreate,
-    user_id: int = Query(..., description="The user ID of the commenter"),
     db: AsyncSession = Depends(get_db),
     current_admin: User = Depends(get_current_admin)
 ):
     """Add a new internal comment to a request."""
+    admin_id = int(current_admin.id)
     comment = RequestComment(
         request_id=request_id,
-        user_id=user_id,
+        user_id=admin_id,
         content=comment_data.content
     )
     db.add(comment)
     await db.commit()
     await db.refresh(comment)
-    
-    # Get user display name for response
-    user_result = await db.execute(select(User.display_name).where(User.id == user_id))
-    display_name = user_result.scalar_one_or_none()
-    
+
     return RequestCommentResponse(
         id=comment.id,
         request_id=comment.request_id,
         user_id=comment.user_id,
         content=comment.content,
         created_at=comment.created_at,
-        display_name=display_name
+        updated_at=comment.updated_at,
+        display_name=current_admin.display_name or current_admin.username
     )
 
 @router.get("/{request_id}/comments", response_model=List[RequestCommentResponse])

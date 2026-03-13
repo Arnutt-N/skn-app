@@ -52,6 +52,17 @@ class RedisClient:
             await self._redis.setex(key, seconds, value)
         except Exception as e:
             logger.error(f"Redis setex error: {e}")
+
+    async def set(self, key: str, value: str, seconds: Optional[int] = None, nx: bool = False) -> bool:
+        """Set key with optional expiration and NX semantics."""
+        if not self._redis:
+            return False
+        try:
+            result = await self._redis.set(key, value, ex=seconds, nx=nx)
+            return bool(result)
+        except Exception as e:
+            logger.error(f"Redis set error: {e}")
+            return False
     
     async def get(self, key: str) -> Optional[str]:
         """Get value by key."""
