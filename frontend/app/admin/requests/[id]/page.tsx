@@ -22,7 +22,6 @@ import {
     Activity
 } from 'lucide-react';
 import { AssignModal } from '@/components/admin/AssignModal';
-import { useAuth } from '@/contexts/AuthContext';
 
 // Interfaces for API Data
 interface Comment {
@@ -78,8 +77,6 @@ export default function RequestDetailPage() {
     const [loading, setLoading] = useState(true);
     const [submittingComment, setSubmittingComment] = useState(false);
     const [assignModalOpen, setAssignModalOpen] = useState(false);
-    const { user: authUser } = useAuth();
-    const currentUserId = authUser?.id || '1';
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
@@ -170,17 +167,13 @@ export default function RequestDetailPage() {
 
             // 3. Post Comment if exists
             if (manageFormData.comment.trim()) {
-                if (!currentUserId) {
-                    alert("ไม่พบข้อมูลผู้ใช้งาน (User ID Missing) - คอมเมนต์อาจไม่ถูกบันทึก");
-                } else {
-                    const res = await fetch(`${API_BASE}/admin/requests/${params.id}/comments?user_id=${currentUserId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ content: manageFormData.comment })
-                    });
-                    if (!res.ok) throw new Error('Failed to post comment');
-                    await fetchComments();
-                }
+                const res = await fetch(`${API_BASE}/admin/requests/${params.id}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: manageFormData.comment })
+                });
+                if (!res.ok) throw new Error('Failed to post comment');
+                await fetchComments();
             }
 
             // 4. Success feedback
@@ -216,13 +209,9 @@ export default function RequestDetailPage() {
     const handleAddComment = async () => {
         if (!newComment.trim()) return;
 
-        if (!currentUserId) {
-            return;
-        }
-
         setSubmittingComment(true);
         try {
-            const res = await fetch(`${API_BASE}/admin/requests/${params.id}/comments?user_id=${currentUserId}`, {
+            const res = await fetch(`${API_BASE}/admin/requests/${params.id}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content: newComment })
@@ -535,7 +524,7 @@ export default function RequestDetailPage() {
                                             onClick={handleAddComment}
                                             disabled={!newComment.trim() || submittingComment}
                                             className={`flex items-center gap-2 px-6 py-2.5 bg-gradient-to-br from-primary to-primary-dark text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 ${!newComment.trim() || submittingComment ? 'opacity-50 shadow-none cursor-default' : 'cursor-pointer'}`}
-                                            title={!currentUserId ? "User ID not loaded yet" : "Save Comment"}
+                                            title="Save Comment"
                                         >
                                             <Send size={16} /> บันทึกข้อมูล
                                         </button>
