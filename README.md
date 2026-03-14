@@ -69,8 +69,8 @@ pip install -r requirements.txt
 
 3. Copy and configure environment:
 ```bash
-cp app/.env.example app/.env
-# Edit app/.env with your credentials
+cp app/.env.example .env
+# Or use backend/.env.development and backend/.env.production with ENV_FILE
 ```
 
 4. Run migrations:
@@ -81,6 +81,12 @@ alembic upgrade head
 5. Start server:
 ```bash
 uvicorn app.main:app --reload
+```
+
+To run with a specific backend env file:
+```bash
+ENV_FILE=.env.development uvicorn app.main:app --reload
+ENV_FILE=.env.development alembic upgrade head
 ```
 
 Backend will run at `http://localhost:8000`
@@ -97,6 +103,11 @@ npm install
 2. Configure environment:
 ```bash
 cp .env.local.example .env.local
+```
+
+For Cloudflare Tunnel local testing, you can use:
+```bash
+cp .env.development.example .env.local
 ```
 
 3. Start dev server:
@@ -149,10 +160,26 @@ See `.agent/skills/` for comprehensive development guidelines:
 Backend example env:
 
 - [backend/app/.env.example](/backend/app/.env.example)
+- [backend/.env.development](/backend/.env.development)
+- [backend/.env.production](/backend/.env.production)
 
 Frontend example env:
 
 - [frontend/.env.local.example](/frontend/.env.local.example)
+- [frontend/.env.development.example](/frontend/.env.development.example)
+
+## Local Tunnel Testing
+
+Recommended Cloudflare Tunnel mapping for local testing:
+
+- `jsk.topzlab.com` -> `http://localhost:3000`
+- `api.topzlab.com` -> `http://localhost:8000`
+
+Suggested local env values:
+
+- Backend `SERVER_BASE_URL=https://api.topzlab.com`
+- Backend `BACKEND_CORS_ORIGINS=["https://jsk.topzlab.com"]`
+- Frontend `NEXT_PUBLIC_API_URL=https://api.topzlab.com`
 
 ## License
 

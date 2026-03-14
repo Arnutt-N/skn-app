@@ -1,3 +1,4 @@
+import os
 from typing import List, Union
 from pydantic import AnyHttpUrl, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -48,9 +49,8 @@ class Settings(BaseSettings):
     SLA_ALERT_TELEGRAM_ENABLED: bool = False
 
     model_config = SettingsConfigDict(
-        env_file=".env", 
         env_ignore_empty=True,
         extra="ignore"
     )
 
-settings = Settings()
+settings = Settings(_env_file=os.getenv("ENV_FILE", ".env"))

@@ -294,7 +294,6 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
             # DB Keyword: "ราคา" (Short)
             # Logic: "ขอราคาหน่อยครับ" LIKE "%" + "ราคา" + "%"
             
-            from sqlalchemy import literal
             stmt = select(IntentKeyword).options(
                 selectinload(IntentKeyword.category).selectinload(IntentCategory.responses.and_(IntentResponse.is_active == True))
             ).filter(
