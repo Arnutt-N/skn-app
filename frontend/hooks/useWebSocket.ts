@@ -20,14 +20,27 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     onError,
   } = options;
   const clientRef = useRef<WebSocketClient | null>(null);
+  const onConnectRef = useRef(onConnect);
+  const onDisconnectRef = useRef(onDisconnect);
+  const onMessageRef = useRef(onMessage);
+  const onErrorRef = useRef(onError);
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+  const effectiveToken = isDevMode ? undefined : token;
+
+  useEffect(() => {
+    onConnectRef.current = onConnect;
+    onDisconnectRef.current = onDisconnect;
+    onMessageRef.current = onMessage;
+    onErrorRef.current = onError;
+  }, [onConnect, onDisconnect, onMessage, onError]);
 
   useEffect(() => {
     const client = new WebSocketClient({
       url,
       adminId,
-      token,
+      token: effectiveToken,
       onStateChange: (state) => {
         setConnectionState(state);
         if (client) {
@@ -36,11 +49,11 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       },
       onConnect: () => {
         setReconnectAttempts(0);
-        onConnect?.();
+        onConnectRef.current?.();
       },
-      onDisconnect,
-      onMessage,
-      onError
+      onDisconnect: () => onDisconnectRef.current?.(),
+      onMessage: (message) => onMessageRef.current?.(message),
+      onError: (error) => onErrorRef.current?.(error),
     });
 
     clientRef.current = client;
@@ -50,7 +63,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       client.disconnect();
       clientRef.current = null;
     };
-  }, [adminId, onConnect, onDisconnect, onError, onMessage, token, url]);
+  }, [adminId, effectiveToken, url]);
 
   const send = useCallback((type: MessageType, payload: unknown) => {
     clientRef.current?.send(type, payload);

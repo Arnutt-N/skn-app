@@ -11,6 +11,7 @@ from app.core.pubsub_manager import pubsub_manager
 from app.core.redis_client import redis_client
 from app.core.websocket_manager import ws_manager
 from app.services.business_hours_service import business_hours_service
+from app.services.credential_service import credential_service
 from app.tasks import start_cleanup_task, stop_cleanup_task
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,8 @@ tags_metadata = [
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    credential_service.validate_configuration()
+
     # Initialize Redis connection
     await redis_client.connect()
 
