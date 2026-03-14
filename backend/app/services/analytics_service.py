@@ -2,7 +2,7 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import and_, exists, select, func
+from sqlalchemy import and_, exists, func, literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
@@ -282,15 +282,16 @@ class AnalyticsService:
         safe_days = max(1, min(days, 30))
         today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         start = today - timedelta(days=safe_days - 1)
+        day_bucket = func.date_trunc(literal_column("'day'"), ChatSession.started_at)
 
         result = await db.execute(
             select(
-                func.date_trunc("day", ChatSession.started_at).label("day"),
+                day_bucket.label("day"),
                 func.count(ChatSession.id).label("count"),
             )
             .where(ChatSession.started_at >= start)
-            .group_by(func.date_trunc("day", ChatSession.started_at))
-            .order_by(func.date_trunc("day", ChatSession.started_at))
+            .group_by(day_bucket)
+            .order_by(day_bucket)
         )
         raw = {row.day.date().isoformat(): int(row.count) for row in result.all() if row.day}
 

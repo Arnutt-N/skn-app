@@ -29,9 +29,6 @@ const MOCK_ADMIN: User = {
   display_name: 'Administrator'
 };
 
-// Mock JWT token for development (expires in 24 hours)
-const MOCK_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImV4cCI6OTk5OTk5OTk5OX0.mock_signature';
-
 function isTokenExpired(token: string): boolean {
   try {
     const parts = token.split('.');
@@ -56,8 +53,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (DEV_MODE) {
           // In dev mode, auto-login as mock admin
           setUser(MOCK_ADMIN);
-          setToken(MOCK_TOKEN);
-          localStorage.setItem('auth_token', MOCK_TOKEN);
+          setToken(null);
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_refresh_token');
           localStorage.setItem('auth_user', JSON.stringify(MOCK_ADMIN));
         } else {
           // Production mode: Restore from localStorage
@@ -130,6 +128,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshToken = useCallback(async () => {
+    if (DEV_MODE) {
+      return;
+    }
+
     try {
       const refreshTokenValue = localStorage.getItem('auth_refresh_token');
       if (!refreshTokenValue) {
@@ -164,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     token,
-    isAuthenticated: !!user && !!token,
+    isAuthenticated: !!user && (DEV_MODE || !!token),
     isLoading,
     login,
     logout,

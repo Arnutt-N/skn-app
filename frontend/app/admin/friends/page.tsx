@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { MoreVertical, User } from 'lucide-react';
 import type { SelectOption } from '@/components/ui/Select';
 import { AdminSearchFilterBar } from '@/components/admin/AdminSearchFilterBar';
 import { AdminTableHead, type AdminTableHeadColumn } from '@/components/admin/AdminTableHead';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Friend {
     line_user_id: string;
@@ -17,6 +18,7 @@ interface Friend {
 }
 
 export default function FriendsPage() {
+    const { token } = useAuth();
     const [friends, setFriends] = useState<Friend[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('');
@@ -37,12 +39,18 @@ export default function FriendsPage() {
     ];
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    const authHeaders = useMemo(() => {
+        if (!token) {
+            return {} as Record<string, string>;
+        }
+        return { Authorization: `Bearer ${token}` };
+    }, [token]);
 
     const fetchFriends = useCallback(async () => {
         setLoading(true);
         try {
             const query = statusFilter ? `?status=${statusFilter}` : '';
-            const res = await fetch(`${API_BASE}/admin/friends${query}`);
+            const res = await fetch(`${API_BASE}/admin/friends${query}`, { headers: authHeaders });
             if (res.ok) {
                 const data = await res.json();
                 setFriends(data.friends);
@@ -52,7 +60,7 @@ export default function FriendsPage() {
         } finally {
             setLoading(false);
         }
-    }, [API_BASE, statusFilter]);
+    }, [API_BASE, authHeaders, statusFilter]);
 
     useEffect(() => {
         fetchFriends();

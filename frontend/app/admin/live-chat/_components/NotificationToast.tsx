@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { X, MessageSquare, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLiveChatStore } from '../_store/liveChatStore'
+
+const TOAST_DURATION_MS = 5000
 
 export function NotificationToast() {
   const notifications = useLiveChatStore((s) => s.notifications)
@@ -11,25 +13,37 @@ export function NotificationToast() {
 
   const timerRefs = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
+  const clearTimer = useCallback((id: string) => {
+    const timer = timerRefs.current.get(id)
+    if (!timer) return
+    clearTimeout(timer)
+    timerRefs.current.delete(id)
+  }, [])
+
+  const dismissToast = useCallback((id: string) => {
+    clearTimer(id)
+    removeNotification(id)
+  }, [clearTimer, removeNotification])
+
   useEffect(() => {
-    // Set timers for new notifications
     notifications.forEach((notif) => {
       if (!timerRefs.current.has(notif.id)) {
+        const elapsedMs = Math.max(0, Date.now() - notif.timestamp)
+        const remainingMs = Math.max(0, TOAST_DURATION_MS - elapsedMs)
         const timer = setTimeout(() => {
-          removeNotification(notif.id)
-          timerRefs.current.delete(notif.id)
-        }, 5000)
+          dismissToast(notif.id)
+        }, remainingMs)
         timerRefs.current.set(notif.id, timer)
       }
     })
-    // Clean up timers for removed notifications
+
     timerRefs.current.forEach((timer, id) => {
       if (!notifications.find(n => n.id === id)) {
         clearTimeout(timer)
         timerRefs.current.delete(id)
       }
     })
-  }, [notifications, removeNotification])
+  }, [dismissToast, notifications])
 
   useEffect(() => {
     const timers = timerRefs.current
@@ -62,7 +76,11 @@ export function NotificationToast() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-text-primary">{toast.title}</p>
-              <button onClick={() => removeNotification(toast.id)} className="shrink-0 rounded-md p-0.5 text-text-tertiary hover:text-text-primary">
+              <button
+                aria-label="Dismiss notification"
+                onClick={() => dismissToast(toast.id)}
+                className="shrink-0 rounded-md p-0.5 text-text-tertiary hover:text-text-primary"
+              >
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>

@@ -1,15 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Any, List, Optional
+from typing import Any, Optional
 from app.api import deps
 from app.api.deps import get_current_admin
 from app.models.user import User
+from app.schemas.friend import FriendListResponse, FriendResponse
 from app.services.friend_service import friend_service
-from app.schemas.friend_event import FriendEventListResponse, FriendEventResponse
+from app.schemas.friend_event import FriendEventListResponse
 
 router = APIRouter()
 
-@router.get("", response_model=Any) # We can refine this schema later
+@router.get("", response_model=FriendListResponse)
 async def list_friends(
     status: Optional[str] = None,
     skip: int = 0,
@@ -19,7 +20,10 @@ async def list_friends(
 ) -> Any:
     """List all friends with status"""
     friends = await friend_service.list_friends(status, db, skip, limit)
-    return {"friends": friends, "total": len(friends)}
+    return {
+        "friends": [FriendResponse.model_validate(friend) for friend in friends],
+        "total": len(friends),
+    }
 
 @router.get("/{line_user_id}/events", response_model=FriendEventListResponse)
 async def get_friend_events(

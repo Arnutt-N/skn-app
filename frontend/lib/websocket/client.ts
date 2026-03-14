@@ -94,6 +94,11 @@ export class WebSocketClient {
       }
 
       if (message.type === MessageType.AUTH_ERROR) {
+        if (this.reconnectTimeout) {
+          clearTimeout(this.reconnectTimeout);
+          this.reconnectTimeout = undefined;
+        }
+        this.intentionalDisconnect = true;
         this.setState('disconnected');
         this.onError?.(new Error('Authentication failed'));
         this.ws?.close();
