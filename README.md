@@ -1,6 +1,6 @@
 # JskApp - LINE Official Account System
 
-A modern LINE Official Account system with LIFF integration for Community Justice Services.
+A LINE Official Account platform with LIFF integration, service requests, and real-time admin live chat for Community Justice Services.
 
 ## Tech Stack
 
@@ -10,8 +10,6 @@ A modern LINE Official Account system with LIFF integration for Community Justic
 > - **Backend**: Must run in WSL using `backend/venv_linux`.
 > - **Frontend**: Must run in WSL.
 > - **System**: Windows OS is the host, but execution happens in WSL.
-
-### Backend
 
 ### Backend
 - **FastAPI** (Python 3.13+)
@@ -108,6 +106,20 @@ npm run dev
 
 Frontend will run at `http://localhost:3000`
 
+## Deployment Stack
+
+Recommended deployment stack for this repository:
+
+- **Frontend**: Vercel
+- **Backend**: Koyeb
+- **Database**: Supabase
+- **Redis**: Upstash
+
+Notes:
+
+- This project uses WebSocket live chat, so backend deployment on Vercel is not recommended.
+- Use the guides below for the exact environment variables and deployment flow.
+
 ## Features
 
 - ✅ LINE Messaging API integration
@@ -126,6 +138,21 @@ See `.agent/skills/` for comprehensive development guidelines:
 - Database Design
 - Testing
 - Deployment
+
+## Deployment Guides
+
+- [Deploy on Vercel + Koyeb + Supabase + Upstash (Thai)](/docs/DEPLOY_VERCEL_KOYEB_SUPABASE_UPSTASH_TH.md)
+- [Deployment Env Checklist: Vercel + Koyeb + Supabase + Upstash (Thai)](/docs/DEPLOY_ENV_CHECKLIST_VERCEL_KOYEB_SUPABASE_UPSTASH_TH.md)
+
+## Environment Files
+
+Backend example env:
+
+- [backend/app/.env.example](/backend/app/.env.example)
+
+Frontend example env:
+
+- [frontend/.env.local.example](/frontend/.env.local.example)
 
 ## License
 
