@@ -15,11 +15,23 @@ async def seed_admin() -> None:
         raise RuntimeError("ADMIN_DEFAULT_PASSWORD is required")
 
     async with AsyncSessionLocal() as db:
+        existing_admin = await db.scalar(
+            select(User).where(User.username == "admin").limit(1)
+        )
+        if existing_admin:
+            existing_admin.display_name = existing_admin.display_name or "Administrator"
+            existing_admin.role = existing_admin.role or UserRole.ADMIN
+            existing_admin.is_active = True
+            existing_admin.hashed_password = get_password_hash(password)
+            await db.commit()
+            print("Admin user updated.")
+            return
+
         existing = await db.scalar(
             select(User.id).where(User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN])).limit(1)
         )
         if existing:
-            print("Admin user already exists, skipping.")
+            print("Another admin user already exists, skipping.")
             return
 
         admin = User(
