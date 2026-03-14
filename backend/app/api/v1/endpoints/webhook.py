@@ -93,6 +93,8 @@ async def process_webhook_events(events):
                 elif isinstance(event, UnfollowEvent):
                     await handle_unfollow_event(event, db)
 
+                await db.commit()
+
                 if cache_key:
                     await redis_client.setex(
                         cache_key,
@@ -116,8 +118,8 @@ async def handle_follow_event(event: FollowEvent, db: AsyncSession):
     logger.info(f"User {line_user_id} followed the OA")
 
     # Create user record and log follow event
-    await friend_service.get_or_create_user(line_user_id, db)
-    await friend_service.handle_follow(line_user_id, db)
+    await friend_service.get_or_create_user(line_user_id, db, commit=False)
+    await friend_service.handle_follow(line_user_id, db, commit=False)
 
 
 async def handle_unfollow_event(event: UnfollowEvent, db: AsyncSession):
@@ -125,7 +127,7 @@ async def handle_unfollow_event(event: UnfollowEvent, db: AsyncSession):
     line_user_id = event.source.user_id
     logger.info(f"User {line_user_id} unfollowed the OA")
 
-    await friend_service.handle_unfollow(line_user_id, db)
+    await friend_service.handle_unfollow(line_user_id, db, commit=False)
 
 
 async def handle_message_event(event: MessageEvent, db: AsyncSession):
@@ -135,14 +137,34 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
         return
 
     line_user_id = event.source.user_id
+    line_message_id = str(getattr(event.message, "id", "")) or None
+
+    if line_message_id:
+        existing_message = await line_service.get_incoming_message_by_line_message_id(
+            db=db,
+            line_user_id=line_user_id,
+            line_message_id=line_message_id,
+        )
+        if existing_message:
+            logger.info(
+                "Skipping re-delivered LINE message %s for user %s because it is already persisted",
+                line_message_id,
+                line_user_id,
+            )
+            return
 
     # Ensure User record exists (critical for live chat to show this user)
-    user = await friend_service.get_or_create_user(line_user_id, db)
-    user = await friend_service.refresh_profile(line_user_id, db, force=False, stale_after_hours=24) or user
+    user = await friend_service.get_or_create_user(line_user_id, db, commit=False)
+    user = await friend_service.refresh_profile(
+        line_user_id,
+        db,
+        force=False,
+        stale_after_hours=24,
+        commit=False,
+    ) or user
 
     # Update last_message_at for conversation sorting
     user.last_message_at = datetime.utcnow()
-    await db.commit()
 
     if isinstance(event.message, TextMessageContent):
         text = event.message.text.strip()
@@ -153,7 +175,9 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
             line_user_id=line_user_id,
             direction=MessageDirection.INCOMING,
             message_type="text",
-            content=text
+            content=text,
+            payload={"line_message_id": line_message_id} if line_message_id else None,
+            commit=False,
         )
 
         # Broadcast to WebSocket clients in room (for operators viewing this conversation)
@@ -210,9 +234,14 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
 
         # --- HANDOFF KEYWORD DETECTION ---
         # Check for handoff keywords before intent matching
-        if await handoff_service.check_handoff_keywords(text, user, event.reply_token, db):
+        if await handoff_service.check_handoff_keywords(
+            text,
+            user,
+            event.reply_token,
+            db,
+            commit=False,
+        ):
             # Handoff initiated - skip bot response
-            await db.commit()
             return
         # -----------------------------------
 
@@ -362,7 +391,8 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
                     line_user_id=line_user_id,
                     direction=MessageDirection.OUTGOING,
                     message_type="multi",
-                    content=f"Sent {len(all_messages)} messages for intent '{cat_name}'"
+                    content=f"Sent {len(all_messages)} messages for intent '{cat_name}'",
+                    commit=False,
                 )
             except Exception as e:
                 logger.error(f"Failed to send all messages: {e}")
@@ -383,6 +413,7 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
             content=content,
             payload=payload,
             sender_role="USER",
+            commit=False,
         )
 
         room_id = ws_manager.get_room_id(line_user_id)
@@ -596,7 +627,6 @@ async def handle_bind_phone(phone_number: str, line_user_id: str, reply_token: s
             .values(line_user_id=line_user_id)
         )
         await db.execute(update_stmt)
-        await db.commit()
         
         # 3. Fetch updated list (Top 5)
         stmt_latest = (

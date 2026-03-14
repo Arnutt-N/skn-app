@@ -49,7 +49,8 @@ class LiveChatService:
         user: User,
         reply_token: str,
         db: AsyncSession,
-        background_tasks=None # Kept for compatibility but unused
+        background_tasks=None, # Kept for compatibility but unused
+        commit: bool = True,
     ):
         """
         Initiate human handoff for a user.
@@ -80,7 +81,10 @@ class LiveChatService:
             )
             db.add(session)
             user.chat_mode = ChatMode.HUMAN
-            await db.commit()
+            if commit:
+                await db.commit()
+            else:
+                await db.flush()
             
             logger.info(f"After-hours handoff for user {user.line_user_id}, next open: {next_open}")
             return session
@@ -120,7 +124,10 @@ class LiveChatService:
             db
         )
 
-        await db.commit()
+        if commit:
+            await db.commit()
+        else:
+            await db.flush()
         return session
     
     async def _send_queue_flex_message(self, line_user_id: str, queue_info: dict):

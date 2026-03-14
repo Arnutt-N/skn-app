@@ -20,6 +20,7 @@ from app.core.line_client import get_line_bot_api
 from app.core.config import settings
 from app.core.line_client import get_async_api_client
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.models.message import Message, MessageDirection
 
 logger = logging.getLogger(__name__)
@@ -169,6 +170,22 @@ class LineService:
             # Helper: Log but don't crash if loading animation fails (e.g. rate limit)
             logger.warning("Error showing loading animation: %s", e)
 
+    async def get_incoming_message_by_line_message_id(
+        self,
+        db: AsyncSession,
+        line_user_id: str,
+        line_message_id: str,
+    ) -> Optional[Message]:
+        """Return an already-persisted incoming LINE message by LINE message id."""
+        result = await db.execute(
+            select(Message).where(
+                Message.line_user_id == line_user_id,
+                Message.direction == MessageDirection.INCOMING,
+                Message.payload["line_message_id"].astext == line_message_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def save_message(
         self,
         db: AsyncSession,
@@ -178,7 +195,8 @@ class LineService:
         content: str,
         payload: dict = None,
         sender_role: str = None,
-        operator_name: str = None
+        operator_name: str = None,
+        commit: bool = True,
     ):
         """
         Save a message to the database.
@@ -203,8 +221,12 @@ class LineService:
             operator_name=operator_name
         )
         db.add(message)
-        await db.commit()
-        await db.refresh(message)
+        if commit:
+            await db.commit()
+            await db.refresh(message)
+        else:
+            await db.flush()
+            await db.refresh(message)
         return message
 
     async def download_message_content(self, message_id: str, preview: bool = False) -> Tuple[bytes, Optional[str]]:

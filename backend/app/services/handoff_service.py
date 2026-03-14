@@ -85,7 +85,8 @@ class HandoffService:
         text: str,
         user: User,
         reply_token: str,
-        db: AsyncSession
+        db: AsyncSession,
+        commit: bool = True,
     ) -> bool:
         """
         Check if message contains handoff keywords.
@@ -125,7 +126,7 @@ class HandoffService:
         
         # Initiate handoff
         try:
-            await live_chat_service.initiate_handoff(user, reply_token, db)
+            await live_chat_service.initiate_handoff(user, reply_token, db, commit=commit)
             return True
         except Exception as e:
             logger.error(f"Failed to initiate handoff for user {user.line_user_id}: {e}")
