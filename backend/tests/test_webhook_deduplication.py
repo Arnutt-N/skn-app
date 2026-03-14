@@ -1,7 +1,8 @@
 """Tests for webhook event deduplication."""
 import pytest
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
+from datetime import datetime, timezone
 from app.api.v1.endpoints.webhook import process_webhook_events, WEBHOOK_EVENT_KEY_PREFIX
 from app.core.redis_client import RedisClient
 
@@ -64,6 +65,37 @@ class TestWebhookDeduplication:
             mock_redis.setex.assert_called_once()
             cache_key = mock_redis.setex.call_args[0][0]
             assert "test-event-id-12345" in cache_key
+
+    @pytest.mark.asyncio
+    async def test_successful_event_commits_before_cache_mark(self, mock_redis, monkeypatch):
+        """A successful event should be committed by the outer webhook processor."""
+        from app.api.v1.endpoints import webhook as webhook_module
+
+        class FakeMessageEvent:
+            pass
+
+        class FakeSessionContext:
+            def __init__(self, db):
+                self.db = db
+
+            async def __aenter__(self):
+                return self.db
+
+            async def __aexit__(self, exc_type, exc, tb):
+                return False
+
+        db = AsyncMock()
+        event = FakeMessageEvent()
+        event.webhook_event_id = "evt-success"
+
+        monkeypatch.setattr(webhook_module, "MessageEvent", FakeMessageEvent)
+        monkeypatch.setattr(webhook_module, "AsyncSessionLocal", lambda: FakeSessionContext(db))
+        monkeypatch.setattr(webhook_module, "handle_message_event", AsyncMock())
+
+        await process_webhook_events([event])
+
+        db.commit.assert_awaited_once()
+        mock_redis.setex.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_event_without_id_processed(self, mock_redis, mock_event_without_id):
@@ -138,6 +170,7 @@ class TestWebhookDeduplication:
         await process_webhook_events([event_one, event_two])
 
         assert handler.await_count == 2
+        db.commit.assert_awaited_once()
         db.rollback.assert_awaited_once()
         assert mock_redis.setex.call_count == 1
         processed_key = mock_redis.setex.call_args[0][0]
@@ -178,6 +211,43 @@ class TestWebhookDeduplication:
         mock_redis.set.assert_awaited_once()
         mock_redis.setex.assert_not_awaited()
         mock_redis.delete.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_redelivered_message_skips_bot_flow_when_message_already_exists(self, monkeypatch):
+        """A redelivered LINE message should exit before re-running bot logic."""
+        from app.api.v1.endpoints import webhook as webhook_module
+
+        existing_message = SimpleNamespace(id=99, created_at=datetime.now(timezone.utc))
+        event = SimpleNamespace(
+            reply_token="reply-token",
+            source=SimpleNamespace(user_id="U123"),
+            message=SimpleNamespace(id="line-msg-123"),
+        )
+        db = AsyncMock()
+
+        get_existing = AsyncMock(return_value=existing_message)
+        get_or_create_user = AsyncMock()
+        refresh_profile = AsyncMock()
+        save_message = AsyncMock()
+        reply_messages = AsyncMock()
+
+        monkeypatch.setattr(webhook_module.line_service, "get_incoming_message_by_line_message_id", get_existing)
+        monkeypatch.setattr(webhook_module.friend_service, "get_or_create_user", get_or_create_user)
+        monkeypatch.setattr(webhook_module.friend_service, "refresh_profile", refresh_profile)
+        monkeypatch.setattr(webhook_module.line_service, "save_message", save_message)
+        monkeypatch.setattr(webhook_module.line_service, "reply_messages", reply_messages)
+
+        await webhook_module.handle_message_event(event, db)
+
+        get_existing.assert_awaited_once_with(
+            db=db,
+            line_user_id="U123",
+            line_message_id="line-msg-123",
+        )
+        get_or_create_user.assert_not_awaited()
+        refresh_profile.assert_not_awaited()
+        save_message.assert_not_awaited()
+        reply_messages.assert_not_awaited()
 
 
 class TestRedisClient:

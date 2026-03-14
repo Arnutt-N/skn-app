@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class FriendService:
-    async def get_or_create_user(self, line_user_id: str, db: AsyncSession) -> User:
+    async def get_or_create_user(self, line_user_id: str, db: AsyncSession, commit: bool = True) -> User:
         """Get existing user or create new one from LINE profile"""
         result = await db.execute(select(User).where(User.line_user_id == line_user_id))
         user = result.scalar_one_or_none()
@@ -39,8 +39,11 @@ class FriendService:
                 )
             
             db.add(user)
-            await db.commit()
-            await db.refresh(user)
+            if commit:
+                await db.commit()
+                await db.refresh(user)
+            else:
+                await db.flush()
             
         return user
 
@@ -50,6 +53,7 @@ class FriendService:
         db: AsyncSession,
         force: bool = False,
         stale_after_hours: int = 24,
+        commit: bool = True,
     ) -> Optional[User]:
         """Refresh LINE profile for a user when stale or forced."""
         result = await db.execute(select(User).where(User.line_user_id == line_user_id))
@@ -75,14 +79,17 @@ class FriendService:
             user.display_name = profile.display_name or user.display_name
             user.picture_url = profile.picture_url or user.picture_url
             user.profile_updated_at = now
-            await db.commit()
-            await db.refresh(user)
+            if commit:
+                await db.commit()
+                await db.refresh(user)
+            else:
+                await db.flush()
         except Exception as exc:
             logger.warning("Failed to refresh LINE profile for %s: %s", line_user_id, exc)
 
         return user
 
-    async def handle_follow(self, line_user_id: str, db: AsyncSession):
+    async def handle_follow(self, line_user_id: str, db: AsyncSession, commit: bool = True):
         """Handle follow/follow event"""
         # Check if user already exists
         result = await db.execute(select(User).where(User.line_user_id == line_user_id))
@@ -109,10 +116,13 @@ class FriendService:
             source=EventSource.WEBHOOK
         )
         db.add(event)
-        await db.commit()
+        if commit:
+            await db.commit()
+        else:
+            await db.flush()
         return event
 
-    async def handle_unfollow(self, line_user_id: str, db: AsyncSession):
+    async def handle_unfollow(self, line_user_id: str, db: AsyncSession, commit: bool = True):
         """Handle unfollow event"""
         result = await db.execute(select(User).where(User.line_user_id == line_user_id))
         user = result.scalar_one_or_none()
@@ -127,7 +137,10 @@ class FriendService:
             source=EventSource.WEBHOOK
         )
         db.add(event)
-        await db.commit()
+        if commit:
+            await db.commit()
+        else:
+            await db.flush()
         return event
 
     async def get_friend_events(
