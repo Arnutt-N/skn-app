@@ -1,21 +1,57 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { X, MessageSquare, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLiveChatStore } from '../_store/liveChatStore'
+
+const TOAST_DURATION_MS = 5000
 
 export function NotificationToast() {
   const notifications = useLiveChatStore((s) => s.notifications)
   const removeNotification = useLiveChatStore((s) => s.removeNotification)
 
+  const timerRefs = useRef<Map<string, NodeJS.Timeout>>(new Map())
+
+  const clearTimer = useCallback((id: string) => {
+    const timer = timerRefs.current.get(id)
+    if (!timer) return
+    clearTimeout(timer)
+    timerRefs.current.delete(id)
+  }, [])
+
+  const dismissToast = useCallback((id: string) => {
+    clearTimer(id)
+    removeNotification(id)
+  }, [clearTimer, removeNotification])
+
   useEffect(() => {
-    if (notifications.length === 0) return
-    const timer = setTimeout(() => {
-      removeNotification(notifications[0].id)
-    }, 5000)
-    return () => clearTimeout(timer)
-  }, [notifications, removeNotification])
+    notifications.forEach((notif) => {
+      if (!timerRefs.current.has(notif.id)) {
+        const elapsedMs = Math.max(0, Date.now() - notif.timestamp)
+        const remainingMs = Math.max(0, TOAST_DURATION_MS - elapsedMs)
+        const timer = setTimeout(() => {
+          dismissToast(notif.id)
+        }, remainingMs)
+        timerRefs.current.set(notif.id, timer)
+      }
+    })
+
+    timerRefs.current.forEach((timer, id) => {
+      if (!notifications.find(n => n.id === id)) {
+        clearTimeout(timer)
+        timerRefs.current.delete(id)
+      }
+    })
+  }, [dismissToast, notifications])
+
+  useEffect(() => {
+    const timers = timerRefs.current
+    return () => {
+      timers.forEach(timer => clearTimeout(timer))
+      timers.clear()
+    }
+  }, [])
 
   if (notifications.length === 0) return null
 
@@ -40,7 +76,11 @@ export function NotificationToast() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-text-primary">{toast.title}</p>
-              <button onClick={() => removeNotification(toast.id)} className="shrink-0 rounded-md p-0.5 text-text-tertiary hover:text-text-primary">
+              <button
+                aria-label="Dismiss notification"
+                onClick={() => dismissToast(toast.id)}
+                className="shrink-0 rounded-md p-0.5 text-text-tertiary hover:text-text-primary"
+              >
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>

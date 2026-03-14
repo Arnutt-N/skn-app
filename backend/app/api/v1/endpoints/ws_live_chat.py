@@ -296,7 +296,10 @@ async def websocket_endpoint(
             if msg_type == WSEventType.SUBSCRIBE_ANALYTICS.value:
                 await ws_manager.subscribe_analytics(websocket)
                 async with AsyncSessionLocal() as db:
-                    await analytics_service.emit_live_kpis_update(db)
+                    try:
+                        await analytics_service.emit_live_kpis_update(db)
+                    except Exception as e:
+                        logger.warning("KPI broadcast failed (non-fatal): %s", e)
                 continue
 
             if msg_type == WSEventType.UNSUBSCRIBE_ANALYTICS.value:
@@ -451,7 +454,10 @@ async def websocket_endpoint(
                                 },
                                 "timestamp": timestamp
                             })
-                            await analytics_service.emit_live_kpis_update(db)
+                            try:
+                                await analytics_service.emit_live_kpis_update(db)
+                            except Exception as e:
+                                logger.warning("KPI broadcast failed (non-fatal): %s", e)
                     except HTTPException as e:
                         await ws_manager.send_personal(websocket, {
                             "type": WSEventType.ERROR.value,
@@ -501,7 +507,10 @@ async def websocket_endpoint(
                                 },
                                 "timestamp": timestamp
                             })
-                            await analytics_service.emit_live_kpis_update(db)
+                            try:
+                                await analytics_service.emit_live_kpis_update(db)
+                            except Exception as e:
+                                logger.warning("KPI broadcast failed (non-fatal): %s", e)
                         else:
                             await ws_manager.send_personal(websocket, {
                                 "type": WSEventType.ERROR.value,
@@ -570,7 +579,10 @@ async def websocket_endpoint(
                                 },
                                 "timestamp": timestamp
                             })
-                            await analytics_service.emit_live_kpis_update(db)
+                            try:
+                                await analytics_service.emit_live_kpis_update(db)
+                            except Exception as e:
+                                logger.warning("KPI broadcast failed (non-fatal): %s", e)
                         else:
                             await ws_manager.send_personal(websocket, {
                                 "type": WSEventType.ERROR.value,

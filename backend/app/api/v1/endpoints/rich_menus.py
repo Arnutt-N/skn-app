@@ -2,26 +2,30 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 import json
+import logging
 import os
 import shutil
 from app.db.session import get_db
+from app.api.deps import get_current_admin
 from app.models.rich_menu import RichMenu, RichMenuStatus
+from app.models.user import User
 from app.schemas.rich_menu import RichMenuResponse, RichMenuCreate
 from app.services.rich_menu_service import RichMenuService
 from sqlalchemy import select
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 UPLOAD_DIR = "uploads/rich_menus"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.get("", response_model=List[RichMenuResponse])
-async def list_rich_menus(db: AsyncSession = Depends(get_db)):
+async def list_rich_menus(db: AsyncSession = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     result = await db.execute(select(RichMenu).order_by(RichMenu.created_at.desc()))
     return result.scalars().all()
 
 @router.get("/{id}", response_model=RichMenuResponse)
-async def get_rich_menu(id: int, db: AsyncSession = Depends(get_db)):
+async def get_rich_menu(id: int, db: AsyncSession = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     result = await db.execute(select(RichMenu).where(RichMenu.id == id))
     rich_menu = result.scalar_one_or_none()
     if not rich_menu:
@@ -29,7 +33,7 @@ async def get_rich_menu(id: int, db: AsyncSession = Depends(get_db)):
     return rich_menu
 
 @router.put("/{id}", response_model=RichMenuResponse)
-async def update_rich_menu(id: int, data: RichMenuCreate, db: AsyncSession = Depends(get_db)):
+async def update_rich_menu(id: int, data: RichMenuCreate, db: AsyncSession = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     result = await db.execute(select(RichMenu).where(RichMenu.id == id))
     rich_menu = result.scalar_one_or_none()
     if not rich_menu:
@@ -56,7 +60,8 @@ async def update_rich_menu(id: int, data: RichMenuCreate, db: AsyncSession = Dep
 @router.post("", response_model=RichMenuResponse)
 async def create_rich_menu(
     data: RichMenuCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     # Construct LINE config object
     line_config = {
@@ -83,7 +88,8 @@ async def create_rich_menu(
 async def upload_rich_menu_image(
     id: int,
     file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     result = await db.execute(select(RichMenu).where(RichMenu.id == id))
     rich_menu = result.scalar_one_or_none()
@@ -116,7 +122,7 @@ async def upload_rich_menu_image(
     return {"message": "Image saved", "path": file_path}
 
 @router.post("/{id}/sync")
-async def sync_rich_menu(id: int, db: AsyncSession = Depends(get_db)):
+async def sync_rich_menu(id: int, db: AsyncSession = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     """
     Sync rich menu to LINE with idempotency.
     If already synced, verifies existence on LINE.
@@ -152,7 +158,7 @@ async def sync_rich_menu(id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=400, detail=f"Sync failed: {str(e)}")
 
 @router.get("/{id}/sync-status")
-async def get_sync_status(id: int, db: AsyncSession = Depends(get_db)):
+async def get_sync_status(id: int, db: AsyncSession = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     """Get the current sync status of a rich menu."""
     status_info = await RichMenuService.get_sync_status(db, id)
     if "success" in status_info and not status_info["success"]:
@@ -160,7 +166,7 @@ async def get_sync_status(id: int, db: AsyncSession = Depends(get_db)):
     return status_info
 
 @router.post("/{id}/publish")
-async def publish_rich_menu(id: int, db: AsyncSession = Depends(get_db)):
+async def publish_rich_menu(id: int, db: AsyncSession = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     result = await db.execute(select(RichMenu).where(RichMenu.id == id))
     rich_menu = result.scalar_one_or_none()
     if not rich_menu:
@@ -176,7 +182,7 @@ async def publish_rich_menu(id: int, db: AsyncSession = Depends(get_db)):
     return {"message": "Rich Menu is now default on LINE Official Account"}
 
 @router.delete("/{id}")
-async def delete_rich_menu(id: int, db: AsyncSession = Depends(get_db)):
+async def delete_rich_menu(id: int, db: AsyncSession = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     result = await db.execute(select(RichMenu).where(RichMenu.id == id))
     rich_menu = result.scalar_one_or_none()
     if not rich_menu:
@@ -187,7 +193,7 @@ async def delete_rich_menu(id: int, db: AsyncSession = Depends(get_db)):
         try:
             await RichMenuService.delete_from_line(db, rich_menu.line_rich_menu_id)
         except Exception as e:
-            print(f"Warning: Failed to delete from LINE: {e}")
+            logger.warning("Failed to delete rich menu %s from LINE during local delete", rich_menu.line_rich_menu_id, exc_info=e)
             
     # Delete local file if exists
     if rich_menu.image_path and os.path.exists(rich_menu.image_path):

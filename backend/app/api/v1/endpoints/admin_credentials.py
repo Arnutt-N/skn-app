@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, List
 from app.api import deps
+from app.api.deps import get_current_admin
+from app.models.user import User
 from app.services.credential_service import credential_service
 from app.models.credential import Provider
 from app.schemas.credential import (
@@ -15,7 +17,8 @@ router = APIRouter()
 @router.get("", response_model=CredentialListResponse)
 async def list_credentials(
     provider: str = None,
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    current_admin: User = Depends(get_current_admin)
 ) -> Any:
     """List all credentials (secrets masked)"""
     credentials = await credential_service.list_credentials(provider, db)
@@ -33,7 +36,8 @@ async def list_credentials(
 @router.post("", response_model=CredentialResponse)
 async def create_credential(
     request: CredentialCreate,
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    current_admin: User = Depends(get_current_admin)
 ) -> Any:
     """Create new credential"""
     credential = await credential_service.create_credential(request, db)
@@ -46,6 +50,7 @@ async def create_credential(
 @router.get("/line/status")
 async def get_line_bot_status(
     db: AsyncSession = Depends(deps.get_db),
+    current_admin: User = Depends(get_current_admin),
 ) -> Any:
     """Check LINE Bot connection status"""
     try:
@@ -66,7 +71,8 @@ async def get_line_bot_status(
 @router.get("/{id}", response_model=CredentialResponse)
 async def get_credential(
     id: int,
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    current_admin: User = Depends(get_current_admin)
 ) -> Any:
     """Get single credential (secrets masked)"""
     credential = await db.get(credential_service.Credential, id)
@@ -82,7 +88,8 @@ async def get_credential(
 async def update_credential(
     id: int,
     request: CredentialUpdate,
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    current_admin: User = Depends(get_current_admin)
 ) -> Any:
     """Update credential"""
     credential = await credential_service.update_credential(id, request, db)
@@ -97,7 +104,8 @@ async def update_credential(
 @router.delete("/{id}")
 async def delete_credential(
     id: int,
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    current_admin: User = Depends(get_current_admin)
 ) -> Any:
     """Delete credential"""
     success = await credential_service.delete_credential(id, db)
@@ -109,7 +117,8 @@ async def delete_credential(
 @router.post("/{id}/verify")
 async def verify_credential(
     id: int,
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    current_admin: User = Depends(get_current_admin)
 ) -> Any:
     """Test connection for credential"""
     return await credential_service.verify_credential(id, db)
@@ -118,7 +127,8 @@ async def verify_credential(
 @router.post("/{id}/set-default", response_model=CredentialResponse)
 async def set_default_credential(
     id: int,
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    current_admin: User = Depends(get_current_admin)
 ) -> Any:
     """Set as default for provider"""
     credential = await credential_service.set_default(id, db)

@@ -1,34 +1,75 @@
 from cryptography.fernet import Fernet
 import json
-from typing import List, Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
-from app.models.credential import Credential, Provider
-from app.schemas.credential import CredentialCreate, CredentialUpdate, CredentialResponse
-from app.core.config import settings
+import logging
+from typing import Any, Dict, List, Optional
+
 import httpx
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
+from app.models.credential import Credential, Provider
+from app.schemas.credential import CredentialCreate, CredentialUpdate
+
+logger = logging.getLogger(__name__)
+
 
 class CredentialService:
     def __init__(self):
-        # We need a fallback if ENCRYPTION_KEY is not a valid Fernet key
-        try:
-            self.cipher = Fernet(settings.ENCRYPTION_KEY.encode())
-        except Exception:
-            # For development, if key is invalid, we might want a stable but insecure fallback
-            # In production, this should fail early.
-            import base64
-            # A 32-byte key is required for Fernet
-            fake_key = base64.urlsafe_b64encode(b"dev_encryption_key_32_bytes_long")
-            self.cipher = Fernet(fake_key)
+        self.cipher: Optional[Fernet] = None
+
+    def validate_configuration(self) -> None:
+        """Validate encryption settings before serving traffic."""
+        key = getattr(settings, "ENCRYPTION_KEY", "")
+        if key:
+            try:
+                Fernet(key.encode())
+                return
+            except Exception as exc:
+                logger.critical("Invalid ENCRYPTION_KEY: %s", exc)
+                raise RuntimeError(
+                    "ENCRYPTION_KEY is invalid. Generate a Fernet key and update your .env file."
+                ) from exc
+
+        if getattr(settings, "ENVIRONMENT", "production") == "development":
+            logger.warning(
+                "ENCRYPTION_KEY not set. Using insecure development fallback key. DO NOT use in production."
+            )
+            return
+
+        raise RuntimeError("ENCRYPTION_KEY must be set in production. Add it to your .env file.")
+
+    def _get_cipher(self) -> Fernet:
+        """Lazily build the cipher to avoid import-time startup failures."""
+        if self.cipher is not None:
+            return self.cipher
+
+        self.validate_configuration()
+        key = getattr(settings, "ENCRYPTION_KEY", "")
+        if key:
+            try:
+                self.cipher = Fernet(key.encode())
+                return self.cipher
+            except Exception as exc:
+                logger.critical("Invalid ENCRYPTION_KEY: %s", exc)
+                raise RuntimeError(
+                    "ENCRYPTION_KEY is invalid. Generate a Fernet key and update your .env file."
+                ) from exc
+
+        import base64
+
+        fake_key = base64.urlsafe_b64encode(b"dev_encryption_key_32_bytes_long")
+        self.cipher = Fernet(fake_key)
+        return self.cipher
 
     def encrypt_credentials(self, data: dict) -> str:
         """Encrypt credentials dict to string"""
         json_str = json.dumps(data)
-        return self.cipher.encrypt(json_str.encode()).decode()
+        return self._get_cipher().encrypt(json_str.encode()).decode()
 
     def decrypt_credentials(self, encrypted: str) -> dict:
         """Decrypt credentials string to dict"""
-        decrypted = self.cipher.decrypt(encrypted.encode())
+        decrypted = self._get_cipher().decrypt(encrypted.encode())
         return json.loads(decrypted.decode())
 
     async def get_default_credential(
@@ -73,7 +114,7 @@ class CredentialService:
             is_active=obj_in.is_active,
             is_default=obj_in.is_default
         )
-        
+
         # If set as default, unset others for this provider
         if obj_in.is_default:
             await db.execute(
@@ -81,7 +122,7 @@ class CredentialService:
                 .where(Credential.provider == obj_in.provider)
                 .values(is_default=False)
             )
-            
+
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
@@ -97,14 +138,14 @@ class CredentialService:
         db_obj = await db.get(Credential, id)
         if not db_obj:
             return None
-            
+
         update_data = obj_in.model_dump(exclude_unset=True)
         if "credentials" in update_data:
             update_data["credentials"] = self.encrypt_credentials(update_data["credentials"])
-        
+
         if "metadata" in update_data:
             update_data["metadata_json"] = update_data.pop("metadata")
-            
+
         # If set as default, unset others for this provider
         if update_data.get("is_default"):
             await db.execute(
@@ -113,10 +154,10 @@ class CredentialService:
                 .where(Credential.id != id)
                 .values(is_default=False)
             )
-            
+
         for field, value in update_data.items():
             setattr(db_obj, field, value)
-            
+
         await db.commit()
         await db.refresh(db_obj)
         return db_obj
@@ -154,9 +195,9 @@ class CredentialService:
         db_obj = await db.get(Credential, id)
         if not db_obj:
             return {"success": False, "message": "Credential not found"}
-            
+
         creds = self.decrypt_credentials(db_obj.credentials)
-        
+
         if db_obj.provider == Provider.LINE:
             token = creds.get("channel_access_token")
             async with httpx.AsyncClient() as client:
@@ -167,7 +208,7 @@ class CredentialService:
                 if response.status_code == 200:
                     return {"success": True, "message": "LINE connection verified", "data": response.json()}
                 return {"success": False, "message": f"LINE error: {response.text}"}
-                
+
         elif db_obj.provider == Provider.TELEGRAM:
             token = creds.get("bot_token")
             async with httpx.AsyncClient() as client:
@@ -175,12 +216,13 @@ class CredentialService:
                 if response.status_code == 200:
                     return {"success": True, "message": "Telegram connection verified", "data": response.json()}
                 return {"success": False, "message": f"Telegram error: {response.text}"}
-                
+
         return {"success": False, "message": f"Verification not implemented for {db_obj.provider}"}
 
     def mask_credentials(self, encrypted_str: str) -> str:
         """Helper to mask sensitive values"""
         # Just show last 4 chars of the encrypted string as a unique-ish identifier
         return f"****{encrypted_str[-4:]}"
+
 
 credential_service = CredentialService()

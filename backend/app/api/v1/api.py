@@ -23,6 +23,8 @@ from app.api.v1.endpoints import (
     admin_canned_responses,
     admin_export,
     admin_tags,
+    admin_credentials,
+    admin_friends,
 )
 
 api_router.include_router(webhook.router, prefix="/line", tags=["line"])
@@ -31,7 +33,7 @@ api_router.include_router(media.router, tags=["media"])
 api_router.include_router(liff.router, prefix="/liff", tags=["liff"])
 api_router.include_router(locations.router, prefix="/locations", tags=["locations"])
 
-# Admin APIs (no auth for now)
+# Admin APIs (auth via get_current_admin dependency on each endpoint)
 api_router.include_router(admin_reply_objects.router, prefix="/admin/reply-objects", tags=["admin"])
 api_router.include_router(admin_auto_replies.router, prefix="/admin/auto-replies", tags=["admin"]) # Legacy
 api_router.include_router(admin_intents.router, prefix="/admin/intents", tags=["admin"])
@@ -45,6 +47,8 @@ api_router.include_router(admin_audit.router, prefix="/admin/audit", tags=["admi
 api_router.include_router(admin_canned_responses.router, prefix="/admin/canned-responses", tags=["admin"])
 api_router.include_router(admin_export.router, prefix="/admin/export", tags=["admin"])
 api_router.include_router(admin_tags.router, prefix="/admin/tags", tags=["admin"])
+api_router.include_router(admin_credentials.router, prefix="/admin/credentials", tags=["admin-credentials"])
+api_router.include_router(admin_friends.router, prefix="/admin/friends", tags=["admin-friends"])
 api_router.include_router(ws_live_chat.router, tags=["websocket"])
 api_router.include_router(health.router, tags=["health"])
 

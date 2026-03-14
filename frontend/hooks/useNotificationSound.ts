@@ -37,6 +37,7 @@ export function useNotificationSound() {
       oscillator.start();
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
       oscillator.stop(ctx.currentTime + 0.3);
+      oscillator.onended = () => { ctx.close(); };
     } catch {
       // Audio not supported or blocked by browser
     }

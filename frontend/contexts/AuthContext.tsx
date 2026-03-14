@@ -29,9 +29,6 @@ const MOCK_ADMIN: User = {
   display_name: 'Administrator'
 };
 
-// Mock JWT token for development (expires in 24 hours)
-const MOCK_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImV4cCI6OTk5OTk5OTk5OX0.mock_signature';
-
 function isTokenExpired(token: string): boolean {
   try {
     const parts = token.split('.');
@@ -56,8 +53,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (DEV_MODE) {
           // In dev mode, auto-login as mock admin
           setUser(MOCK_ADMIN);
-          setToken(MOCK_TOKEN);
-          localStorage.setItem('auth_token', MOCK_TOKEN);
+          setToken(null);
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_refresh_token');
           localStorage.setItem('auth_user', JSON.stringify(MOCK_ADMIN));
         } else {
           // Production mode: Restore from localStorage
@@ -89,7 +87,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
       const response = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -105,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(data.access_token);
       setUser(data.user);
       
-      // TODO(security): move token handling to secure httpOnly cookies to reduce XSS risk.
+      // Current auth flow stores tokens in localStorage; moving to httpOnly cookies requires coordinated backend changes.
       localStorage.setItem('auth_token', data.access_token);
       if (data.refresh_token) {
         localStorage.setItem('auth_refresh_token', data.refresh_token);
@@ -131,6 +128,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshToken = useCallback(async () => {
+    if (DEV_MODE) {
+      return;
+    }
+
     try {
       const refreshTokenValue = localStorage.getItem('auth_refresh_token');
       if (!refreshTokenValue) {
@@ -165,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     token,
-    isAuthenticated: !!user && !!token,
+    isAuthenticated: !!user && (DEV_MODE || !!token),
     isLoading,
     login,
     logout,

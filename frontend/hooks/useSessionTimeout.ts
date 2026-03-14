@@ -17,6 +17,11 @@ export function useSessionTimeout(onLogout: () => void): UseSessionTimeoutReturn
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const showWarningRef = useRef(false);
+
+  useEffect(() => {
+    showWarningRef.current = showWarning;
+  }, [showWarning]);
 
   const clearAllTimers = useCallback(() => {
     if (timeoutRef.current) {
@@ -67,7 +72,7 @@ export function useSessionTimeout(onLogout: () => void): UseSessionTimeoutReturn
     const events = ['mousemove', 'keypress', 'click', 'scroll', 'touchstart'];
 
     const handleActivity = () => {
-      if (!showWarning) {
+      if (!showWarningRef.current) {
         resetTimer();
       }
     };
@@ -87,7 +92,7 @@ export function useSessionTimeout(onLogout: () => void): UseSessionTimeoutReturn
       });
       clearAllTimers();
     };
-  }, [resetTimer, clearAllTimers, showWarning]);
+  }, [resetTimer, clearAllTimers]);
 
   const extendSession = useCallback(() => {
     resetTimer();

@@ -34,7 +34,7 @@ export enum MessageType {
 }
 
 export interface WebSocketMessage {
-  type: MessageType | string;
+  type: MessageType;
   payload: unknown;
   timestamp: string;
 }
@@ -55,7 +55,7 @@ export interface UseWebSocketOptions {
 }
 
 export interface UseWebSocketReturn {
-  send: (type: MessageType | string, payload: unknown) => void;
+  send: (type: MessageType, payload: unknown) => void;
   connectionState: ConnectionState;
   isConnected: boolean;
   isReconnecting: boolean;
@@ -117,7 +117,7 @@ export interface SessionPayload {
 
 export interface PresencePayload {
   operators: Array<{
-    id: string;
+    id: number;
     status: string;
     active_chats: number;
   }>;

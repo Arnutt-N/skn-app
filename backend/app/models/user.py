@@ -14,6 +14,11 @@ class ChatMode(str, enum.Enum):
     BOT = "BOT"
     HUMAN = "HUMAN"
 
+class FriendStatus(str, enum.Enum):
+    ACTIVE = "ACTIVE"
+    BLOCKED = "BLOCKED"
+    DELETED = "DELETED"
+
 class User(Base):
     __tablename__ = "users"
 
@@ -36,7 +41,7 @@ class User(Base):
     # Chat State
     chat_mode = Column(Enum(ChatMode), default=ChatMode.BOT)
 
-    # Friend Status (For LINE Users)
+    # Friend Status (For LINE Users) -- FriendStatus enum defined above; Column kept as String to avoid migration
     friend_status = Column(String, nullable=True, default="ACTIVE")
     friend_since = Column(DateTime(timezone=True), nullable=True)
     last_message_at = Column(DateTime(timezone=True), nullable=True)

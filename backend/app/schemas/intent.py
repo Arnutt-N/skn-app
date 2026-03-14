@@ -1,47 +1,31 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from enum import Enum
 from uuid import UUID
-
-class MatchTypeEnum(str, Enum):
-    exact = "exact"
-    contains = "contains"
-    regex = "regex"
-    starts_with = "starts_with"
-
-class ReplyTypeEnum(str, Enum):
-    text = "text"
-    flex = "flex"
-    image = "image"
-    sticker = "sticker"
-    video = "video"
-    template = "template"
+from app.models.intent import MatchType, ReplyType
 
 # --- Keywords ---
 class IntentKeywordBase(BaseModel):
     keyword: str = Field(..., min_length=1, max_length=255)
-    match_type: MatchTypeEnum = MatchTypeEnum.contains
+    match_type: MatchType = MatchType.CONTAINS
 
 class IntentKeywordCreate(IntentKeywordBase):
     category_id: int
 
 class IntentKeywordUpdate(BaseModel):
     keyword: Optional[str] = None
-    match_type: Optional[MatchTypeEnum] = None
+    match_type: Optional[MatchType] = None
 
 class IntentKeywordResponse(IntentKeywordBase):
     id: int
     category_id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-        use_enum_values = True
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 # --- Responses ---
 class IntentResponseBase(BaseModel):
-    reply_type: ReplyTypeEnum = ReplyTypeEnum.text
+    reply_type: ReplyType = ReplyType.TEXT
     text_content: Optional[str] = None
     media_id: Optional[UUID] = None
     payload: Optional[Dict[str, Any]] = None
@@ -52,7 +36,7 @@ class IntentResponseCreate(IntentResponseBase):
     category_id: int
 
 class IntentResponseUpdate(BaseModel):
-    reply_type: Optional[ReplyTypeEnum] = None
+    reply_type: Optional[ReplyType] = None
     text_content: Optional[str] = None
     media_id: Optional[UUID] = None
     payload: Optional[Dict[str, Any]] = None
@@ -64,9 +48,7 @@ class IntentResponseResponse(IntentResponseBase):
     category_id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-        use_enum_values = True
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 # --- Categories ---
 class IntentCategoryBase(BaseModel):
@@ -91,9 +73,7 @@ class IntentCategoryResponse(IntentCategoryBase):
     response_count: int = 0
     keywords_preview: List[str] = []  # First 5 keywords for preview
 
-    class Config:
-        from_attributes = True
-        use_enum_values = True
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 class IntentCategoryDetailResponse(IntentCategoryResponse):
     keywords: List[IntentKeywordResponse] = []

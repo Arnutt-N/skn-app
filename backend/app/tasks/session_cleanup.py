@@ -173,8 +173,25 @@ async def _mark_abandoned_waiting_session(session: ChatSession, db: AsyncSession
         logger.error(f"Failed to broadcast waiting timeout close: {e}")
 
 
+_cleanup_task: asyncio.Task = None
+
+
 async def start_cleanup_task():
     """Start cleanup background task."""
-    asyncio.create_task(cleanup_inactive_sessions())
+    global _cleanup_task
+    _cleanup_task = asyncio.create_task(cleanup_inactive_sessions())
     logger.info("Session cleanup background task started")
+
+
+async def stop_cleanup_task():
+    """Cancel and await cleanup background task."""
+    global _cleanup_task
+    if _cleanup_task and not _cleanup_task.done():
+        _cleanup_task.cancel()
+        try:
+            await _cleanup_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("Session cleanup background task stopped")
+    _cleanup_task = None
 

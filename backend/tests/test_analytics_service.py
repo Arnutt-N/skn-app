@@ -3,6 +3,8 @@ import pytest
 from unittest.mock import AsyncMock
 from types import SimpleNamespace
 
+from sqlalchemy.dialects import postgresql
+
 from app.services.analytics_service import AnalyticsService
 
 
@@ -99,3 +101,31 @@ async def test_calculate_sla_breach_events_sums_all_categories(service):
     total = await service.calculate_sla_breach_events(mock_db, hours=24)
 
     assert total == 6
+
+
+@pytest.mark.asyncio
+async def test_get_session_volume_uses_literal_day_bucket(service):
+    captured = {}
+
+    class _FakeResult:
+        def all(self):
+            return []
+
+    async def _capture(stmt):
+        captured["stmt"] = stmt
+        return _FakeResult()
+
+    mock_db = AsyncMock()
+    mock_db.execute.side_effect = _capture
+
+    series = await service.get_session_volume(mock_db, days=7)
+
+    compiled = str(
+        captured["stmt"].compile(
+            dialect=postgresql.dialect(),
+            compile_kwargs={"literal_binds": True},
+        )
+    )
+
+    assert "date_trunc('day', chat_sessions.started_at)" in compiled
+    assert series[-1]["sessions"] == 0

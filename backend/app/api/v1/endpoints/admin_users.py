@@ -4,6 +4,7 @@ from sqlalchemy import select, func, or_
 from typing import List, Optional
 
 from app.db.session import get_db
+from app.api.deps import get_current_admin
 from app.models.user import User, UserRole
 from app.models.service_request import ServiceRequest, RequestStatus
 from pydantic import BaseModel
@@ -22,7 +23,8 @@ class UserWorkload(BaseModel):
 async def list_users(
     role: Optional[UserRole] = None,
     search: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin)
 ):
     """List users with their current workload statistics."""
     

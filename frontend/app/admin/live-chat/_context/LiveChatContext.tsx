@@ -476,6 +476,17 @@ export function LiveChatProvider({ children }: { children: React.ReactNode }) {
 
     if (wsStatusRef.current === 'connected') {
       wsSendMessage(text, tempId);
+      // Fallback: fail the optimistic message if the WS ack never arrives.
+      setTimeout(() => {
+        const store = getStore();
+        if (store.pendingMessages.has(tempId)) {
+          store.removePending(tempId);
+          store.setFailed(tempId, 'Message acknowledgment timed out');
+        }
+        if (store.sending) {
+          store.setSending(false);
+        }
+      }, 10000);
       return;
     }
 

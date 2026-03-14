@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -31,8 +31,8 @@ class ServiceRequestCreate(BaseModel):
     name: Optional[str] = None # Will be constructed from first+last if needed
     service_type: Optional[str] = None # Will be mapped to topic_category
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "prefix": "นาย",
                 "firstname": "สมชาย",
@@ -50,20 +50,38 @@ class ServiceRequestCreate(BaseModel):
                 "line_user_id": "U1234567890abcdef1234567890abcdef"
             }
         }
+    )
 
-class ServiceRequestResponse(ServiceRequestCreate):
+class ServiceRequestResponse(BaseModel):
     id: int
+    requester_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+    line_user_id: Optional[str] = None
+    agency: Optional[str] = None
+    province: Optional[str] = None
+    district: Optional[str] = None
+    sub_district: Optional[str] = None
+    prefix: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    topic_category: Optional[str] = None
+    topic_subcategory: Optional[str] = None
+    description: Optional[str] = None
+    attachments: Optional[list] = None
+    category: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[str] = None
-    due_date: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    details: Optional[dict] = None
     assigned_agent_id: Optional[int] = None
     assigned_by_id: Optional[int] = None
     assignee_name: Optional[str] = None
-    created_at: datetime
+    due_date: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RequestCommentBase(BaseModel):
     content: str
@@ -79,6 +97,5 @@ class RequestCommentResponse(RequestCommentBase):
     updated_at: Optional[datetime] = None
     display_name: Optional[str] = None # For frontend display
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 

@@ -32,4 +32,4 @@ class Message(Base):
     sender_role = Column(Enum(SenderRole), nullable=True)  # USER, BOT, or ADMIN
     operator_name = Column(String, nullable=True)  # Display name of admin operator
     
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
