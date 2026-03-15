@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,8 +14,15 @@ function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useAuth();
+  const router = useRouter();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace('/admin');
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +43,7 @@ function LoginForm() {
         description: 'Successfully logged in. Redirecting...',
         variant: 'success'
       });
-      // Navigation is handled by AuthContext or window redirection
+      router.replace('/admin');
     } catch {
       toast({
         title: 'Login Failed',

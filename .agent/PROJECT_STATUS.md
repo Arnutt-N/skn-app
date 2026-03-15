@@ -1,6 +1,6 @@
 # Project Status: SknApp
 
-> **Last Updated:** 2026-03-15 15:42 by CodeX (admin workflow audit + role/menu guard handoff)
+> **Last Updated:** 2026-03-15 17:18 by CodeX (admin media contract fix + universal handoff artifacts)
 
 ## Thai Summary
 เนเธเธ 27 เธเธฑเนเธเธ•เธญเธ **เน€เธชเธฃเนเธเธชเธกเธเธนเธฃเธ“เน 100%** โ€” เธ—เธธเธเธเธตเน€เธเธญเธฃเนเธ–เธนเธ implement เนเธฅเนเธง
@@ -118,6 +118,9 @@
 - [2026-02-13] All 321 files committed and pushed to `origin/fix/live-chat-redesign-issues`.
 
 ## Recent Completions
+- [2026-03-15 17:18] CodeX: fixed `/admin/files` media contract by adding secure admin list/delete endpoints, aligned frontend list/delete vs public upload/download routes, added backend media endpoint tests, verified `pytest tests/test_media_endpoints.py -q`, `npm run lint -- app/admin/files/page.tsx`, and `npm run build`, then executed universal handoff workflow artifacts (CodeX)
+- [2026-03-15 19:00] Claude Code: Skills audit (39 skills reviewed) + 4 skills updated — skn-auth-security (authFetch/PageAccessGuard/get_current_staff), skn-design-system (MessageBubble tokens, new pages, text-gradient fix), skn-service-request + skn-settings-config (frontmatter added) (Claude Code)
+- [2026-03-15 17:30] Claude Code: UI overhaul on `feat/ui-workflow-audit` — semantic token migration (Input/Select/MessageBubble/auto-replies/analytics/layout), built files page + landing page, fixed 2 pre-existing lint errors, lint ✅ tsc ✅ build ✅ (33 routes) (Claude Code)
 - [2026-03-15 15:42] CodeX audited admin workflow on `feat/ui-workflow-audit`, fixed bearer-token propagation, removed dead sidebar links, aligned AGENT/live-chat access, added page/route guards, and pushed commit `2f06695` to origin (CodeX)
 - [2026-02-20 22:20] UI consistency token migration (13 components) + sidebar/navbar HR-IMS alignment (SidebarItem, gradient-active, glass-navbar, h-20), tagged v1.8.0, PR #2 merged to main (Claude Code)
 - [2026-02-15 23:00] CodeX scope creep audit + remediation (removed dead UI, fixed bookkeeping), Thai font verified correct, committed 98 files, tagged v1.6.0, pushed (Claude Code)

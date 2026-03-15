@@ -23,8 +23,8 @@ const selectVariants = cva(
           'focus:border-brand-500 focus:ring-brand-500/20',
         ],
         filled: [
-          'border-transparent bg-gray-100 dark:bg-gray-700',
-          'focus:bg-white dark:focus:bg-gray-800 focus:border-brand-500 focus:ring-brand-500/20',
+          'border-transparent bg-bg',
+          'focus:bg-surface focus:border-brand-500 focus:ring-brand-500/20',
         ],
       },
       size: {
@@ -87,7 +87,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       <div className="w-full">
         <div className="relative">
           {leftIcon && (
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors duration-200 pointer-events-none">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary transition-colors duration-200 pointer-events-none">
               {leftIcon}
             </span>
           )}

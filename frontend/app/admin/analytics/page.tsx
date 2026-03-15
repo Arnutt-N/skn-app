@@ -228,7 +228,7 @@ export default function AnalyticsPage() {
       {loading && !kpis ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, idx) => (
-            <div key={idx} className="h-32 rounded-xl border border-border-default bg-gray-100 dark:bg-gray-700 animate-pulse" />
+            <div key={idx} className="h-32 rounded-xl border border-border-default bg-bg animate-pulse" />
           ))}
         </div>
       ) : null}

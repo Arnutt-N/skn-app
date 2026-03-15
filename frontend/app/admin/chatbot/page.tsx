@@ -61,7 +61,8 @@ export default function ChatbotDashboard() {
     }, []);
 
     useEffect(() => {
-        void fetchChatbotData();
+        const timer = window.setTimeout(() => { void fetchChatbotData(); }, 0);
+        return () => window.clearTimeout(timer);
     }, [fetchChatbotData]);
 
     if (loading) {

@@ -3,11 +3,14 @@ name: skn-auth-security
 description: >
   Implements, debugs, or extends authentication and security in the SKN App —
   JWT tokens, password hashing, role-based access control, dev-mode bypass,
-  audit logging, and encrypted credential storage.
+  audit logging, encrypted credential storage, frontend auth fetch interceptor,
+  and client-side page access guards.
   Use when asked to "add auth to endpoint", "create admin user", "protect route",
   "add role check", "JWT error", "dev mode bypass", "audit log", "encrypt credential",
+  "protect a page by role", "authFetch", "PageAccessGuard", "bearer token missing",
+  "get_current_staff", "AGENT access",
   "เพิ่ม auth", "สร้าง admin", "เพิ่ม role check", "JWT หมดอายุ",
-  "บันทึก audit log", "เก็บ credential".
+  "บันทึก audit log", "เก็บ credential", "guard หน้า", "AGENT เข้าหน้า".
   Do NOT use for LINE webhook signature validation (use skn-webhook-handler),
   or LINE credential management UI (use skn-fastapi-endpoint for the CRUD).
 license: MIT
@@ -42,7 +45,7 @@ access control, audit logging, and Fernet-encrypted credential storage.
 
 5. **Token type claim required** — access tokens have `"type": "access"`, refresh tokens have `"type": "refresh"`. `get_current_user()` rejects tokens where `type != "access"`. The refresh endpoint rejects tokens where `type != "refresh"`.
 
-6. **`get_current_admin` vs `get_current_user`** — `get_current_user` allows any admin/agent role. `get_current_admin` adds an extra check for `ADMIN` or `SUPER_ADMIN` only. There is no `get_current_agent()` — use `get_current_user` for AGENT-accessible endpoints.
+6. **Three dependency levels** — `get_current_user` allows any logged-in role. `get_current_admin` restricts to `ADMIN` or `SUPER_ADMIN` only. `get_current_staff` (added v1.9.0+) allows `ADMIN`, `SUPER_ADMIN`, **and `AGENT`** — use this for live-chat REST endpoints that agents need. Never use `get_current_user` as a blanket "any role is fine" guard without a role check inside the endpoint.
 
 7. **Audit decorator does NOT commit** — `@audit_action()` calls `db.add(log)` but NOT `await db.commit()`. The calling function must commit. Using `create_audit_log()` directly calls `db.flush()` (not commit) to get the ID.
 
@@ -175,12 +178,15 @@ async def agent_or_admin(current_user: User = Depends(get_current_user)):
 
 **Role hierarchy in this project:**
 
-| Role | Login | `get_current_user` | `get_current_admin` | Notes |
-|---|---|---|---|---|
-| `SUPER_ADMIN` | ✅ | ✅ | ✅ | Full access |
-| `ADMIN` | ✅ | ✅ | ✅ | Standard admin |
-| `AGENT` | ✅ | ✅ | ❌ | Live chat operators |
-| `USER` | ❌ | ❌ | ❌ | LINE users only |
+| Role | Login | `get_current_user` | `get_current_staff` | `get_current_admin` | Notes |
+|---|---|---|---|---|---|
+| `SUPER_ADMIN` | ✅ | ✅ | ✅ | ✅ | Full access |
+| `ADMIN` | ✅ | ✅ | ✅ | ✅ | Standard admin |
+| `AGENT` | ✅ | ✅ | ✅ | ❌ | Live chat operators |
+| `USER` | ❌ | ❌ | ❌ | ❌ | LINE users only |
+
+Use `get_current_staff` for: live-chat REST endpoints (claim session, send message, close session, read conversations).
+Use `get_current_admin` for: analytics, audit logs, system settings, user management, rich menus.
 
 ---
 
@@ -366,6 +372,10 @@ print(Fernet.generate_key().decode())
 
 ## Step 8: Frontend Auth Usage
 
+> **Note:** Manually adding `Authorization` headers to every `fetch()` call is the OLD pattern.
+> Since v1.9.0 (Task #22), `authFetch.ts` installs a global fetch interceptor that auto-adds the
+> bearer token to any `/api/v1/admin/` call. See Step 9 below.
+
 ```typescript
 // In any component wrapped by AuthProvider
 import { useAuth } from '@/contexts/AuthContext';
@@ -379,16 +389,16 @@ function MyComponent() {
         // On success: token/user set in state + localStorage
     };
 
-    // Add auth header to API calls
+    // ✅ NEW: just call fetch() — bearer token is injected automatically for /api/v1/admin/ calls
     const fetchData = async () => {
-        const response = await fetch('/api/v1/some-endpoint', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await fetch('/api/v1/admin/some-endpoint');
         // ...
     };
+
+    // ❌ OLD pattern — no longer needed for admin endpoints:
+    // const response = await fetch('/api/v1/admin/...', {
+    //     headers: { 'Authorization': `Bearer ${token}` }
+    // });
 
     // Role check in UI
     if (user?.role === 'SUPER_ADMIN') {
@@ -411,6 +421,73 @@ NEXT_PUBLIC_DEV_MODE=true
 | `auth_token` | JWT access token |
 | `auth_refresh_token` | JWT refresh token |
 | `auth_user` | JSON-serialized User object |
+
+---
+
+## Step 9: authFetch Interceptor + PageAccessGuard (v1.9.0+)
+
+### authFetch — global bearer token injection
+
+`frontend/lib/authFetch.ts` patches `window.fetch` once at startup so every call to
+`/api/v1/admin/*` automatically receives the `Authorization: Bearer {token}` header.
+
+```typescript
+// In AuthContext.tsx — called once when the auth state changes:
+import { installAdminAuthFetchInterceptor, syncAdminAuthToken } from '@/lib/authFetch';
+
+// Install the interceptor (idempotent — safe to call multiple times):
+installAdminAuthFetchInterceptor();
+
+// Sync the token whenever auth state changes:
+syncAdminAuthToken(token);   // call with null on logout
+```
+
+**How it works:**
+- Intercepts ONLY requests where URL contains `/api/v1/admin/`
+- Skips requests that already have an `Authorization` header
+- Stores token in `window.__JSK_ADMIN_AUTH_TOKEN__` (set by `syncAdminAuthToken`)
+- Guard `window.__JSK_ADMIN_AUTH_FETCH_INSTALLED__` prevents double-patching
+- SSR-safe: checks `typeof window !== 'undefined'` before installing
+
+**Do NOT** add manual `Authorization` headers to admin fetch calls — the interceptor handles it.
+**DO** add manual headers for non-admin endpoints (LIFF, webhook) that need auth.
+
+---
+
+### PageAccessGuard — client-side route guard
+
+`frontend/components/admin/PageAccessGuard.tsx` protects pages by role. Add it as a
+wrapper inside the page's `'use client'` component.
+
+```tsx
+'use client';
+import PageAccessGuard from '@/components/admin/PageAccessGuard';
+
+export default function AnalyticsPage() {
+  return (
+    <PageAccessGuard allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+      {/* page content here */}
+    </PageAccessGuard>
+  );
+}
+```
+
+**Behavior:**
+- While `isLoading`: renders a centered spinner
+- `isAuthenticated === false` OR `user === null`: `router.replace('/login')`
+- Role not in `allowedRoles`: `router.replace(fallbackPath ?? resolveFallbackPath(role))`
+  - `AGENT` role defaults to `/admin/live-chat`
+  - All others default to `/admin`
+- Role is allowed: renders `children`
+
+**When to use:**
+- Analytics, audit, user management, system settings → `['ADMIN', 'SUPER_ADMIN']`
+- Pages agents should NOT access → use `PageAccessGuard` (they redirect to live-chat)
+- Live chat page → agents can access, no guard needed (or allow all staff roles)
+
+**Architecture note:**
+The layout.tsx also has role-aware menu filtering (hides restricted menu items from AGENT).
+`PageAccessGuard` is the second line of defense for direct URL navigation.
 
 ---
 

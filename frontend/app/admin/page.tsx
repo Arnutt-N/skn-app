@@ -82,7 +82,8 @@ export default function ServiceDashboard() {
     }, []);
 
     useEffect(() => {
-        void fetchDashboardData();
+        const timer = window.setTimeout(() => { void fetchDashboardData(); }, 0);
+        return () => window.clearTimeout(timer);
     }, [fetchDashboardData]);
 
     if (loading) {

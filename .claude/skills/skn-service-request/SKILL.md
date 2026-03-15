@@ -1,3 +1,25 @@
+---
+name: skn-service-request
+description: >
+  Full-stack service request feature for the SKN App — LIFF 4-step form, backend CRUD,
+  and admin list/kanban/detail views. Use when adding fields to service requests, fixing
+  the LIFF form, managing status/priority, assignment, comments, or sending Flex status messages.
+license: MIT
+compatibility: >
+  SKN App (JskApp) backend + frontend. FastAPI, SQLAlchemy async, Next.js.
+metadata:
+  author: SKN App Team
+  version: 1.0.0
+  project: skn-app
+  category: fullstack
+  tags: [service-request, liff, kanban, admin, assignment, flex-message]
+  related-skills:
+    - skn-liff-form
+    - skn-liff-data
+    - skn-fastapi-endpoint
+    - skn-admin-requests
+---
+
 # skn-service-request
 
 Full-stack service request feature for the SKN App (JskApp). Covers the complete flow: citizen submits via LINE LIFF 4-step form → backend saves to DB → admin manages in list/kanban/detail views → agents assigned by workload → LINE user tracks status via Flex message.
