@@ -1,32 +1,33 @@
 {
   "version": "1.0",
-  "last_updated": "2026-02-20T22:20:00+07:00",
-  "platform": "claude_code",
-  "agent_id": "claude-sonnet-4-6",
-  "session_id": "b713f66a-2388-47e2-9843-6dfd132cc96a",
+  "last_updated": "2026-03-15T15:42:05+07:00",
+  "platform": "codeX",
+  "agent_id": "codex-gpt-5",
+  "session_id": "sess-20260315-1542-codex",
   "project": {
     "name": "SknApp",
     "root": "D:/genAI/skn-app",
-    "branch": "main"
+    "branch": "feat/ui-workflow-audit"
   },
   "current_task": {
-    "id": "task-ui-consistency-sidebar-v1.8.0-20260220",
-    "title": "UI consistency token migration + sidebar/navbar HR-IMS alignment (v1.8.0)",
+    "id": "task-admin-workflow-audit-20260315",
+    "title": "Admin workflow audit + auth/menu/role guard fixes handoff",
     "status": "completed",
     "priority": "high"
   },
   "context": {
     "recent_files": [
-      "frontend/components/admin/SidebarItem.tsx",
+      "frontend/components/admin/PageAccessGuard.tsx",
       "frontend/app/admin/layout.tsx",
-      "frontend/app/globals.css",
-      "frontend/docs/plans/2026-02-20-sidebar-navbar-system.md",
-      "project-log-md/claude_code/session-summary-20260220-2220.md"
+      "frontend/contexts/AuthContext.tsx",
+      "frontend/lib/authFetch.ts",
+      "backend/app/api/deps.py",
+      "backend/app/api/v1/endpoints/admin_live_chat.py",
+      "project-log-md/codeX/session-summary-20260315-1542.md"
     ],
-    "active_branch": "main",
-    "commit": "75495f1",
-    "commit_message": "fix(ui): align sidebar+navbar with HR-IMS reference — h-20, glass-navbar, SidebarItem, bottom toggle",
-    "tag": "v1.8.0"
+    "active_branch": "feat/ui-workflow-audit",
+    "commit": "2f06695",
+    "commit_message": "fix(admin): align role access and guard restricted routes"
   },
   "handoff_history": [
     {
@@ -138,25 +139,37 @@
       "timestamp": "2026-02-20T22:20:00+07:00",
       "task": "UI consistency token migration + sidebar/navbar HR-IMS alignment (v1.8.0)",
       "status": "completed"
+    },
+    {
+      "from": "codeX",
+      "timestamp": "2026-03-15T15:42:05+07:00",
+      "task": "Admin workflow audit + role/menu/access guard fixes handoff",
+      "status": "completed"
     }
   ],
-  "blockers": [],
+  "blockers": [
+    "Full frontend lint/tsc/build verification was not completed in this session because whole-project checks timed out in the current environment.",
+    "Worktree still contains unrelated local changes outside the pushed handoff commit."
+  ],
   "next_steps": [
-    "Implement real JWT auth (replace DEV_MODE mock in AuthContext.tsx)",
-    "Build operator list API (GET /admin/live-chat/operators) for session transfer dropdown",
-    "Consider merging fix/live-chat-redesign-issues into main",
-    "Test MessageInput popup pickers on mobile viewports (375px, 768px)"
+    "Continue UI redesign and workflow audit on feat/ui-workflow-audit.",
+    "Review remaining admin routes with PageAccessGuard coverage and finalize role-based UX for non-admin pages.",
+    "Decide how to handle unrelated dirty frontend files before opening a PR from feat/ui-workflow-audit.",
+    "Run full frontend lint/tsc/build once the environment is stable enough to complete whole-project checks."
   ],
   "plan_status": {
-    "plan_file": "frontend/docs/plans/2026-02-20-sidebar-navbar-system.md",
-    "total_phases": 4,
+    "plan_file": ".agent/workflows/handoff-to-any.md",
+    "total_phases": 7,
     "status": "completed"
   },
   "cross_platform_context": {
     "summaries_read": [
-      "claude_code/session-summary-20260218-0204.md"
+      "claude_code/session-summary-20260220-2220.md",
+      "open_code/session-summary-20260214-2300.md",
+      "kimi_code/session-summary-20260214-1325.md",
+      "codeX/session-summary-20260215-1848.md"
     ],
-    "key_insights": "v1.8.0 on main. All admin UI on semantic tokens. Sidebar/navbar aligned to HR-IMS. SidebarItem extracted. PR #2 merged. UI consistency work complete."
+    "key_insights": "Latest stable shared context was still Claude's v1.8.0 UI baseline on main plus prior migration planning. This session branched into admin workflow hardening: bearer propagation was inconsistent, several sidebar routes were dead, LINE settings entry was orphaned, and AGENT auth semantics did not match live-chat access. Commit 2f06695 on feat/ui-workflow-audit addresses those issues."
   },
   "reference_docs": [
     ".agent/workflows/handoff-to-any.md",

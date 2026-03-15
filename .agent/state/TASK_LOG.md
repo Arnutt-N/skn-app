@@ -38,6 +38,61 @@
 
 ## Task History (Newest First)
 
+### Task #22 - 2026-03-15 15:42 - CodeX
+
+**Task ID**: `task-admin-workflow-audit-20260315`
+**Agent**: CodeX (Codex GPT-5)
+**Status**: completed
+**Duration**: ~2.5 hours
+
+#### Cross-Platform Context
+- Read summaries from: Claude Code (`session-summary-20260220-2220.md`), Open Code (`session-summary-20260214-2300.md`), Kimi Code (`session-summary-20260214-1325.md`), CodeX (`session-summary-20260215-1848.md`)
+- Key insights from other agents: `main` carries the v1.8.0 UI baseline, workflow/handoff artifacts require cross-platform updates every session, and prior live-chat migration planning remains valid while admin auth/menu workflows still needed alignment.
+
+#### Work Completed
+- Audited admin workflow and identified 4 high-signal issues: missing bearer propagation on many admin fetches, dead sidebar links, hidden LINE settings flow, and AGENT/backend access mismatch.
+- Added centralized browser-side auth propagation with `authFetch.ts` and wired it through `AuthContext.tsx`.
+- Removed dead admin sidebar links, remapped settings to `/admin/settings/line`, and redirected the placeholder settings route.
+- Added backend `get_current_staff` access path so `AGENT` can use live-chat REST endpoints while keeping analytics admin-only.
+- Added role-aware sidebar filtering and page/route guards so AGENT users are redirected to `/admin/live-chat` instead of landing on broken/forbidden pages.
+- Committed and pushed the implementation to `origin/feat/ui-workflow-audit` as `2f06695`.
+
+#### Files Modified
+- `backend/app/api/deps.py`
+- `backend/app/api/v1/endpoints/admin_live_chat.py`
+- `frontend/app/admin/layout.tsx`
+- `frontend/app/admin/page.tsx`
+- `frontend/app/admin/chatbot/page.tsx`
+- `frontend/app/admin/design-system/page.tsx`
+- `frontend/app/admin/settings/page.tsx`
+- `frontend/app/admin/settings/line/page.tsx`
+- `frontend/contexts/AuthContext.tsx`
+- `.agent/PROJECT_STATUS.md`
+- `.agent/state/current-session.json`
+- `.agent/state/TASK_LOG.md`
+- `.agent/state/SESSION_INDEX.md`
+
+#### Files Created
+- `frontend/components/admin/PageAccessGuard.tsx`
+- `frontend/lib/authFetch.ts`
+- `.agent/state/checkpoints/handover-codeX-20260315-1542.json`
+- `project-log-md/codeX/session-summary-20260315-1542.md`
+
+#### Session Summary
+- Location: `project-log-md/codeX/session-summary-20260315-1542.md`
+- Checkpoint: `.agent/state/checkpoints/handover-codeX-20260315-1542.json`
+
+#### Blockers
+- Whole-project frontend `lint` / `tsc --noEmit` / build checks were not completed in this session because they timed out in the current environment.
+- Worktree still contains unrelated local modifications outside the pushed handoff commit.
+
+#### Next Steps
+- Continue UI redesign and menu/workflow audit on `feat/ui-workflow-audit`.
+- Decide whether to fold remaining dirty frontend files into this branch or cleanly separate them before PR.
+- Run full frontend verification once environment/runtime stability allows whole-project checks to finish.
+
+---
+
 ### Task #21 - 2026-02-20 22:20 - Claude Code
 
 **Task ID**: `task-ui-consistency-sidebar-v1.8.0-20260220`
@@ -915,16 +970,16 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Tasks | 20 |
-| Completed | 20 |
+| Total Tasks | 22 |
+| Completed | 21 |
 | In Progress | 0 |
 | Blocked | 0 |
 | First Entry | 2026-02-10 |
-| Last Entry | 2026-02-18 |
+| Last Entry | 2026-03-15 |
 
 ### Agents Contributed
 1. **Claude Code**: 7 tasks (#1, #4, #5, #10, #14, #18, #20)
-2. **CodeX**: 3 tasks (#15, #16, #19)
+2. **CodeX**: 4 tasks (#15, #16, #19, #22)
 3. **Kimi Code CLI**: 3 tasks (#2, #7, #8)
 4. **Antigravity**: 3 tasks (#3, #6, #11)
 5. **Cline**: 1 task (#12)
