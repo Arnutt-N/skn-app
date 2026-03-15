@@ -10,8 +10,8 @@ import { cn } from '@/lib/utils';
 import {
   Sun, Moon, Bell, Menu, Search, LogOut, ChevronLeft, ChevronRight,
   LayoutDashboard, FileText, Bot, MessageCircle,
-  Reply, MessageSquareReply, PanelTop, History,
-  Users, Megaphone, FolderOpen, UserCog, BarChart3,
+  Reply, MessageSquareReply, PanelTop, Users,
+  UserCog, BarChart3,
   Settings, Palette,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
@@ -22,12 +22,16 @@ interface MenuItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  allowedRoles?: Array<'SUPER_ADMIN' | 'ADMIN' | 'AGENT'>;
   external?: boolean;
   openInNewTab?: boolean;
 }
 
+type StaffRole = 'SUPER_ADMIN' | 'ADMIN' | 'AGENT';
+
 function AdminAuthGate({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -35,7 +39,29 @@ function AdminAuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, isLoading]);
 
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || !user) {
+      return;
+    }
+
+    if (user.role !== 'AGENT') {
+      return;
+    }
+
+    if (pathname !== '/admin/live-chat') {
+      window.location.href = '/admin/live-chat';
+    }
+  }, [isAuthenticated, isLoading, pathname, user]);
+
   if (isLoading || !isAuthenticated) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (user?.role === 'AGENT' && pathname !== '/admin/live-chat') {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" />
@@ -97,10 +123,11 @@ function ThemeToggle() {
   );
 }
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminShell({ children }: { children: React.ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleResize = () => {
@@ -119,55 +146,65 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     {
       title: 'Service Requests',
       items: [
-        { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-        { name: 'Manage Requests', href: '/admin/requests', icon: FileText },
+        { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+        { name: 'Manage Requests', href: '/admin/requests', icon: FileText, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
       ]
     },
     {
       title: 'Chatbot Management',
       items: [
-        { name: 'Chatbot Overview', href: '/admin/chatbot', icon: Bot },
-        { name: 'Live Chat', href: '/admin/live-chat', icon: MessageCircle, openInNewTab: true },
-        { name: 'Auto-Replies', href: '/admin/auto-replies', icon: Reply },
-        { name: 'Reply Objects', href: '/admin/reply-objects', icon: MessageSquareReply },
-        { name: 'Rich Menus', href: '/admin/rich-menus', icon: PanelTop },
-        { name: 'Chat Histories', href: '/admin/chat-histories', icon: History },
-        { name: 'Friend Histories', href: '/admin/friend-histories', icon: Users },
-        { name: 'Broadcast', href: '/admin/broadcast', icon: Megaphone },
+        { name: 'Chatbot Overview', href: '/admin/chatbot', icon: Bot, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+        { name: 'Live Chat', href: '/admin/live-chat', icon: MessageCircle, openInNewTab: true, allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'AGENT'] },
+        { name: 'Auto-Replies', href: '/admin/auto-replies', icon: Reply, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+        { name: 'Reply Objects', href: '/admin/reply-objects', icon: MessageSquareReply, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+        { name: 'Rich Menus', href: '/admin/rich-menus', icon: PanelTop, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+        { name: 'Friends', href: '/admin/friends', icon: Users, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
       ]
     },
     {
       title: 'System Management',
       items: [
-        { name: 'File Management', href: '/admin/file-management', icon: FolderOpen },
-        { name: 'User Management', href: '/admin/users', icon: UserCog },
-        { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
-        { name: 'Settings', href: '/admin/settings', icon: Settings },
-        { name: 'Design System', href: '/admin/design-system', icon: Palette },
+        { name: 'User Management', href: '/admin/users', icon: UserCog, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+        { name: 'Reports', href: '/admin/reports', icon: BarChart3, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+        { name: 'LINE Settings', href: '/admin/settings/line', icon: Settings, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+        { name: 'Design System', href: '/admin/design-system', icon: Palette, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
       ]
     }
   ];
+
+  const isMenuItemVisible = (item: MenuItem) => {
+    if (!item.allowedRoles) {
+      return true;
+    }
+
+    if (!user || user.role === 'USER') {
+      return false;
+    }
+
+    return item.allowedRoles.includes(user.role as StaffRole);
+  };
+
+  const visibleMenuGroups = menuGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(isMenuItemVisible),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
   const isLiveChat = pathname.includes('/admin/live-chat');
 
   if (isLiveChat) {
-    return (
-      <AuthProvider>
-        <AdminAuthGate>{children}</AdminAuthGate>
-      </AuthProvider>
-    );
+    return <>{children}</>;
   }
 
-  const allItems = menuGroups.flatMap(g => g.items);
+  const allItems = visibleMenuGroups.flatMap(g => g.items);
   const activeItem = allItems
     .filter(item => !item.external && (pathname === item.href || pathname.startsWith(item.href + '/')))
     .sort((a, b) => b.href.length - a.href.length)[0];
 
   return (
-    <AuthProvider>
-      <AdminAuthGate>
-        <div className="flex h-screen bg-bg text-gray-600 dark:bg-gray-900 dark:text-gray-400 font-sans">
+    <div className="flex h-screen bg-bg text-gray-600 dark:bg-gray-900 dark:text-gray-400 font-sans">
           {/* Skip to main content link for accessibility */}
           <a
             href="#main-content"
@@ -214,7 +251,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             {/* Navigation */}
             <nav className="relative z-10 flex-1 overflow-y-auto py-4 px-3 space-y-6 scrollbar-sidebar">
-              {menuGroups.map((group) => (
+              {visibleMenuGroups.map((group) => (
                 <div key={group.title}>
                   {!isSidebarCollapsed && (
                     <h3 className="px-3 mb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
@@ -329,8 +366,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             />
           )}
 
-          <SessionTimeoutWarning />
-        </div>
+      <SessionTimeoutWarning />
+    </div>
+  );
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <AdminAuthGate>
+        <AdminShell>{children}</AdminShell>
       </AdminAuthGate>
     </AuthProvider>
   );

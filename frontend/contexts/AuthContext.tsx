@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { installAdminAuthFetchInterceptor, syncAdminAuthToken } from '@/lib/authFetch';
 
 interface User {
   id: string;
@@ -45,6 +46,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    installAdminAuthFetchInterceptor();
+  }, []);
+
+  useEffect(() => {
+    syncAdminAuthToken(token);
+  }, [token]);
 
   // Initialize auth state from localStorage on mount
   useEffect(() => {

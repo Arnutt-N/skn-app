@@ -106,3 +106,19 @@ async def get_current_admin(
             detail="Insufficient permissions"
         )
     return current_user
+
+
+async def get_current_staff(
+    current_user = Depends(get_current_user)
+):
+    """
+    Verify current user is an admin, super_admin, or agent.
+    """
+    from app.models.user import UserRole
+
+    if current_user.role not in [UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.AGENT]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions"
+        )
+    return current_user

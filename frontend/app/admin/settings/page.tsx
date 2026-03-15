@@ -1,4 +1,5 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import ComingSoon from '../components/ComingSoon';
-export default function Page() { return <ComingSoon />; }
+export default function SettingsPage() {
+  redirect('/admin/settings/line');
+}

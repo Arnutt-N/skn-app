@@ -21,7 +21,7 @@ router = APIRouter()
 async def list_conversations(
     status: Optional[str] = None,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_admin),
+    current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """List all conversations for inbox"""
     return await live_chat_service.get_conversations(status, db, admin_id=current_user.id)
@@ -30,7 +30,7 @@ async def list_conversations(
 async def get_conversation(
     line_user_id: str,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_admin),
+    current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """Get full chat history with a user"""
     await ws_manager.mark_conversation_read(str(current_user.id), line_user_id)
@@ -45,7 +45,7 @@ async def get_conversation_messages(
     before_id: Optional[int] = None,
     limit: int = 50,
     db: AsyncSession = Depends(deps.get_db),
-    _current_user: User = Depends(deps.get_current_admin),
+    _current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """Get paginated conversation messages with cursor-based pagination."""
     return await live_chat_service.get_messages_paginated(
@@ -60,7 +60,7 @@ async def send_message(
     line_user_id: str,
     request: SendMessageRequest,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_admin),
+    current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """Send message to user via LINE"""
     if not request.text:
@@ -77,7 +77,7 @@ async def send_media(
     line_user_id: str,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_admin),
+    current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """Upload and send media message to user via LINE."""
     content = await file.read()
@@ -147,7 +147,7 @@ async def send_media(
 async def claim_conversation(
     line_user_id: str,
     db: AsyncSession = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_admin),
+    current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """Operator claims the chat session"""
     session = await live_chat_service.claim_session(
@@ -163,7 +163,7 @@ async def claim_conversation(
 async def close_conversation(
     line_user_id: str,
     db: AsyncSession = Depends(deps.get_db),
-    _current_user: User = Depends(deps.get_current_admin),
+    _current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """Close session and return to bot mode"""
     session = await live_chat_service.close_session(
@@ -180,7 +180,7 @@ async def toggle_mode(
     line_user_id: str,
     request: ModeToggleRequest,
     db: AsyncSession = Depends(deps.get_db),
-    _current_user: User = Depends(deps.get_current_admin),
+    _current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """Toggle chat mode: BOT | HUMAN"""
     success = await live_chat_service.set_chat_mode(
@@ -195,7 +195,7 @@ async def toggle_mode(
 async def refresh_profile(
     line_user_id: str,
     db: AsyncSession = Depends(deps.get_db),
-    _current_user: User = Depends(deps.get_current_admin),
+    _current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """Manually refresh LINE profile for a conversation user."""
     user = await friend_service.refresh_profile(
@@ -246,7 +246,7 @@ async def search_messages(
     line_user_id: Optional[str] = None,
     limit: int = 20,
     db: AsyncSession = Depends(deps.get_db),
-    _current_user: User = Depends(deps.get_current_admin),
+    _current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """Search message text across conversations or within a specific conversation."""
     return {

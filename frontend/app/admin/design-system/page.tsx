@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Badge,
   Button,
@@ -13,8 +15,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui';
-
-export const dynamic = 'force-static';
+import PageAccessGuard from '@/components/admin/PageAccessGuard';
 
 const screenshotFamilies = [
   { family: 'Dashboards', count: 5, path: 'examples/templates/*dashboards*' },
@@ -31,8 +32,9 @@ const screenshotFamilies = [
 
 export default function DesignSystemPage() {
   return (
-    <div className="ds-page">
-      <section className="ds-hero">
+    <PageAccessGuard allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
+      <div className="ds-page">
+        <section className="ds-hero">
         <p className="text-sm/6 text-white/80">Frontend Design System</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight">JSK Admin UI Language</h1>
         <p className="mt-2 max-w-3xl text-sm text-white/90">
@@ -167,7 +169,8 @@ export default function DesignSystemPage() {
             ))}
           </div>
         </TabsContent>
-      </Tabs>
-    </div>
+        </Tabs>
+      </div>
+    </PageAccessGuard>
   );
 }

@@ -1,8 +1,10 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Package, Tags, MessageSquare } from 'lucide-react';
+import PageAccessGuard from '@/components/admin/PageAccessGuard';
 import StatsCard from '../components/StatsCard';
-
-export const dynamic = 'force-dynamic';
 
 interface ReplyObjectSummary {
     id: number;
@@ -43,19 +45,41 @@ async function getChatbotData() {
     }
 }
 
-export default async function ChatbotDashboard() {
-    const { replyObjects, intentCategories, error } = await getChatbotData();
+export default function ChatbotDashboard() {
+    const [replyObjects, setReplyObjects] = useState<ReplyObjectSummary[]>([]);
+    const [intentCategories, setIntentCategories] = useState<IntentCategorySummary[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    if (error) {
+    const fetchChatbotData = useCallback(async () => {
+        setLoading(true);
+        const data = await getChatbotData();
+        setReplyObjects(data.replyObjects);
+        setIntentCategories(data.intentCategories);
+        setError(data.error);
+        setLoading(false);
+    }, []);
+
+    useEffect(() => {
+        void fetchChatbotData();
+    }, [fetchChatbotData]);
+
+    if (loading) {
         return (
+            <PageAccessGuard allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
+                <div className="flex min-h-[320px] items-center justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
+                </div>
+            </PageAccessGuard>
+        );
+    }
+
+    const content = error ? (
             <div className="p-8 text-center bg-danger/8 text-danger rounded-2xl border border-danger/15">
                 <h2 className="text-lg font-bold mb-2">Connection Error</h2>
                 <p className="text-sm opacity-80">Could not connect to the chatbot services. Please check backend connection.</p>
             </div>
-        );
-    }
-
-    return (
+    ) : (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
                 <div>
@@ -165,5 +189,11 @@ export default async function ChatbotDashboard() {
                 </div>
             </div>
         </div>
+    );
+
+    return (
+        <PageAccessGuard allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
+            {content}
+        </PageAccessGuard>
     );
 }
