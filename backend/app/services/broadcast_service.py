@@ -177,25 +177,31 @@ class BroadcastService:
                 await self.api.broadcast(
                     BroadcastRequest(messages=messages)
                 )
+                broadcast.status = BroadcastStatus.COMPLETED
+                broadcast.sent_at = datetime.now(timezone.utc)
             else:
-                # For specific user IDs in target_filter
                 user_ids = broadcast.target_filter.get("user_ids", [])
                 if user_ids:
-                    # LINE multicast supports up to 500 user IDs per call
+                    sent = 0
+                    failed = 0
                     for i in range(0, len(user_ids), 500):
                         chunk = user_ids[i : i + 500]
-                        await self.api.multicast(
-                            MulticastRequest(to=chunk, messages=messages)
-                        )
+                        try:
+                            await self.api.multicast(
+                                MulticastRequest(to=chunk, messages=messages)
+                            )
+                            sent += len(chunk)
+                        except Exception as chunk_exc:
+                            failed += len(chunk)
+                            logger.error("Broadcast %s chunk %d failed: %s", broadcast.id, i // 500, chunk_exc)
 
-            broadcast.status = BroadcastStatus.COMPLETED
-            broadcast.sent_at = datetime.now(timezone.utc)
-            # For broadcast to all, we don't know exact count; LINE provides stats later
-            if broadcast.target_audience != "all":
-                user_ids = broadcast.target_filter.get("user_ids", [])
-                broadcast.total_recipients = len(user_ids)
-                broadcast.success_count = len(user_ids)
-            logger.info("Broadcast %s sent successfully", broadcast.id)
+                    broadcast.total_recipients = len(user_ids)
+                    broadcast.success_count = sent
+                    broadcast.failure_count = failed
+                    broadcast.sent_at = datetime.now(timezone.utc)
+                    broadcast.status = BroadcastStatus.COMPLETED if failed == 0 else BroadcastStatus.FAILED
+
+            logger.info("Broadcast %s finished: success=%s, failed=%s", broadcast.id, broadcast.success_count, broadcast.failure_count)
 
         except Exception as exc:
             broadcast.status = BroadcastStatus.FAILED
@@ -211,6 +217,12 @@ class BroadcastService:
     ) -> Broadcast:
         if broadcast.status != BroadcastStatus.DRAFT:
             raise ValueError(f"Cannot schedule broadcast in status {broadcast.status}")
+
+        now = datetime.now(timezone.utc)
+        if scheduled_at.tzinfo is None:
+            scheduled_at = scheduled_at.replace(tzinfo=timezone.utc)
+        if scheduled_at <= now:
+            raise ValueError("scheduled_at must be in the future")
 
         broadcast.status = BroadcastStatus.SCHEDULED
         broadcast.scheduled_at = scheduled_at

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, Optional
 from app.api import deps
@@ -16,7 +17,7 @@ import math
 router = APIRouter()
 
 
-@router.get("", response_model=FriendListResponse)
+@router.get("")
 async def list_friends(
     status: Optional[str] = None,
     skip: int = 0,
@@ -26,7 +27,20 @@ async def list_friends(
 ) -> Any:
     """List all friends with status"""
     friends = await friend_service.list_friends(status, db, skip, limit)
-    refollow_counts = await friend_service.get_user_refollow_counts(db)
+
+    # Get total count for pagination
+    from sqlalchemy import func as sa_func
+    from app.models.user import User as UserModel
+    count_query = select(sa_func.count(UserModel.id)).where(UserModel.line_user_id.isnot(None))
+    if status:
+        count_query = count_query.where(UserModel.status == status)
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # Scope refollow counts to current page only
+    line_user_ids = [f.line_user_id for f in friends if f.line_user_id]
+    refollow_counts = await friend_service.get_user_refollow_counts(db, line_user_ids=line_user_ids)
+
     friend_list = []
     for friend in friends:
         data = FriendResponse.model_validate(friend).model_dump()
@@ -34,7 +48,7 @@ async def list_friends(
         friend_list.append(data)
     return {
         "friends": friend_list,
-        "total": len(friends),
+        "total": total,
     }
 
 

@@ -5,7 +5,7 @@ import io
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import case, cast, func, select, text, Date, Integer
@@ -95,14 +95,14 @@ def _parse_dates(
     default_days: int = 30,
 ) -> tuple[datetime, datetime]:
     now = datetime.utcnow()
-    if end_date:
-        end = datetime.fromisoformat(end_date)
-    else:
-        end = now
-    if start_date:
-        start = datetime.fromisoformat(start_date)
-    else:
-        start = end - timedelta(days=default_days)
+    try:
+        end = datetime.fromisoformat(end_date) if end_date else now
+    except ValueError:
+        raise HTTPException(status_code=422, detail=f"Invalid end_date format: {end_date}")
+    try:
+        start = datetime.fromisoformat(start_date) if start_date else end - timedelta(days=default_days)
+    except ValueError:
+        raise HTTPException(status_code=422, detail=f"Invalid start_date format: {start_date}")
     return start, end
 
 

@@ -298,17 +298,20 @@ class FriendService:
             "refollow_breakdown": refollow_breakdown,
         }
 
-    async def get_user_refollow_counts(self, db: AsyncSession) -> Dict[str, int]:
-        """Get refollow count for all users who have re-followed at least once."""
-        result = await db.execute(
-            select(
-                FriendEvent.line_user_id,
-                func.max(FriendEvent.refollow_count).label("max_refollow"),
-            )
-            .where(FriendEvent.event_type == FriendEventType.REFOLLOW.value)
-            .group_by(FriendEvent.line_user_id)
-        )
-        return {row[0]: row[1] for row in result.all()}
+    async def get_user_refollow_counts(self, db: AsyncSession, line_user_ids: list[str] | None = None) -> Dict[str, int]:
+        """Get max refollow count per user, optionally scoped to specific IDs."""
+        query = select(
+            FriendEvent.line_user_id,
+            func.max(FriendEvent.refollow_count).label("max_refollow"),
+        ).where(
+            FriendEvent.event_type == FriendEventType.REFOLLOW.value
+        ).group_by(FriendEvent.line_user_id)
+
+        if line_user_ids:
+            query = query.where(FriendEvent.line_user_id.in_(line_user_ids))
+
+        result = await db.execute(query)
+        return {row.line_user_id: row.max_refollow for row in result.all()}
 
     async def list_friends(
         self,

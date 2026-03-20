@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -58,6 +59,12 @@ const TYPE_LABELS: Record<string, string> = {
 export default function BroadcastDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const { token } = useAuth();
+    const authHeaders = useMemo(() => {
+        const h: Record<string, string> = {};
+        if (token) h.Authorization = `Bearer ${token}`;
+        return h;
+    }, [token]);
     const broadcastId = params.id as string;
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
@@ -71,7 +78,7 @@ export default function BroadcastDetailPage() {
     const fetchBroadcast = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/admin/broadcasts/${broadcastId}`);
+            const res = await fetch(`${API_BASE}/admin/broadcasts/${broadcastId}`, { headers: authHeaders });
             if (!res.ok) throw new Error('Not found');
             const data = await res.json();
             setBroadcast(data);
@@ -80,7 +87,7 @@ export default function BroadcastDetailPage() {
         } finally {
             setLoading(false);
         }
-    }, [API_BASE, broadcastId]);
+    }, [API_BASE, broadcastId, authHeaders]);
 
     useEffect(() => {
         void fetchBroadcast();
@@ -89,7 +96,7 @@ export default function BroadcastDetailPage() {
     const handleSend = async () => {
         setActionLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/admin/broadcasts/${broadcastId}/send`, { method: 'POST' });
+            const res = await fetch(`${API_BASE}/admin/broadcasts/${broadcastId}/send`, { method: 'POST', headers: authHeaders });
             if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Failed'); }
             setSendModal(false);
             fetchBroadcast();
@@ -103,7 +110,7 @@ export default function BroadcastDetailPage() {
     const handleCancel = async () => {
         setActionLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/admin/broadcasts/${broadcastId}/cancel`, { method: 'POST' });
+            const res = await fetch(`${API_BASE}/admin/broadcasts/${broadcastId}/cancel`, { method: 'POST', headers: authHeaders });
             if (!res.ok) throw new Error('Failed');
             setCancelModal(false);
             fetchBroadcast();
@@ -117,7 +124,7 @@ export default function BroadcastDetailPage() {
     const handleDelete = async () => {
         setActionLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/admin/broadcasts/${broadcastId}`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE}/admin/broadcasts/${broadcastId}`, { method: 'DELETE', headers: authHeaders });
             if (!res.ok) throw new Error('Failed');
             router.push('/admin/chatbot/broadcast');
         } catch {

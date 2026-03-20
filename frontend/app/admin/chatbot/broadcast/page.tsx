@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -61,6 +62,13 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default function BroadcastListPage() {
+    const { token } = useAuth();
+    const authHeaders = useMemo(() => {
+        const h: Record<string, string> = {};
+        if (token) h.Authorization = `Bearer ${token}`;
+        return h;
+    }, [token]);
+
     const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -82,7 +90,7 @@ export default function BroadcastListPage() {
             params.append('skip', String(page * pageSize));
             params.append('limit', String(pageSize));
 
-            const res = await fetch(`${API_BASE}/admin/broadcasts?${params.toString()}`);
+            const res = await fetch(`${API_BASE}/admin/broadcasts?${params.toString()}`, { headers: authHeaders });
             if (!res.ok) throw new Error('Failed to fetch broadcasts');
             const data = await res.json();
             setBroadcasts(data.items);
@@ -92,7 +100,7 @@ export default function BroadcastListPage() {
         } finally {
             setLoading(false);
         }
-    }, [API_BASE, statusFilter, page]);
+    }, [API_BASE, statusFilter, page, authHeaders]);
 
     useEffect(() => {
         void fetchBroadcasts();
@@ -102,7 +110,7 @@ export default function BroadcastListPage() {
         if (!deleteTarget) return;
         setActionLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/admin/broadcasts/${deleteTarget.id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE}/admin/broadcasts/${deleteTarget.id}`, { method: 'DELETE', headers: authHeaders });
             if (!res.ok) throw new Error('Failed to delete');
             setDeleteTarget(null);
             fetchBroadcasts();
@@ -118,7 +126,7 @@ export default function BroadcastListPage() {
         if (!sendTarget) return;
         setActionLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/admin/broadcasts/${sendTarget.id}/send`, { method: 'POST' });
+            const res = await fetch(`${API_BASE}/admin/broadcasts/${sendTarget.id}/send`, { method: 'POST', headers: authHeaders });
             if (!res.ok) {
                 const err = await res.json();
                 throw new Error(err.detail || 'Failed to send');

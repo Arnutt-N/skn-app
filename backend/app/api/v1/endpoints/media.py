@@ -10,6 +10,7 @@ from app.db.session import AsyncSessionLocal
 from app.models.media_file import MediaFile, FileCategory, detect_category
 from app.api.deps import get_db, get_current_admin
 from app.core.config import settings
+from app.models.user import User
 
 router = APIRouter()
 
@@ -68,15 +69,18 @@ async def get_public_file(public_token: str):
 # Existing media endpoint (kept for backward compat)
 # ===================================================================
 @router.get("/media/{media_id}")
-async def get_media(media_id: uuid.UUID):
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(select(MediaFile).filter(MediaFile.id == media_id))
-        media = result.scalar_one_or_none()
+async def get_media(
+    media_id: uuid.UUID,
+    _admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(MediaFile).filter(MediaFile.id == media_id))
+    media = result.scalar_one_or_none()
 
-        if not media:
-            raise HTTPException(status_code=404, detail="Media not found")
+    if not media:
+        raise HTTPException(status_code=404, detail="Media not found")
 
-        return Response(content=media.data, media_type=media.mime_type)
+    return Response(content=media.data, media_type=media.mime_type)
 
 
 # ===================================================================
@@ -351,10 +355,18 @@ async def bulk_create_public_links(
     return {"ok": True, "updated": updated}
 
 
-# Keep the old POST /media endpoint working (no auth, for LINE webhook etc.)
+# Legacy upload — requires auth, 10MB limit
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+
 @router.post("/media")
-async def upload_media_legacy(file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
+async def upload_media_legacy(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
     content = await file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (max 10MB)")
     mime = file.content_type or "application/octet-stream"
 
     media = MediaFile(

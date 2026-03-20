@@ -228,28 +228,35 @@ async def list_user_workload(
     result = await db.execute(query)
     users = result.scalars().all()
 
+    # Single GROUP BY query for all users' workload stats
+    user_ids = [u.id for u in users]
+    if user_ids:
+        from sqlalchemy import case
+        stats_query = (
+            select(
+                ServiceRequest.assigned_agent_id,
+                func.count(case((ServiceRequest.status == RequestStatus.PENDING, 1))).label("pending"),
+                func.count(case((ServiceRequest.status == RequestStatus.IN_PROGRESS, 1))).label("in_progress"),
+            )
+            .where(ServiceRequest.assigned_agent_id.in_(user_ids))
+            .group_by(ServiceRequest.assigned_agent_id)
+        )
+        stats_result = await db.execute(stats_query)
+        stats_map = {row.assigned_agent_id: (row.pending, row.in_progress) for row in stats_result.all()}
+    else:
+        stats_map = {}
+
     user_workloads = []
     for user in users:
-        stats_query = select(
-            func.count(ServiceRequest.id)
-            .filter(ServiceRequest.status == RequestStatus.PENDING)
-            .label("pending"),
-            func.count(ServiceRequest.id)
-            .filter(ServiceRequest.status == RequestStatus.IN_PROGRESS)
-            .label("in_progress"),
-        ).where(ServiceRequest.assigned_agent_id == user.id)
-
-        stats_res = await db.execute(stats_query)
-        stats = stats_res.one()
-
+        pending, in_progress = stats_map.get(user.id, (0, 0))
         user_workloads.append(
             UserWorkload(
                 id=user.id,
                 display_name=user.display_name or user.username,
                 role=user.role,
-                active_tasks=stats.pending + stats.in_progress,
-                pending_tasks=stats.pending,
-                in_progress_tasks=stats.in_progress,
+                active_tasks=pending + in_progress,
+                pending_tasks=pending,
+                in_progress_tasks=in_progress,
             )
         )
 

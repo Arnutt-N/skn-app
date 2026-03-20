@@ -89,6 +89,8 @@ function formatThaiDate(dateStr: string): string {
     });
 }
 
+const perPage = 20;
+
 export default function FriendHistoryPage() {
     const { token } = useAuth();
     const [events, setEvents] = useState<FriendEvent[]>([]);
@@ -99,7 +101,6 @@ export default function FriendHistoryPage() {
     const [total, setTotal] = useState(0);
     const [eventTypeFilter, setEventTypeFilter] = useState('');
     const [searchFilter, setSearchFilter] = useState('');
-    const perPage = 20;
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
     const authHeaders = useMemo(() => {
