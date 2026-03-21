@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { ChevronLeft, Plus, Edit2, Trash2, X, Key, MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { cn } from '@/lib/utils';
 
 interface IntentKeyword {
     id: number;
@@ -183,56 +188,50 @@ export default function CategoryDetailPage() {
         if (res.ok) fetchCategoryDetail();
     };
 
-    if (loading) return <div className="p-8 text-center text-slate-400">กำลังโหลด...</div>;
-    if (!category) return <div className="p-8 text-center text-slate-400">ไม่พบข้อมูล</div>;
+    if (loading) return <div className="p-8 text-center text-text-tertiary">กำลังโหลด...</div>;
+    if (!category) return <div className="p-8 text-center text-text-tertiary">ไม่พบข้อมูล</div>;
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 max-w-7xl mx-auto">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <Link
-                        href="/admin/auto-replies"
-                        className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-primary hover:border-primary/20 transition-all shadow-sm"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
+                    <Link href="/admin/auto-replies">
+                        <Button variant="outline" size="icon" className="rounded-xl">
+                            <ChevronLeft className="w-5 h-5" />
+                        </Button>
                     </Link>
                     <div>
                         <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold text-slate-800">{category.name}</h1>
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${category.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                            <h1 className="text-2xl font-bold text-text-primary">{category.name}</h1>
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${category.is_active ? 'bg-green-100 text-green-700' : 'bg-bg text-text-tertiary'}`}>
                                 {category.is_active ? 'Active' : 'Inactive'}
                             </span>
                         </div>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-slate-500">
+                        <div className="flex items-center gap-4 mt-1 text-sm text-text-tertiary">
                             <span>{category.keywords.length} keywords</span>
-                            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                            <span className="w-1 h-1 bg-border-default rounded-full"></span>
                             <span>{category.responses.length} responses</span>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                        variant={isEditing ? 'secondary' : 'ghost'}
+                        size="sm"
                         onClick={() => setIsEditing(!isEditing)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${isEditing
-                                ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                : 'bg-primary/8 text-primary hover:bg-primary/12'
-                            }`}
+                        leftIcon={<Edit2 className="w-4 h-4" />}
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
                         {isEditing ? 'Cancel Edit' : 'Edit Details'}
-                    </button>
+                    </Button>
                     {isEditing && (
-                        <button
+                        <Button
+                            variant="primary"
+                            size="sm"
                             onClick={handleCategoryUpdate}
-                            className="px-4 py-2 bg-gradient-to-br from-primary to-primary-dark text-white rounded-lg hover:bg-primary-dark transition-all text-sm font-medium shadow-sm shadow-primary/20"
                         >
                             Save Changes
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>
@@ -245,29 +244,29 @@ export default function CategoryDetailPage() {
 
                     {/* Description Card */}
                     {(category.description || isEditing) && (
-                        <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-6">
-                            <h3 className="text-sm font-semibold text-slate-800 mb-3 uppercase tracking-wider">Description</h3>
+                        <Card variant="default" padding="lg">
+                            <h3 className="text-sm font-semibold text-text-primary mb-3 uppercase tracking-wider">Description</h3>
                             {isEditing ? (
                                 <textarea
                                     value={categoryFormData.description}
                                     onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary/40 text-sm transition-all"
+                                    className="w-full px-3 py-2 border border-border-default rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm transition-all bg-surface text-text-primary placeholder:text-text-tertiary"
                                     rows={3}
                                     placeholder="Add a description..."
                                 />
                             ) : (
-                                <p className="text-slate-600 text-sm leading-relaxed">{category.description || 'No description provided.'}</p>
+                                <p className="text-text-secondary text-sm leading-relaxed">{category.description || 'No description provided.'}</p>
                             )}
 
                             {isEditing && (
-                                <div className="mt-4 pt-4 border-t border-slate-100">
+                                <div className="mt-4 pt-4 border-t border-border-default">
                                     <div className="flex items-center gap-3">
-                                        <label className="text-sm font-medium text-slate-700">Category Name</label>
-                                        <input
+                                        <label className="text-sm font-medium text-text-primary">Category Name</label>
+                                        <Input
                                             type="text"
                                             value={categoryFormData.name}
                                             onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
-                                            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/30/20 focus:border-primary/40 text-sm"
+                                            className="flex-1"
                                         />
                                     </div>
                                     <div className="flex items-center gap-2 mt-3">
@@ -275,180 +274,170 @@ export default function CategoryDetailPage() {
                                             type="checkbox"
                                             checked={categoryFormData.is_active}
                                             onChange={(e) => setCategoryFormData({ ...categoryFormData, is_active: e.target.checked })}
-                                            className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary/30"
+                                            className="w-4 h-4 text-primary border-border-default rounded focus:ring-brand-500/30"
                                             id="isActive"
                                         />
-                                        <label htmlFor="isActive" className="text-sm text-slate-600 cursor-pointer select-none">Active Status</label>
+                                        <label htmlFor="isActive" className="text-sm text-text-secondary cursor-pointer select-none">Active Status</label>
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </Card>
                     )}
 
                     {/* Keywords Card */}
-                    <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
-                            <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider">Keywords</h3>
+                    <Card variant="default" padding="none" className="overflow-hidden">
+                        <CardHeader divider className="px-6 py-4 flex-row justify-between items-center bg-bg">
+                            <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">Keywords</h3>
                             <button
                                 onClick={() => setShowKeywordForm(true)}
                                 className="p-2 text-primary hover:bg-primary/8 rounded-lg transition-colors"
                                 title="Add Keyword"
                             >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
+                                <Plus className="w-5 h-5" />
                             </button>
-                        </div>
-                        <div className="p-6">
+                        </CardHeader>
+                        <CardContent className="p-6">
                             {category.keywords.length === 0 ? (
                                 <div className="text-center py-8">
-                                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-                                        </svg>
+                                    <div className="w-12 h-12 bg-bg rounded-full flex items-center justify-center mx-auto mb-3 text-text-tertiary">
+                                        <Key className="w-6 h-6" />
                                     </div>
-                                    <p className="text-slate-500 text-sm">No keywords defined yet</p>
+                                    <p className="text-text-tertiary text-sm">No keywords defined yet</p>
                                     <button onClick={() => setShowKeywordForm(true)} className="text-primary text-sm font-medium mt-2 hover:underline">Add one now</button>
                                 </div>
                             ) : (
                                 <div className="flex flex-wrap gap-2">
                                     {category.keywords.map((kw) => (
-                                        <div key={kw.id} className="group flex items-center bg-slate-50 border border-slate-100 rounded-full pl-3 pr-2 py-1.5 transition-all hover:border-primary/20 hover:bg-primary/8">
-                                            <span className="text-sm text-slate-700 font-medium">{kw.keyword}</span>
-                                            <span className="mx-2 text-[10px] text-slate-400 uppercase tracking-wide bg-white px-1.5 py-0.5 rounded border border-slate-100">
+                                        <div key={kw.id} className="group flex items-center bg-bg border border-border-default rounded-full pl-3 pr-2 py-1.5 transition-all hover:border-primary/20 hover:bg-primary/8">
+                                            <span className="text-sm text-text-primary font-medium">{kw.keyword}</span>
+                                            <span className="mx-2 text-[10px] text-text-tertiary uppercase tracking-wide bg-surface px-1.5 py-0.5 rounded border border-border-default">
                                                 {kw.match_type === 'exact' ? '=' : kw.match_type === 'contains' ? 'abc' : '*'}
                                             </span>
                                             <button
                                                 onClick={() => handleDeleteKeyword(kw.id)}
-                                                className="w-5 h-5 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                                                className="w-5 h-5 flex items-center justify-center rounded-full text-text-tertiary hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
                                             >
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
+                                                <X className="w-3 h-3" />
                                             </button>
                                         </div>
                                     ))}
                                 </div>
                             )}
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
 
                 </div>
 
                 {/* Right Column: Responses */}
                 <div className="space-y-6">
-                    <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden h-full">
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
-                            <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider">Responses</h3>
+                    <Card variant="default" padding="none" className="overflow-hidden h-full">
+                        <CardHeader divider className="px-6 py-4 flex-row justify-between items-center bg-bg">
+                            <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">Responses</h3>
                             <button
                                 onClick={() => { resetResponseForm(); setShowResponseForm(true); }}
                                 className="p-2 text-primary hover:bg-primary/8 rounded-lg transition-colors"
                                 title="Add Response"
                             >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
+                                <Plus className="w-5 h-5" />
                             </button>
-                        </div>
-                        <div className="p-4 space-y-3">
+                        </CardHeader>
+                        <CardContent className="p-4 space-y-3">
                             {category.responses.length === 0 ? (
                                 <div className="text-center py-12">
-                                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                                        </svg>
+                                    <div className="w-12 h-12 bg-bg rounded-full flex items-center justify-center mx-auto mb-3 text-text-tertiary">
+                                        <MessageSquare className="w-6 h-6" />
                                     </div>
-                                    <p className="text-slate-500 text-sm">No responses configured</p>
+                                    <p className="text-text-tertiary text-sm">No responses configured</p>
                                 </div>
                             ) : (
                                 category.responses.map((resp, index) => (
-                                    <div key={resp.id} className="group relative bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition-all hover:border-indigo-200">
+                                    <div key={resp.id} className="group relative bg-surface border border-border-default rounded-xl p-4 hover:shadow-md transition-all hover:border-indigo-200">
                                         <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => handleEditResponse(resp)}
-                                                className="p-1.5 text-slate-400 hover:text-primary hover:bg-indigo-50 rounded-lg"
+                                                className="p-1.5 text-text-tertiary hover:text-primary hover:bg-indigo-50 rounded-lg"
                                             >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
+                                                <Edit2 className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteResponse(resp.id)}
-                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                                className="p-1.5 text-text-tertiary hover:text-red-600 hover:bg-red-50 rounded-lg"
                                             >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
 
                                         <div className="flex items-center gap-2 mb-3">
-                                            <span className="w-6 h-6 flex items-center justify-center bg-slate-100 rounded-full text-xs font-bold text-slate-500">
+                                            <span className="w-6 h-6 flex items-center justify-center bg-bg rounded-full text-xs font-bold text-text-tertiary">
                                                 {index + 1}
                                             </span>
                                             <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide ${resp.reply_type === 'text' ? 'bg-blue-50 text-blue-600' :
                                                     resp.reply_type === 'flex' ? 'bg-indigo-50 text-indigo-600' :
                                                         resp.reply_type === 'image' ? 'bg-pink-50 text-pink-600' :
-                                                            'bg-slate-100 text-slate-600'
+                                                            'bg-bg text-text-secondary'
                                                 }`}>
                                                 {resp.reply_type}
                                             </span>
                                             {!resp.is_active && (
-                                                <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-400 rounded">Inactive</span>
+                                                <span className="text-[10px] px-1.5 py-0.5 bg-bg text-text-tertiary rounded">Inactive</span>
                                             )}
                                         </div>
 
-                                        <div className="text-sm text-slate-700">
+                                        <div className="text-sm text-text-primary">
                                             {resp.reply_type === 'text' ? (
                                                 <p className="line-clamp-3 whitespace-pre-wrap">{resp.text_content}</p>
                                             ) : resp.payload ? (
-                                                <div className="bg-slate-50 rounded p-2 border border-slate-100 font-mono text-xs text-slate-600 overflow-hidden">
-                                                    <div className="flex items-center gap-2 text-slate-400 mb-1">
+                                                <div className="bg-bg rounded p-2 border border-border-default font-mono text-xs text-text-secondary overflow-hidden">
+                                                    <div className="flex items-center gap-2 text-text-tertiary mb-1">
                                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
                                                         JSON Payload
                                                     </div>
                                                     <pre className="line-clamp-3">{JSON.stringify(resp.payload, null, 2)}</pre>
                                                 </div>
                                             ) : (
-                                                <p className="text-slate-400 italic">No content</p>
+                                                <p className="text-text-tertiary italic">No content</p>
                                             )}
                                         </div>
                                     </div>
                                 ))
                             )}
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
 
             {/* Keyword Form Modal */}
             {showKeywordForm && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl p-0 max-w-sm w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                            <h2 className="text-lg font-semibold text-slate-800">Add Keyword</h2>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-surface rounded-2xl p-0 max-w-sm w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-border-default bg-bg">
+                            <h2 className="text-lg font-semibold text-text-primary">Add Keyword</h2>
                         </div>
                         <form onSubmit={handleKeywordSubmit} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Keyword Phrase</label>
-                                <input
+                                <label className="block text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-1.5">Keyword Phrase</label>
+                                <Input
                                     type="text"
                                     value={keywordFormData.keyword}
                                     onChange={(e) => setKeywordFormData({ ...keywordFormData, keyword: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary/40 text-sm transition-all"
                                     placeholder="e.g. hello, pricing, contact"
                                     required
                                     autoFocus
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Match Logic</label>
+                                <label className="block text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-1.5">Match Logic</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {MATCH_TYPES.map(type => (
-                                        <label key={type} className={`cursor-pointer border rounded-lg p-3 flex items-center gap-2 transition-all ${keywordFormData.match_type === type
-                                                ? 'border-indigo-500 bg-indigo-50/50 text-indigo-700'
-                                                : 'border-slate-200 hover:border-slate-300 text-slate-600'
-                                            }`}>
+                                        <label
+                                            key={type}
+                                            className={cn(
+                                                'cursor-pointer border rounded-lg p-3 flex items-center gap-2 transition-all',
+                                                keywordFormData.match_type === type
+                                                    ? 'border-brand-500 bg-brand-50/50 text-brand-700'
+                                                    : 'border-border-default hover:border-border-hover text-text-secondary'
+                                            )}
+                                        >
                                             <input
                                                 type="radio"
                                                 name="match_type"
@@ -463,12 +452,21 @@ export default function CategoryDetailPage() {
                                 </div>
                             </div>
                             <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={() => setShowKeywordForm(false)} className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1 rounded-xl"
+                                    onClick={() => setShowKeywordForm(false)}
+                                >
                                     Cancel
-                                </button>
-                                <button type="submit" className="flex-1 px-4 py-2.5 bg-gradient-to-br from-primary to-primary-dark text-white rounded-xl hover:shadow-lg transition-colors text-sm font-medium shadow-lg shadow-primary/20">
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    variant="primary"
+                                    className="flex-1 rounded-xl"
+                                >
                                     Add Keyword
-                                </button>
+                                </Button>
                             </div>
                         </form>
                     </div>
@@ -477,17 +475,17 @@ export default function CategoryDetailPage() {
 
             {/* Response Form Modal */}
             {showResponseForm && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl p-0 max-w-lg w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                            <h2 className="text-lg font-semibold text-slate-800">{responseFormData.id ? 'Edit Response' : 'Add Response'}</h2>
-                            <button onClick={() => setShowResponseForm(false)} className="text-slate-400 hover:text-slate-600">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-surface rounded-2xl p-0 max-w-lg w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-border-default bg-bg flex justify-between items-center">
+                            <h2 className="text-lg font-semibold text-text-primary">{responseFormData.id ? 'Edit Response' : 'Add Response'}</h2>
+                            <button onClick={() => setShowResponseForm(false)} className="text-text-tertiary hover:text-text-secondary">
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
                         <form onSubmit={handleResponseSubmit} className="p-6 space-y-5">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Message Type</label>
+                                <label className="block text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-2">Message Type</label>
                                 <div className="flex flex-wrap gap-2">
                                     {REPLY_TYPES.map(type => (
                                         <button
@@ -496,7 +494,7 @@ export default function CategoryDetailPage() {
                                             onClick={() => setResponseFormData({ ...responseFormData, reply_type: type })}
                                             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${responseFormData.reply_type === type
                                                     ? 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-md shadow-primary/20'
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                    : 'bg-bg text-text-secondary hover:bg-border-default'
                                                 }`}
                                         >
                                             {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -508,11 +506,11 @@ export default function CategoryDetailPage() {
                             {/* Dynamic Fields based on Reply Type */}
                             {responseFormData.reply_type === 'text' && (
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Text Content</label>
+                                    <label className="block text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-1.5">Text Content</label>
                                     <textarea
                                         value={responseFormData.text_content}
                                         onChange={(e) => setResponseFormData({ ...responseFormData, text_content: e.target.value })}
-                                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary/40 text-sm transition-all"
+                                        className="w-full px-4 py-3 border border-border-default rounded-xl focus:ring-4 focus:ring-brand-500/20 focus:border-brand-500 text-sm transition-all bg-surface text-text-primary placeholder:text-text-tertiary"
                                         rows={4}
                                         placeholder="Enter the reply message..."
                                         required
@@ -523,9 +521,9 @@ export default function CategoryDetailPage() {
 
                             {(responseFormData.reply_type === 'flex' || responseFormData.reply_type === 'template') && (
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                                    <label className="block text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-1.5">
                                         JSON Payload
-                                        <span className="ml-2 text-[10px] normal-case bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">Required for Flex/Template</span>
+                                        <span className="ml-2 text-[10px] normal-case bg-bg text-text-tertiary px-1.5 py-0.5 rounded">Required for Flex/Template</span>
                                     </label>
                                     <div className="relative">
                                         <textarea
@@ -534,9 +532,9 @@ export default function CategoryDetailPage() {
                                                 setResponseFormData({ ...responseFormData, payload: e.target.value });
                                                 setPayloadError(null);
                                             }}
-                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm font-mono transition-all ${payloadError
+                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-4 text-sm font-mono transition-all bg-surface text-text-primary placeholder:text-text-tertiary ${payloadError
                                                     ? 'border-red-300 focus:ring-red-100 focus:border-red-500'
-                                                    : 'border-slate-200 focus:ring-primary/10 focus:border-primary/40'
+                                                    : 'border-border-default focus:ring-brand-500/20 focus:border-brand-500'
                                                 }`}
                                             rows={8}
                                             placeholder='{\n  "type": "flex",\n  "altText": "Start",\n  "contents": { ... }\n}'
@@ -547,7 +545,7 @@ export default function CategoryDetailPage() {
                                             </div>
                                         )}
                                     </div>
-                                    <p className="text-xs text-slate-400 mt-2">
+                                    <p className="text-xs text-text-tertiary mt-2">
                                         Tip: You can use <a href="https://developers.line.biz/flex-simulator/" target="_blank" className="text-primary hover:underline">LINE Flex Simulator</a> to generate JSON.
                                     </p>
                                 </div>
@@ -559,19 +557,28 @@ export default function CategoryDetailPage() {
                                         type="checkbox"
                                         checked={responseFormData.is_active}
                                         onChange={(e) => setResponseFormData({ ...responseFormData, is_active: e.target.checked })}
-                                        className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary/30"
+                                        className="w-4 h-4 text-primary border-border-default rounded focus:ring-brand-500/30"
                                     />
-                                    <span className="text-sm font-medium text-slate-700">Set as Active</span>
+                                    <span className="text-sm font-medium text-text-primary">Set as Active</span>
                                 </label>
                             </div>
 
                             <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={() => setShowResponseForm(false)} className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1 rounded-xl"
+                                    onClick={() => setShowResponseForm(false)}
+                                >
                                     Cancel
-                                </button>
-                                <button type="submit" className="flex-1 px-4 py-2.5 bg-gradient-to-br from-primary to-primary-dark text-white rounded-xl hover:shadow-lg transition-colors text-sm font-medium shadow-lg shadow-primary/20">
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    variant="primary"
+                                    className="flex-1 rounded-xl"
+                                >
                                     {responseFormData.id ? 'Save Changes' : 'Create Response'}
-                                </button>
+                                </Button>
                             </div>
                         </form>
                     </div>

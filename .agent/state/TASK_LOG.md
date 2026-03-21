@@ -38,6 +38,251 @@
 
 ## Task History (Newest First)
 
+### Task #26 - 2026-03-18 21:42 - CodeX
+
+**Task ID**: `task-live-chat-hardening-20260318`
+**Agent**: CodeX (Codex GPT-5)
+**Status**: completed
+**Duration**: ~4 hours
+
+#### Cross-Platform Context
+- Live-chat hardening session completed on `feat/ui-workflow-audit`.
+- Final verification from the session: backend live-chat suite `70 passed, 7 skipped`; frontend `npm run build` passed.
+- Session summary path: `project-log-md/codeX/session-summary-20260318-2142.md`
+
+#### Work Completed
+- Hardened live-chat WS auth, owner enforcement, room tracking, Redis cross-instance exclusion, REST transfer fallback, and REST/WS response consistency across the backend and frontend.
+- Captured the completed session in the state artifacts so the next agent can pickup from a clean, completed baseline.
+- Preserved append-only history and kept the summary/handoff docs untouched per instruction.
+
+#### Files Modified
+- `.agent/state/current-session.json`
+- `.agent/state/task.md`
+- `.agent/state/TASK_LOG.md`
+- `.agent/state/SESSION_INDEX.md`
+
+#### Blockers
+- None.
+
+#### Next Steps
+- Run manual QA for live-chat flows: claim -> send -> transfer -> close.
+- Verify multi-instance behavior with Redis-backed WebSocket broadcast if staging is available.
+- Decide commit scope for live-chat hardening vs any unrelated dirty-worktree changes.
+- Open or update the PR on `feat/ui-workflow-audit` once the intended scope is staged.
+
+---
+
+### Task #25 - 2026-03-15 17:18 - CodeX
+
+**Task ID**: `task-media-admin-handoff-20260315`
+**Agent**: CodeX (Codex GPT-5)
+**Status**: completed
+**Duration**: ~1 hour
+
+#### Cross-Platform Context
+- Read summaries from: CodeX (`session-summary-20260315-1542.md`), Claude Code (`session-summary-20260315-1730.md`), Open Code (`session-summary-20260214-2300.md`), Kimi Code (`session-summary-20260214-1325.md`)
+- Key insights from other agents: branch `feat/ui-workflow-audit` already contains CodeX admin workflow/auth fixes at commit `2f06695`; Claude added the new `/admin/files` browser as part of the UI overhaul; Kimi/Open Code artifacts remain the reference for cross-platform workflow rules and broader live-chat planning.
+
+#### Work Completed
+- Reviewed the dirty worktree and confirmed `/admin/files` was calling media list/delete endpoints that the checked-in backend did not implement.
+- Added secure admin media endpoints in `backend/app/api/v1/endpoints/media.py`: `GET /api/v1/admin/media` and `DELETE /api/v1/admin/media/{media_id}` while preserving public `POST /api/v1/media` and `GET /api/v1/media/{media_id}` behavior.
+- Added response schemas in `backend/app/schemas/media.py` so the admin files page gets stable `id`, `file_name`, `content_type`, `size`, and `created_at` fields.
+- Updated `frontend/app/admin/files/page.tsx` to use `/api/v1/admin/media` for list/delete, keep public upload/download routes, and handle failed deletes explicitly instead of silently refetching.
+- Added focused backend coverage in `backend/tests/test_media_endpoints.py` for upload response, list serialization, delete success, and missing-file 404 behavior.
+- Verified the fix with `python -m pytest tests/test_media_endpoints.py -q`, `npm run lint -- app/admin/files/page.tsx`, and `npm run build`.
+- Executed the universal handoff workflow and created new CodeX checkpoint/summary artifacts.
+
+#### Files Modified
+- `backend/app/api/v1/endpoints/media.py`
+- `backend/app/schemas/media.py`
+- `backend/tests/test_media_endpoints.py`
+- `frontend/app/admin/files/page.tsx`
+- `.agent/PROJECT_STATUS.md`
+- `.agent/state/current-session.json`
+- `.agent/state/TASK_LOG.md`
+- `.agent/state/SESSION_INDEX.md`
+
+#### Files Created
+- `.agent/state/checkpoints/handover-codeX-20260315-1718.json`
+- `project-log-md/codeX/session-summary-20260315-1718.md`
+
+#### Session Summary
+- Location: `project-log-md/codeX/session-summary-20260315-1718.md`
+- Checkpoint: `.agent/state/checkpoints/handover-codeX-20260315-1718.json`
+
+#### Blockers
+- None.
+
+#### Next Steps
+- Run WSL smoke test on `/admin/files`: upload -> list -> download -> delete
+- Decide commit scope for CodeX media fix vs Claude UI/skills changes still in the dirty worktree
+- Review Claude Task #24 skills-audit summary if the next change touches auth, settings, or design-system skills
+- Commit intended changes on `feat/ui-workflow-audit` and open PR -> `main`
+
+---
+
+### Task #24 - 2026-03-15 19:00 - Claude Code
+
+**Task ID**: `task-skills-audit-20260315`
+**Agent**: Claude Code (claude-sonnet-4-6)
+**Status**: completed
+**Duration**: ~45 minutes
+
+#### Cross-Platform Context
+- Read summaries from: Claude Code (`session-summary-20260315-1730.md`), CodeX (`session-summary-20260315-1542.md`), Claude Code (`session-summary-20260220-2220.md`), Claude Code (`session-summary-20260218-0204.md`), Claude Code (`session-summary-20260215-2300.md`)
+- Key insights: CodeX is running a live code review on the uncommitted UI changes from Task #23. All 5 latest session summaries read for full context before skills audit.
+
+#### Work Completed
+- Reviewed all 39 skills in `.claude/skills/` for fitness to current project state
+- Identified 3 skills needing updates + 2 missing frontmatter
+- **skn-auth-security**: Updated description; rewrote Rule #6 (3 dep levels); expanded role table with `get_current_staff`; annotated Step 8 (old vs new pattern); added Step 9 documenting `authFetch.ts` interceptor + `PageAccessGuard` with full API reference
+- **skn-design-system**: Fixed MessageBubble token colors (incoming→`bg-surface`, bot→`bg-bg`, admin→`.gradient-active`); added `app/page.tsx`/`files/`/`logs/` to file structure; added `text-gradient-primary` → `text-gradient` common issue entry
+- **skn-service-request**: Added full YAML frontmatter (was missing — showed skill name as description)
+- **skn-settings-config**: Added full YAML frontmatter (was missing — showed skill name as description)
+
+#### Files Modified
+- `.claude/skills/skn-auth-security/SKILL.md`
+- `.claude/skills/skn-design-system/SKILL.md`
+- `.claude/skills/skn-service-request/SKILL.md`
+- `.claude/skills/skn-settings-config/SKILL.md`
+- `.agent/PROJECT_STATUS.md`
+- `.agent/state/current-session.json`
+- `.agent/state/TASK_LOG.md`
+- `.agent/state/SESSION_INDEX.md`
+
+#### Files Created
+- `.agent/state/checkpoints/handover-claude_code-20260315-1900.json`
+- `project-log-md/claude_code/session-summary-20260315-1900.md`
+
+#### Session Summary
+- Location: `project-log-md/claude_code/session-summary-20260315-1900.md`
+- Checkpoint: `.agent/state/checkpoints/handover-claude_code-20260315-1900.json`
+
+#### Blockers
+- CodeX review of Task #23 changes still in progress — do not commit/push until review is complete
+
+#### Next Steps
+- Wait for CodeX review results; apply any fixes
+- Commit all uncommitted changes on `feat/ui-workflow-audit`
+- Push + open PR `feat/ui-workflow-audit` → `main`
+- Visual QA: MessageBubble colors (incoming/bot/admin) + dark mode on all modified pages
+- Verify `/api/v1/media` backend endpoint for new files page
+- Next feature: real JWT auth (replace DEV_MODE mock in `AuthContext.tsx`)
+
+---
+
+### Task #23 - 2026-03-15 17:30 - Claude Code
+
+**Task ID**: `task-ui-overhaul-20260315`
+**Agent**: Claude Code (claude-sonnet-4-6)
+**Status**: completed
+**Duration**: ~2 hours
+
+#### Cross-Platform Context
+- Read summaries from: CodeX (`session-summary-20260315-1542.md`), Claude Code (`session-summary-20260220-2220.md`)
+- Key insights: CodeX completed admin workflow audit + role guards on `feat/ui-workflow-audit` (commit `2f06695`). Full lint/build had not been verified — resolved in this session.
+
+#### Work Completed
+- Phase 1: Input.tsx + Select.tsx — `filled`/`flushed` variants migrated to `bg-bg`/`border-border-subtle`; icon colors `text-gray-400` → `text-text-tertiary`
+- Phase 2 (CRITICAL): MessageBubble.tsx — incoming `bg-white` → `bg-surface`, bot `bg-gray-100` → `bg-bg`, admin `from-blue-600 to-indigo-600` → `.gradient-active` CSS utility
+- Phase 3: `auto-replies/[id]` full rewrite (semantic tokens + Card/Button/Input components + Lucide icons); `auto-replies/page.tsx` label/table/skeleton fixes; `analytics/page.tsx` skeleton fix; `admin/layout.tsx` minor token fixes
+- Phase 4: `files/page.tsx` built as full media browser (upload, search, table, download/delete); `logs/page.tsx` redirects to `/admin/audit`; `settings/page.tsx` auto-managed by project hook (redirects to `/admin/settings/line`)
+- Phase 5: `app/page.tsx` new landing page — Hero + 6-feature grid + footer; fixed undefined `text-gradient-primary` → `text-gradient`
+- Fixed 2 pre-existing lint errors: `chatbot/page.tsx` + `admin/page.tsx` (`setState-in-effect` via `setTimeout` wrapper)
+- Full verification gate passed: `npm run lint` ✅ `npx tsc --noEmit` ✅ `npm run build` ✅ (33 routes compiled)
+
+#### Files Modified
+- `frontend/components/ui/Input.tsx`
+- `frontend/components/ui/Select.tsx`
+- `frontend/app/admin/live-chat/_components/MessageBubble.tsx`
+- `frontend/app/admin/auto-replies/[id]/page.tsx`
+- `frontend/app/admin/auto-replies/page.tsx`
+- `frontend/app/admin/analytics/page.tsx`
+- `frontend/app/admin/layout.tsx`
+- `frontend/app/admin/files/page.tsx`
+- `frontend/app/admin/logs/page.tsx`
+- `frontend/app/admin/chatbot/page.tsx`
+- `frontend/app/admin/page.tsx`
+- `frontend/app/page.tsx`
+- `.agent/PROJECT_STATUS.md`
+- `.agent/state/current-session.json`
+- `.agent/state/TASK_LOG.md`
+- `.agent/state/SESSION_INDEX.md`
+
+#### Files Created
+- `.agent/state/checkpoints/handover-claude_code-20260315-1730.json`
+- `project-log-md/claude_code/session-summary-20260315-1730.md`
+
+#### Session Summary
+- Location: `project-log-md/claude_code/session-summary-20260315-1730.md`
+- Checkpoint: `.agent/state/checkpoints/handover-claude_code-20260315-1730.json`
+
+#### Blockers
+- None. All verification passed.
+
+#### Next Steps
+- Commit all uncommitted changes on `feat/ui-workflow-audit` and push to origin
+- Open PR from `feat/ui-workflow-audit` → `main`
+- Visual QA: dark mode toggle on every modified page
+- Visual QA: MessageBubble incoming/bot/admin colors
+
+---
+
+### Task #22 - 2026-03-15 15:42 - CodeX
+
+**Task ID**: `task-admin-workflow-audit-20260315`
+**Agent**: CodeX (Codex GPT-5)
+**Status**: completed
+**Duration**: ~2.5 hours
+
+#### Cross-Platform Context
+- Read summaries from: Claude Code (`session-summary-20260220-2220.md`), Open Code (`session-summary-20260214-2300.md`), Kimi Code (`session-summary-20260214-1325.md`), CodeX (`session-summary-20260215-1848.md`)
+- Key insights from other agents: `main` carries the v1.8.0 UI baseline, workflow/handoff artifacts require cross-platform updates every session, and prior live-chat migration planning remains valid while admin auth/menu workflows still needed alignment.
+
+#### Work Completed
+- Audited admin workflow and identified 4 high-signal issues: missing bearer propagation on many admin fetches, dead sidebar links, hidden LINE settings flow, and AGENT/backend access mismatch.
+- Added centralized browser-side auth propagation with `authFetch.ts` and wired it through `AuthContext.tsx`.
+- Removed dead admin sidebar links, remapped settings to `/admin/settings/line`, and redirected the placeholder settings route.
+- Added backend `get_current_staff` access path so `AGENT` can use live-chat REST endpoints while keeping analytics admin-only.
+- Added role-aware sidebar filtering and page/route guards so AGENT users are redirected to `/admin/live-chat` instead of landing on broken/forbidden pages.
+- Committed and pushed the implementation to `origin/feat/ui-workflow-audit` as `2f06695`.
+
+#### Files Modified
+- `backend/app/api/deps.py`
+- `backend/app/api/v1/endpoints/admin_live_chat.py`
+- `frontend/app/admin/layout.tsx`
+- `frontend/app/admin/page.tsx`
+- `frontend/app/admin/chatbot/page.tsx`
+- `frontend/app/admin/design-system/page.tsx`
+- `frontend/app/admin/settings/page.tsx`
+- `frontend/app/admin/settings/line/page.tsx`
+- `frontend/contexts/AuthContext.tsx`
+- `.agent/PROJECT_STATUS.md`
+- `.agent/state/current-session.json`
+- `.agent/state/TASK_LOG.md`
+- `.agent/state/SESSION_INDEX.md`
+
+#### Files Created
+- `frontend/components/admin/PageAccessGuard.tsx`
+- `frontend/lib/authFetch.ts`
+- `.agent/state/checkpoints/handover-codeX-20260315-1542.json`
+- `project-log-md/codeX/session-summary-20260315-1542.md`
+
+#### Session Summary
+- Location: `project-log-md/codeX/session-summary-20260315-1542.md`
+- Checkpoint: `.agent/state/checkpoints/handover-codeX-20260315-1542.json`
+
+#### Blockers
+- Whole-project frontend `lint` / `tsc --noEmit` / build checks were not completed in this session because they timed out in the current environment.
+- Worktree still contains unrelated local modifications outside the pushed handoff commit.
+
+#### Next Steps
+- Continue UI redesign and menu/workflow audit on `feat/ui-workflow-audit`.
+- Decide whether to fold remaining dirty frontend files into this branch or cleanly separate them before PR.
+- Run full frontend verification once environment/runtime stability allows whole-project checks to finish.
+
+---
+
 ### Task #21 - 2026-02-20 22:20 - Claude Code
 
 **Task ID**: `task-ui-consistency-sidebar-v1.8.0-20260220`
@@ -915,16 +1160,16 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Tasks | 20 |
-| Completed | 20 |
+| Total Tasks | 25 |
+| Completed | 25 |
 | In Progress | 0 |
 | Blocked | 0 |
 | First Entry | 2026-02-10 |
-| Last Entry | 2026-02-18 |
+| Last Entry | 2026-03-18 |
 
 ### Agents Contributed
 1. **Claude Code**: 7 tasks (#1, #4, #5, #10, #14, #18, #20)
-2. **CodeX**: 3 tasks (#15, #16, #19)
+2. **CodeX**: 4 tasks (#15, #16, #19, #22)
 3. **Kimi Code CLI**: 3 tasks (#2, #7, #8)
 4. **Antigravity**: 3 tasks (#3, #6, #11)
 5. **Cline**: 1 task (#12)

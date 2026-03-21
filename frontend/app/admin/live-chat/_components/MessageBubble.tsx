@@ -62,7 +62,7 @@ function renderMessageContent(message: Message): React.ReactNode {
     const size = typeof payload.size === 'number' ? payload.size : null;
     const url = typeof payload.url === 'string' ? payload.url : '';
     return (
-      <div className="flex items-center gap-2 bg-gray-100 p-3 rounded-lg">
+      <div className="flex items-center gap-2 bg-bg p-3 rounded-lg">
         <FileText className="w-4 h-4 flex-shrink-0" />
         <div className="min-w-0">
           <div className="truncate text-sm font-medium">{fileName}</div>
@@ -106,7 +106,7 @@ export const MessageBubble = memo(function MessageBubble({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={incomingAvatar}
-            className="w-7 h-7 rounded-full object-cover flex-shrink-0 bg-gray-100"
+            className="w-7 h-7 rounded-full object-cover flex-shrink-0 bg-bg"
             alt={senderLabel}
           />
         ) : <div className="w-7 flex-shrink-0" />
@@ -123,10 +123,10 @@ export const MessageBubble = memo(function MessageBubble({
         {/* Message Bubble */}
         <div
           className={`relative px-4 py-2.5 text-sm leading-relaxed rounded-2xl shadow-sm ${incoming
-              ? 'rounded-tl-sm bg-white border border-gray-200 text-text-primary'
+              ? 'rounded-tl-sm bg-surface border border-border-default text-text-primary'
               : isBot
-                ? 'rounded-tr-sm bg-gray-100 border border-gray-200 text-text-primary'
-                : 'rounded-tr-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-900/20'
+                ? 'rounded-tr-sm bg-bg border border-border-subtle text-text-primary'
+                : 'rounded-tr-sm gradient-active text-white shadow-md shadow-brand-900/20'
             }`}
         >
           {renderMessageContent(message)}

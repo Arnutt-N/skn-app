@@ -56,3 +56,124 @@ async def test_refresh_profile_updates_when_stale():
     mock_db.commit.assert_awaited_once()
     mock_db.refresh.assert_awaited_once_with(stale_user)
 
+
+# ── T6: handle_follow / handle_unfollow tests ─────────────────────
+
+
+@pytest.mark.asyncio
+async def test_handle_follow_new_user_creates_follow_event():
+    service = FriendService()
+    mock_db = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = None  # user not found
+    mock_db.execute.return_value = mock_result
+    mock_db.add = MagicMock()
+
+    event = await service.handle_follow("Unew", mock_db)
+
+    mock_db.add.assert_called_once()
+    assert event.event_type == "FOLLOW"
+    assert event.refollow_count == 0
+
+
+@pytest.mark.asyncio
+async def test_handle_follow_returning_user_creates_refollow_event():
+    service = FriendService()
+    existing = SimpleNamespace(
+        line_user_id="U123",
+        friend_status="UNFOLLOWED",
+        is_active=False,
+        friend_since=datetime(2025, 1, 1, tzinfo=timezone.utc),
+    )
+    mock_db = AsyncMock()
+    # First call: find user; Second call: count refollows
+    user_result = MagicMock()
+    user_result.scalar_one_or_none.return_value = existing
+    refollow_result = MagicMock()
+    refollow_result.scalar.return_value = 2  # already refollowed twice
+    mock_db.execute.side_effect = [user_result, refollow_result]
+    mock_db.add = MagicMock()
+
+    event = await service.handle_follow("U123", mock_db)
+
+    assert event.event_type == "REFOLLOW"
+    assert event.refollow_count == 3
+    assert existing.friend_status == "ACTIVE"
+    assert existing.is_active is True
+
+
+@pytest.mark.asyncio
+async def test_handle_follow_blocked_user_creates_refollow_event():
+    service = FriendService()
+    existing = SimpleNamespace(
+        line_user_id="U456",
+        friend_status="BLOCKED",
+        is_active=False,
+        friend_since=datetime(2025, 6, 1, tzinfo=timezone.utc),
+    )
+    mock_db = AsyncMock()
+    user_result = MagicMock()
+    user_result.scalar_one_or_none.return_value = existing
+    refollow_result = MagicMock()
+    refollow_result.scalar.return_value = 0
+    mock_db.execute.side_effect = [user_result, refollow_result]
+    mock_db.add = MagicMock()
+
+    event = await service.handle_follow("U456", mock_db)
+
+    assert event.event_type == "REFOLLOW"
+    assert event.refollow_count == 1
+
+
+@pytest.mark.asyncio
+async def test_handle_follow_sets_friend_since_only_if_missing():
+    service = FriendService()
+    existing = SimpleNamespace(
+        line_user_id="U789",
+        friend_status="ACTIVE",
+        is_active=True,
+        friend_since=None,
+    )
+    mock_db = AsyncMock()
+    user_result = MagicMock()
+    user_result.scalar_one_or_none.return_value = existing
+    mock_db.execute.return_value = user_result
+    mock_db.add = MagicMock()
+
+    await service.handle_follow("U789", mock_db)
+
+    assert existing.friend_since is not None
+
+
+@pytest.mark.asyncio
+async def test_handle_unfollow_sets_unfollowed_status():
+    service = FriendService()
+    existing = SimpleNamespace(
+        line_user_id="U123",
+        friend_status="ACTIVE",
+    )
+    mock_db = AsyncMock()
+    user_result = MagicMock()
+    user_result.scalar_one_or_none.return_value = existing
+    mock_db.execute.return_value = user_result
+    mock_db.add = MagicMock()
+
+    event = await service.handle_unfollow("U123", mock_db)
+
+    assert existing.friend_status == "UNFOLLOWED"
+    assert event.event_type == "UNFOLLOW"
+
+
+@pytest.mark.asyncio
+async def test_handle_unfollow_unknown_user_still_creates_event():
+    service = FriendService()
+    mock_db = AsyncMock()
+    user_result = MagicMock()
+    user_result.scalar_one_or_none.return_value = None
+    mock_db.execute.return_value = user_result
+    mock_db.add = MagicMock()
+
+    event = await service.handle_unfollow("Uunknown", mock_db)
+
+    assert event.event_type == "UNFOLLOW"
+    mock_db.add.assert_called_once()

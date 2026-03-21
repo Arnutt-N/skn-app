@@ -1,3 +1,25 @@
+---
+name: skn-settings-config
+description: >
+  Manages environment configuration, third-party credentials, and system settings in the SKN App.
+  Covers SystemSetting (plain-text key-value) and Credential (Fernet-encrypted multi-provider) stores.
+  Use when adding LINE/Telegram/N8N config, storing API keys securely, adding setting keys,
+  or debugging credential endpoints.
+license: MIT
+compatibility: >
+  SKN App (JskApp) backend + frontend. FastAPI, cryptography (Fernet), SQLAlchemy async.
+metadata:
+  author: SKN App Team
+  version: 1.1.0
+  project: skn-app
+  category: backend
+  tags: [settings, credentials, fernet, encryption, line, telegram, config]
+  related-skills:
+    - skn-auth-security
+    - skn-fastapi-endpoint
+    - skn-admin-overview
+---
+
 # skn-settings-config
 
 Manages all environment configuration, third-party credentials, and system settings in the SKN App. Covers two independent storage systems: a plain-text `SystemSetting` key-value store (currently in use) and a Fernet-encrypted `Credential` store (fully built, not yet wired up). Use this skill when adding, reading, or securing configuration for any platform or service.

@@ -4,25 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-JskApp is a LINE Official Account system with LIFF integration for Community Justice Services. It features a FastAPI backend with PostgreSQL/Redis and a Next.js 16 frontend with React 19 and TypeScript. Key features include service request management, chatbot with intent matching, live-chat operator handoff, and rich menu configuration.
+JskApp is a LINE Official Account system with LIFF integration for Community Justice Services. It features a FastAPI backend with PostgreSQL/Redis and a Next.js 16 frontend with React 19 and TypeScript. Key features include service request management, chatbot with intent matching, live-chat operator handoff, rich menu configuration, broadcast messaging, file management, user management, analytics reports, and multi-platform integrations (Telegram, n8n).
 
 ## Development Commands
 
 ### Quick Start
 ```bash
 docker-compose up -d db redis              # Start PostgreSQL and Redis
-cd backend && uvicorn app.main:app --reload  # Backend: http://localhost:8000/api/v1/docs
+cd backend && python run.py --target local   # Backend: http://localhost:8000/api/v1/docs
 cd frontend && npm run dev                   # Frontend: http://localhost:3000
 ```
 
 ### Backend (FastAPI)
 ```bash
 cd backend
-python -m venv venv
-venv\Scripts\activate           # Windows
-source venv/bin/activate        # Linux/Mac
+python3.13 -m venv venv_linux
+source venv_linux/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+python run.py --target local
 ```
 
 ### Frontend (Next.js)
@@ -37,17 +36,22 @@ npm run build
 ### Database Migrations (Alembic)
 ```bash
 cd backend
-alembic current                              # Check current version
-alembic revision --autogenerate -m "desc"    # Generate migration
-alembic upgrade head                         # Apply migrations
-alembic downgrade -1                         # Rollback one step
+python scripts/db_target.py show --target local
+python scripts/db_target.py alembic --target local current
+python scripts/db_target.py alembic --target local revision --autogenerate -m "desc"
+python scripts/db_target.py alembic --target local upgrade head
+python scripts/db_target.py alembic --target local downgrade -1
+python scripts/db_target.py alembic --target remote upgrade head  # deploy/migrate Supabase
 ```
 
 ### Testing
 ```bash
 cd backend
 python -m pytest                             # Run all tests
-python test_endpoint.py                      # Basic endpoint test
+python scripts/test_endpoint.py              # Basic endpoint test with default sample payload
+python scripts/verify_db.py                  # Quick DB verification
+python scripts/verify_schema_extended.py     # Check request-related schema additions
+python scripts/verify_api.py                 # Quick HTTP probe against a running backend
 ```
 
 ## Architecture
@@ -64,7 +68,13 @@ api/
     ├── admin_live_chat.py  # Live chat operator endpoints
     ├── admin_intents.py    # Chatbot intent management
     ├── admin_settings.py   # System configuration
-    └── admin_credentials.py # LINE credential management
+    ├── admin_credentials.py # LINE credential management
+    ├── admin_users.py      # User CRUD, roles, password reset
+    ├── admin_friends.py    # Friend event history (follow/block/refollow)
+    ├── admin_broadcast.py  # LINE broadcast create/schedule/send
+    ├── admin_reports.py    # Analytics reports (5 tabs + CSV export)
+    ├── admin_integrations.py # Telegram, n8n, custom integration settings
+    └── media.py            # File upload/download, categories, public links
 
 core/
 ├── config.py               # Settings from environment
@@ -76,7 +86,10 @@ models/                     # SQLAlchemy async models
 ├── message.py              # Messages with direction (INCOMING/OUTGOING)
 ├── chat_session.py         # Live chat sessions (WAITING/ACTIVE/CLOSED)
 ├── service_request.py      # Service requests with JSONB details
-└── credential.py           # LINE channel credentials
+├── credential.py           # LINE channel credentials
+├── friend_event.py         # Follow/unfollow/block/refollow events
+├── broadcast.py            # Broadcast messages with status lifecycle
+└── media_file.py           # Files with categories and public tokens
 
 services/
 ├── line_service.py         # LINE Messaging API wrapper
@@ -95,7 +108,11 @@ app/
 │   ├── live-chat/          # Full-screen live chat interface
 │   ├── requests/           # Service request management
 │   ├── chatbot/            # Intent and auto-reply config
-│   └── settings/           # System settings
+│   ├── friends/            # LINE friends + history
+│   ├── users/              # User management CRUD
+│   ├── files/              # File management (categories, public links)
+│   ├── reports/            # 5-tab analytics dashboard
+│   └── settings/           # Settings hub (LINE/Telegram/n8n/Custom)
 └── liff/                   # LINE LIFF mini-apps
 
 components/
@@ -116,6 +133,12 @@ hooks/
 | `/admin/live-chat` | Conversations, messages, session management |
 | `/admin/intents` | Chatbot intent CRUD |
 | `/admin/settings` | LINE credentials, system config |
+| `/admin/users` | User CRUD, workload, password reset |
+| `/admin/friends` | Friend history, stats, refollow tracking |
+| `/admin/broadcasts` | Broadcast create/schedule/send |
+| `/admin/reports` | Analytics: overview, requests, messages, operators, followers |
+| `/admin/settings` (integrations) | Telegram, n8n, custom integration config |
+| `/media`, `/admin/media` | File upload, categories, public link generation |
 
 ## Key Patterns
 

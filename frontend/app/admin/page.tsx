@@ -1,8 +1,10 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
 import { FileText, Clock, Zap, CheckCircle2 } from 'lucide-react';
+import PageAccessGuard from '@/components/admin/PageAccessGuard';
 import StatsCard from './components/StatsCard';
 import ChartsWrapper from './components/ChartsWrapper';
-
-export const dynamic = 'force-dynamic';
 
 async function fetchWithTimeout(url: string, timeout = 15000) {
     const controller = new AbortController();
@@ -22,8 +24,23 @@ async function fetchWithTimeout(url: string, timeout = 15000) {
     }
 }
 
+type RequestStats = Record<string, number>;
+type MonthlyDataPoint = { month: string; count: number };
+
+function getErrorMessage(error: unknown): string {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+        return 'The request timed out. Please try again.';
+    }
+
+    if (error instanceof TypeError) {
+        return 'Could not connect to the backend server.';
+    }
+
+    return 'Failed to load service data.';
+}
+
 async function getRequestData() {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
     // Use Promise.allSettled to handle partial failures gracefully
     const [statsResult, monthlyResult] = await Promise.allSettled([
@@ -32,47 +49,73 @@ async function getRequestData() {
     ]);
 
     // Process stats result
-    let requestStats = null;
+    let requestStats: RequestStats | null = null;
+    let errorMessage: string | null = null;
     if (statsResult.status === 'fulfilled' && statsResult.value.ok) {
         try {
             requestStats = await statsResult.value.json();
-        } catch (e) {
-            console.error('Failed to parse stats response:', e);
+        } catch {
+            errorMessage ??= 'Received an invalid stats response from the backend.';
         }
     } else if (statsResult.status === 'rejected') {
-        console.error('Stats fetch failed:', statsResult.reason);
+        errorMessage ??= getErrorMessage(statsResult.reason);
     }
 
     // Process monthly data result
-    let monthlyData: Array<{ month: string; count: number }> = [];
+    let monthlyData: MonthlyDataPoint[] = [];
     if (monthlyResult.status === 'fulfilled' && monthlyResult.value.ok) {
         try {
             monthlyData = await monthlyResult.value.json();
-        } catch (e) {
-            console.error('Failed to parse monthly response:', e);
+        } catch {
+            errorMessage ??= 'Received an invalid monthly stats response from the backend.';
         }
     } else if (monthlyResult.status === 'rejected') {
-        console.error('Monthly fetch failed:', monthlyResult.reason);
+        errorMessage ??= getErrorMessage(monthlyResult.reason);
     }
 
     // Only show error if both requests failed
     const bothFailed = statsResult.status === 'rejected' && monthlyResult.status === 'rejected';
     const error = bothFailed
-        ? 'Failed to load service data. Please check if the backend is running.'
+        ? errorMessage ?? 'Failed to load service data. Please check if the backend is running.'
         : null;
 
     return { requestStats, monthlyData, error };
 }
 
-export default async function ServiceDashboard() {
-    const { requestStats, monthlyData, error } = await getRequestData();
+export default function ServiceDashboard() {
+    const [requestStats, setRequestStats] = useState<RequestStats | null>(null);
+    const [monthlyData, setMonthlyData] = useState<MonthlyDataPoint[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    if (error) {
+    const fetchDashboardData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await getRequestData();
+            setRequestStats(data.requestStats);
+            setMonthlyData(data.monthlyData);
+            setError(data.error);
+        } catch {
+            setRequestStats(null);
+            setMonthlyData([]);
+            setError('Failed to load service data. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => { void fetchDashboardData(); }, 0);
+        return () => window.clearTimeout(timer);
+    }, [fetchDashboardData]);
+
+    if (loading) {
         return (
-            <div className="p-8 text-center bg-red-50 text-red-600 rounded-2xl border border-red-100 animate-fade-in-up dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400">
-                <h2 className="text-lg font-bold mb-2 text-red-800 dark:text-red-300">Connection Error</h2>
-                <p className="text-sm text-red-600 dark:text-red-400">Could not connect to the backend server. Please check your connection.</p>
-            </div>
+            <PageAccessGuard allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
+                <div className="flex min-h-[320px] items-center justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
+                </div>
+            </PageAccessGuard>
         );
     }
 
@@ -83,7 +126,12 @@ export default async function ServiceDashboard() {
         { name: 'Rejected', value: requestStats.rejected }
     ] : [];
 
-    return (
+    const content = error ? (
+                <div className="p-8 text-center bg-red-50 text-red-600 rounded-2xl border border-red-100 animate-fade-in-up dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400">
+                <h2 className="text-lg font-bold mb-2 text-red-800 dark:text-red-300">Connection Error</h2>
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            </div>
+    ) : (
         <div className="space-y-6 animate-fade-in-up thai-text">
             <div className="ds-panel ds-panel-body flex justify-between items-center hover:shadow-md transition-shadow duration-300">
                 <div>
@@ -145,5 +193,11 @@ export default async function ServiceDashboard() {
             <ChartsWrapper statusData={statusData} monthlyData={monthlyData} />
 
         </div>
+    );
+
+    return (
+        <PageAccessGuard allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
+            {content}
+        </PageAccessGuard>
     );
 }

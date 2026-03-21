@@ -150,8 +150,13 @@ Design system governance, semantic tokens, and visual standards for the JSK Admi
 frontend/
 ├── app/
 │   ├── globals.css               ← ALL semantic tokens defined here
+│   ├── page.tsx                  ← Public landing page (Hero + 6-feature grid + footer); uses .text-gradient
 │   └── admin/
-│       └── design-system/        ← Live preview page at /admin/design-system
+│       ├── design-system/        ← Live preview page at /admin/design-system
+│       │   └── page.tsx
+│       ├── files/                ← Media browser (upload/search/table/download/delete)
+│       │   └── page.tsx
+│       └── logs/                 ← redirect('/admin/audit') — do NOT add content here
 │           └── page.tsx
 ├── components/
 │   └── ui/
@@ -361,13 +366,13 @@ Use this baseline for ALL new admin list/table pages:
 className="rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm"
 
 // Outgoing (operator → user):
-className="rounded-tr-sm bg-brand-600 text-white"    // corner-cut top-right
+className="rounded-tr-sm gradient-active text-white"    // corner-cut top-right; use .gradient-active NOT bg-brand-600
 
 // Incoming (user → operator):
-className="rounded-tl-sm bg-gray-100 text-text-primary"  // corner-cut top-left
+className="rounded-tl-sm bg-surface border border-border-default text-text-primary"
 
-// Bot message:
-className="rounded-tr-sm bg-gray-200 text-text-primary"
+// Bot message (slightly off-white / subtle):
+className="rounded-tl-sm bg-bg border border-border-subtle text-text-primary"
 
 // Animation classes:
 className="msg-in"   // incoming message entrance
@@ -425,6 +430,10 @@ Use these CSS tokens instead of arbitrary numbers:
 ---
 
 ## Common Issues
+
+### `text-gradient-primary` not found — build error
+**Cause:** This class does NOT exist. The correct class is `text-gradient` (defined in `globals.css`).
+**Fix:** Use `className="text-gradient"` for gradient hero text. Do not use `text-gradient-primary`.
 
 ### Token not applying — component still shows raw gray
 **Cause:** The token name is wrong or the `globals.css` token isn't loaded.

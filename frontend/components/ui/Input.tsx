@@ -22,11 +22,11 @@ const inputVariants = cva(
           'focus:border-brand-500 focus:ring-brand-500/20',
         ],
         filled: [
-          'border-transparent bg-gray-100 dark:bg-gray-700',
-          'focus:bg-white dark:focus:bg-gray-800 focus:border-brand-500 focus:ring-brand-500/20',
+          'border-transparent bg-bg',
+          'focus:bg-surface focus:border-brand-500 focus:ring-brand-500/20',
         ],
         flushed: [
-          'rounded-none border-0 border-b-2 border-gray-200 dark:border-gray-600 bg-transparent px-0',
+          'rounded-none border-0 border-b-2 border-border-subtle bg-transparent px-0',
           'focus:border-brand-500 focus:ring-0',
         ],
       },
@@ -82,7 +82,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <div className="w-full">
         <div className="relative">
           {leftIcon && (
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors duration-200">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary transition-colors duration-200">
               {leftIcon}
             </span>
           )}
@@ -97,7 +97,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {rightIcon && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary">
               {rightIcon}
             </span>
           )}

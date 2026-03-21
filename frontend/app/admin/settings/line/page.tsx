@@ -164,7 +164,7 @@ export default function LineSettingsPage() {
                     variant="ghost"
                     size="sm"
                     leftIcon={<ArrowLeft className="w-4 h-4" />}
-                    onClick={() => handleNavigationAttempt('/admin/settings')}
+                    onClick={() => handleNavigationAttempt('/admin')}
                 >
                     กลับ
                 </Button>
