@@ -1,7 +1,7 @@
 """add category, is_public, public_token, thumbnail_url to media_files
 
 Revision ID: l2m3n4o5p6q7
-Revises: k1l2m3n4o5p6
+Revises: k1l2m3n4o5p7
 Create Date: 2026-03-20 10:00:00.000000
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "l2m3n4o5p6q7"
-down_revision: Union[str, Sequence[str], None] = "j0k1l2m3n4o5"
+down_revision: Union[str, Sequence[str], None] = "k1l2m3n4o5p7"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -1,7 +1,7 @@
 """add refollow_count and event_data to friend_events
 
-Revision ID: k1l2m3n4o5p6
-Revises: j0k1l2m3n4o5
+Revision ID: k1l2m3n4o5p7
+Revises: k1l2m3n4o5p6
 Create Date: 2026-03-20 10:00:00.000000
 
 """
@@ -13,8 +13,8 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision: str = "k1l2m3n4o5p6"
-down_revision: Union[str, Sequence[str], None] = "j0k1l2m3n4o5"
+revision: str = "k1l2m3n4o5p7"
+down_revision: Union[str, Sequence[str], None] = "k1l2m3n4o5p6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
