@@ -33,7 +33,7 @@ class Broadcast(Base):
     )
     content = Column(JSONB, nullable=False)
     target_audience = Column(String, default="all")
-    target_filter = Column(JSONB, default={})
+    target_filter = Column(JSONB, default=dict)
     scheduled_at = Column(DateTime(timezone=True), nullable=True)
     sent_at = Column(DateTime(timezone=True), nullable=True)
     status = Column(

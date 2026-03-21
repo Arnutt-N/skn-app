@@ -2,7 +2,7 @@
 
 import csv
 import io
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -94,7 +94,7 @@ def _parse_dates(
     end_date: Optional[str],
     default_days: int = 30,
 ) -> tuple[datetime, datetime]:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     try:
         end = datetime.fromisoformat(end_date) if end_date else now
     except ValueError:

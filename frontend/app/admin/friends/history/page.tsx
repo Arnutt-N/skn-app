@@ -173,15 +173,15 @@ export default function FriendHistoryPage() {
                 <div className="flex items-center gap-3">
                     <Link
                         href="/admin/friends"
-                        className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="p-2 rounded-xl hover:bg-surface-hover transition-colors"
                     >
-                        <ArrowLeft className="w-5 h-5 text-gray-500" />
+                        <ArrowLeft className="w-5 h-5 text-text-secondary" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-800 dark:text-gray-100 tracking-tight thai-no-break">
+                        <h1 className="text-2xl font-bold text-text-primary tracking-tight thai-no-break">
                             ประวัติเพื่อน
                         </h1>
-                        <p className="text-slate-400 text-sm thai-no-break">
+                        <p className="text-text-secondary text-sm thai-no-break">
                             Friend History - Track follow, unfollow, and re-follow events
                         </p>
                     </div>
@@ -191,58 +191,58 @@ export default function FriendHistoryPage() {
             {/* Stats Cards */}
             {stats && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-slate-100/60 dark:border-gray-700 p-4">
+                    <div className="bg-surface rounded-2xl shadow-sm border border-border p-4">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 rounded-xl bg-green-100 dark:bg-green-900/50">
                                 <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
                             </div>
                         </div>
-                        <p className="text-2xl font-bold text-slate-800 dark:text-gray-100">
+                        <p className="text-2xl font-bold text-text-primary">
                             {stats.total_followers.toLocaleString()}
                         </p>
-                        <p className="text-xs text-slate-400 thai-no-break">ผู้ติดตามทั้งหมด</p>
+                        <p className="text-xs text-text-secondary thai-no-break">ผู้ติดตามทั้งหมด</p>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-slate-100/60 dark:border-gray-700 p-4">
+                    <div className="bg-surface rounded-2xl shadow-sm border border-border p-4">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 rounded-xl bg-red-100 dark:bg-red-900/50">
                                 <ShieldX className="w-5 h-5 text-red-600 dark:text-red-400" />
                             </div>
                         </div>
-                        <p className="text-2xl font-bold text-slate-800 dark:text-gray-100">
+                        <p className="text-2xl font-bold text-text-primary">
                             {stats.total_blocked.toLocaleString()}
                         </p>
-                        <p className="text-xs text-slate-400 thai-no-break">บล็อคแล้ว</p>
+                        <p className="text-xs text-text-secondary thai-no-break">บล็อคแล้ว</p>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-slate-100/60 dark:border-gray-700 p-4">
+                    <div className="bg-surface rounded-2xl shadow-sm border border-border p-4">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/50">
                                 <RefreshCw className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                             </div>
                         </div>
-                        <p className="text-2xl font-bold text-slate-800 dark:text-gray-100">
+                        <p className="text-2xl font-bold text-text-primary">
                             {stats.total_refollows.toLocaleString()}
                         </p>
-                        <p className="text-xs text-slate-400 thai-no-break">กลับมาใหม่</p>
+                        <p className="text-xs text-text-secondary thai-no-break">กลับมาใหม่</p>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-slate-100/60 dark:border-gray-700 p-4">
+                    <div className="bg-surface rounded-2xl shadow-sm border border-border p-4">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/50">
                                 <UserCheck className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                             </div>
                         </div>
-                        <p className="text-2xl font-bold text-slate-800 dark:text-gray-100">
+                        <p className="text-2xl font-bold text-text-primary">
                             {stats.refollow_rate}%
                         </p>
-                        <p className="text-xs text-slate-400 thai-no-break">อัตราการกลับมา</p>
+                        <p className="text-xs text-text-secondary thai-no-break">อัตราการกลับมา</p>
                     </div>
                 </div>
             )}
 
             {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-slate-100/60 dark:border-gray-700 p-4 mb-6">
+            <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-1">
                         <Input
@@ -261,20 +261,20 @@ export default function FriendHistoryPage() {
                             variant="filled"
                         />
                     </div>
-                    <div className="md:col-span-1 flex items-center text-sm text-slate-400">
+                    <div className="md:col-span-1 flex items-center text-sm text-text-secondary">
                         ทั้งหมด {total.toLocaleString()} รายการ
                     </div>
                 </div>
             </div>
 
             {/* Timeline */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-slate-100/60 dark:border-gray-700 overflow-hidden">
+            <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
                 {loading ? (
-                    <div className="p-12 text-center text-slate-500">Loading...</div>
+                    <div className="p-12 text-center text-text-secondary">Loading...</div>
                 ) : events.length === 0 ? (
-                    <div className="p-12 text-center text-slate-500">ไม่พบข้อมูล</div>
+                    <div className="p-12 text-center text-text-secondary">ไม่พบข้อมูล</div>
                 ) : (
-                    <div className="divide-y divide-slate-50 dark:divide-gray-700">
+                    <div className="divide-y divide-border">
                         {events.map((event) => {
                             const config = EVENT_CONFIG[event.event_type] || EVENT_CONFIG.FOLLOW;
                             const IconComponent = config.icon;
@@ -283,7 +283,7 @@ export default function FriendHistoryPage() {
                             return (
                                 <div
                                     key={event.id}
-                                    className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-gray-700/50 transition-colors"
+                                    className="flex items-center gap-4 px-6 py-4 hover:bg-surface-hover transition-colors"
                                 >
                                     {/* Icon */}
                                     <div className={`flex-shrink-0 p-2.5 rounded-xl ${config.bgColor}`}>
@@ -292,7 +292,7 @@ export default function FriendHistoryPage() {
 
                                     {/* User info */}
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-gray-600 overflow-hidden flex-shrink-0">
+                                        <div className="w-9 h-9 rounded-full bg-surface-secondary overflow-hidden flex-shrink-0">
                                             {event.picture_url ? (
                                                 // eslint-disable-next-line @next/next/no-img-element
                                                 <img
@@ -301,16 +301,16 @@ export default function FriendHistoryPage() {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                                <div className="w-full h-full flex items-center justify-center text-text-secondary">
                                                     <User className="w-4 h-4" />
                                                 </div>
                                             )}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="font-medium text-slate-900 dark:text-gray-100 truncate">
+                                            <p className="font-medium text-text-primary truncate">
                                                 {event.display_name || 'LINE User'}
                                             </p>
-                                            <p className="text-xs text-slate-400 font-mono truncate">
+                                            <p className="text-xs text-text-secondary font-mono truncate">
                                                 {event.line_user_id.substring(0, 12)}...
                                             </p>
                                         </div>
@@ -329,7 +329,7 @@ export default function FriendHistoryPage() {
 
                                     {/* Timestamp */}
                                     <div className="flex-shrink-0 text-right hidden sm:block">
-                                        <p className="text-sm text-slate-500 dark:text-gray-400 whitespace-nowrap">
+                                        <p className="text-sm text-text-secondary whitespace-nowrap">
                                             {formatThaiDate(event.created_at)}
                                         </p>
                                     </div>
@@ -341,22 +341,22 @@ export default function FriendHistoryPage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-gray-700">
-                        <p className="text-sm text-slate-500">
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                        <p className="text-sm text-text-secondary">
                             หน้า {page} จาก {totalPages}
                         </p>
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                                 disabled={page <= 1}
-                                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
+                                className="p-2 rounded-lg hover:bg-surface-hover disabled:opacity-30 transition-colors"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                                 disabled={page >= totalPages}
-                                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
+                                className="p-2 rounded-lg hover:bg-surface-hover disabled:opacity-30 transition-colors"
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </button>
