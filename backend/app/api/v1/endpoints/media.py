@@ -70,10 +70,11 @@ async def get_public_file(public_token: str):
 # ===================================================================
 # Existing media endpoint (kept for backward compat)
 # ===================================================================
+# NOTE: No auth — used by <img src>, <video src>, <audio src> in frontend.
+# UUIDs are unguessable; admin endpoints handle metadata/deletion separately.
 @router.get("/media/{media_id}")
 async def get_media(
     media_id: uuid.UUID,
-    _admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(MediaFile).filter(MediaFile.id == media_id))

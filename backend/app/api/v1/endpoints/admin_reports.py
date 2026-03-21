@@ -613,7 +613,13 @@ async def export_report(
             ])
 
     elif type == "operators":
-        report = await report_operators(start_date=start_date, end_date=end_date, db=db, current_admin=current_admin)
+        # report_operators expects str params, convert datetime back to ISO strings
+        report = await report_operators(
+            start_date=start.isoformat() if start else None,
+            end_date=end.isoformat() if end else None,
+            db=db,
+            current_admin=current_admin,
+        )
         writer.writerow(["OperatorID", "Name", "SessionsHandled", "AvgResponseSec", "MessagesSent"])
         for op in report.operators:
             writer.writerow([op.operator_id, op.operator_name, op.sessions_handled, op.avg_response_seconds, op.messages_sent])

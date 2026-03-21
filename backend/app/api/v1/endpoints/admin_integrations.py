@@ -385,14 +385,25 @@ async def update_integration(
     if not obj or obj.provider != Provider.CUSTOM:
         raise HTTPException(status_code=404, detail="Integration not found")
 
+    # Preserve existing credentials if not explicitly provided
+    try:
+        existing_creds = credential_service.decrypt_credentials(obj.credentials)
+    except Exception:
+        existing_creds = {}
+
     creds_dict: Dict[str, Any] = {
         "integration_type": body.integration_type,
         "url": body.url,
     }
+    # Keep existing api_key if not provided in update
     if body.api_key:
         creds_dict["api_key"] = body.api_key
+    elif existing_creds.get("api_key"):
+        creds_dict["api_key"] = existing_creds["api_key"]
     if body.headers:
         creds_dict["headers"] = body.headers
+    elif existing_creds.get("headers"):
+        creds_dict["headers"] = existing_creds["headers"]
 
     obj.name = body.name
     obj.credentials = credential_service.encrypt_credentials(creds_dict)

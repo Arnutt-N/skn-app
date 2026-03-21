@@ -348,6 +348,8 @@ export default function FilesPage() {
   // -----------------------------------------------------------------------
   const getPreviewUrl = (file: MediaFile) => {
     if (file.thumbnail_url) return file.thumbnail_url;
+    if (file.public_url) return file.public_url;
+    // /media/{id} is unauthenticated — safe for <img src>, <video src>, <audio src>
     if (isImageMime(file.mime_type)) return `${API_BASE}/media/${file.id}`;
     return null;
   };
