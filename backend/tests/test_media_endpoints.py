@@ -53,7 +53,7 @@ async def test_list_media_returns_paginated_dict():
         filename="manual.pdf",
         mime_type="application/pdf",
         size_bytes=2048,
-        category="DOCUMENT",
+        category=FileCategory.DOCUMENT,
         is_public=False,
         public_token=None,
         thumbnail_url=None,
@@ -124,7 +124,7 @@ async def test_delete_media_raises_404_when_missing():
 async def test_create_public_link_generates_token():
     media_file = SimpleNamespace(
         id=uuid4(), filename="doc.pdf", mime_type="application/pdf",
-        size_bytes=100, category="DOCUMENT",
+        size_bytes=100, category=FileCategory.DOCUMENT,
         is_public=False, public_token=None,
         thumbnail_url=None,
         created_at=datetime.now(timezone.utc),
@@ -152,7 +152,7 @@ async def test_create_public_link_preserves_existing_token():
     existing_token = "existing-token-123"
     media_file = SimpleNamespace(
         id=uuid4(), filename="doc.pdf", mime_type="application/pdf",
-        size_bytes=100, category="DOCUMENT",
+        size_bytes=100, category=FileCategory.DOCUMENT,
         is_public=False, public_token=existing_token,
         thumbnail_url=None,
         created_at=datetime.now(timezone.utc),
@@ -176,7 +176,7 @@ async def test_create_public_link_preserves_existing_token():
 async def test_revoke_public_link_clears_token():
     media_file = SimpleNamespace(
         id=uuid4(), filename="doc.pdf", mime_type="application/pdf",
-        size_bytes=100, category="DOCUMENT",
+        size_bytes=100, category=FileCategory.DOCUMENT,
         is_public=True, public_token="some-token",
         thumbnail_url=None,
         created_at=datetime.now(timezone.utc),
