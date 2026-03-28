@@ -2,12 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Home, Inbox, Search, Users } from 'lucide-react';
+import { Archive, Home, Inbox, MessageSquarePlus, Search, Users } from 'lucide-react';
 
+import { useAuth } from '@/contexts/AuthContext';
 import { useLiveChatStore } from '../_store/liveChatStore';
 import { useConversations } from '../_hooks/useConversations';
 import { useLiveChatContext } from '../_context/LiveChatContext';
 import { ConversationItem } from './ConversationItem';
+import { CreateChatSheet } from './CreateChatSheet';
 
 interface SearchMessageResult {
   id: number;
@@ -31,15 +33,39 @@ export function ConversationList() {
   const setFilterStatus = useLiveChatStore((s) => s.setFilterStatus);
   const setActiveActionMenu = useLiveChatStore((s) => s.setActiveActionMenu);
 
+  // Auth context
+  const { token } = useAuth();
+
   // API methods from Context
-  const { formatTime, selectConversation, jumpToMessage } = useLiveChatContext();
+  const { formatTime, selectConversation, jumpToMessage, fetchConversations } = useLiveChatContext();
 
   const { filtered, waitingCount, activeCount } = useConversations(conversations, searchQuery);
   const selectedIndex = filtered.findIndex((c) => c.line_user_id === selectedId);
   const selectedConversation = selectedIndex >= 0 ? filtered[selectedIndex] : null;
   const [searchResults, setSearchResults] = React.useState<SearchMessageResult[]>([]);
   const [searching, setSearching] = React.useState(false);
+  const [showCreateChat, setShowCreateChat] = React.useState(false);
+  const [archiving, setArchiving] = React.useState<string | null>(null);
   const closedCount = conversations.filter((c) => !c.session || c.session.status === 'CLOSED').length;
+
+  // Archive (ซ่อน) conversation ที่ปิดแล้ว
+  const handleArchive = React.useCallback(async (lineUserId: string) => {
+    if (!token) return;
+    setArchiving(lineUserId);
+    try {
+      const res = await fetch(`/api/v1/admin/live-chat/conversations/${encodeURIComponent(lineUserId)}/archive`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        await fetchConversations();
+      }
+    } catch (err) {
+      console.error('Archive failed:', err);
+    } finally {
+      setArchiving(null);
+    }
+  }, [token, fetchConversations]);
 
   React.useEffect(() => {
     const q = searchQuery.trim();
@@ -91,6 +117,14 @@ export function ConversationList() {
             </span>
           </div>
         </div>
+        <button
+          onClick={() => setShowCreateChat(true)}
+          className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all flex-shrink-0"
+          aria-label="เริ่มแชทใหม่"
+          title="เริ่มแชทใหม่"
+        >
+          <MessageSquarePlus className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Search + Filter */}
@@ -202,20 +236,41 @@ export function ConversationList() {
           </div>
         ) : (
           <div className="space-y-1 py-2">
-            {filtered.map((conversation) => (
-              <ConversationItem
-                key={conversation.line_user_id}
-                optionId={`conversation-option-${conversation.line_user_id}`}
-                conversation={conversation}
-                selected={selectedId === conversation.line_user_id}
-                formattedTime={conversation.last_message?.created_at ? formatTime(conversation.last_message.created_at) : undefined}
-                onClick={() => {
-                  selectConversation(conversation.line_user_id);
-                  setActiveActionMenu(null);
-                }}
-                onMenuClick={() => setActiveActionMenu(activeActionMenu === conversation.line_user_id ? null : conversation.line_user_id)}
-              />
-            ))}
+            {filtered.map((conversation) => {
+              const isClosed = !conversation.session || conversation.session.status === 'CLOSED';
+              const isArchiving = archiving === conversation.line_user_id;
+
+              return (
+                <div key={conversation.line_user_id} className="relative group/conv">
+                  <ConversationItem
+                    optionId={`conversation-option-${conversation.line_user_id}`}
+                    conversation={conversation}
+                    selected={selectedId === conversation.line_user_id}
+                    formattedTime={conversation.last_message?.created_at ? formatTime(conversation.last_message.created_at) : undefined}
+                    onClick={() => {
+                      selectConversation(conversation.line_user_id);
+                      setActiveActionMenu(null);
+                    }}
+                    onMenuClick={() => setActiveActionMenu(activeActionMenu === conversation.line_user_id ? null : conversation.line_user_id)}
+                  />
+                  {/* ปุ่ม Archive สำหรับ session ที่ปิดแล้ว */}
+                  {isClosed && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleArchive(conversation.line_user_id);
+                      }}
+                      disabled={isArchiving}
+                      className="absolute top-2 right-10 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sidebar-text-muted hover:text-white opacity-0 group-hover/conv:opacity-100 transition-all disabled:opacity-50"
+                      aria-label={`Archive ${conversation.display_name}`}
+                      title="Archive"
+                    >
+                      <Archive className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -236,6 +291,16 @@ export function ConversationList() {
         </span>
       </div>
       </div>
+
+      {/* Sheet สำหรับสร้างแชทใหม่ */}
+      <CreateChatSheet
+        isOpen={showCreateChat}
+        onClose={() => setShowCreateChat(false)}
+        onCreated={() => {
+          setShowCreateChat(false);
+          fetchConversations();
+        }}
+      />
     </aside>
   );
 }

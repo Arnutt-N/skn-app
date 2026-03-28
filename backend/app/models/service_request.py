@@ -23,7 +23,10 @@ class ServiceRequest(Base):
     __tablename__ = "service_requests"
 
     id = Column(Integer, primary_key=True, index=True)
-    
+
+    # แหล่งที่มาของคำร้อง (LIFF, ADMIN, PHONE, PAPER, WALK_IN)
+    source = Column(String(20), default="LIFF", nullable=False, index=True)
+
     # Requester
     requester_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     requester = relationship("User", back_populates="requests", foreign_keys=[requester_id])

@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { History, MoreVertical, RefreshCw, User } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { SelectOption } from '@/components/ui/Select';
 import { AdminSearchFilterBar } from '@/components/admin/AdminSearchFilterBar';
 import { AdminTableHead, type AdminTableHeadColumn } from '@/components/admin/AdminTableHead';
@@ -21,6 +22,7 @@ interface Friend {
 
 export default function FriendsPage() {
     const { token } = useAuth();
+    const router = useRouter();
     const [friends, setFriends] = useState<Friend[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('');
@@ -77,8 +79,8 @@ export default function FriendsPage() {
         <div className="p-6 max-w-7xl mx-auto thai-text">
             <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-text-primary tracking-tight thai-no-break">LINE Friends</h1>
-                    <p className="text-text-secondary text-sm thai-no-break">Manage users who follow the Official Account</p>
+                    <h1 className="text-2xl font-bold text-text-primary tracking-tight thai-no-break">ประวัติเพื่อน</h1>
+                    <p className="text-text-secondary text-sm thai-no-break">ประวัติการเพิ่มเพื่อนและการเปลี่ยนแปลง</p>
                 </div>
                 <Link
                     href="/admin/friends/history"
@@ -116,7 +118,19 @@ export default function FriendsPage() {
                                 </tr>
                             ) : (
                                 filteredFriends.map((friend) => (
-                                    <tr key={friend.line_user_id} className="hover:bg-surface-hover transition-colors">
+                                    <tr
+                                        key={friend.line_user_id}
+                                        className="hover:bg-surface-hover transition-colors cursor-pointer"
+                                        onClick={() => router.push(`/admin/friends/${friend.line_user_id}`)}
+                                        role="link"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                router.push(`/admin/friends/${friend.line_user_id}`);
+                                            }
+                                        }}
+                                    >
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-surface-secondary overflow-hidden">

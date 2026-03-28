@@ -19,6 +19,7 @@ import {
     ChevronRight,
     SquarePen,
     Trash2,
+    Plus,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { AssignModal } from '@/components/admin/AssignModal';
@@ -167,6 +168,11 @@ export default function AdminRequestList() {
         <div className="space-y-6 animate-in fade-in duration-500 thai-text">
             {/* Page Header */}
             <PageHeader title="รายการคำร้องขอรับบริการ" subtitle="จัดการและติดตามสถานะคำร้องจากประชาชนผ่าน LINE OA">
+                <Link href="/admin/requests/create">
+                    <Button variant="primary" size="sm" leftIcon={<Plus className="w-4 h-4" />}>
+                        สร้างคำร้อง
+                    </Button>
+                </Link>
                 <Button variant="outline" size="sm" onClick={() => fetchRequests()}>
                     Refresh
                 </Button>

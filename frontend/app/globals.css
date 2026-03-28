@@ -98,6 +98,21 @@
   --color-busy: hsl(0 84% 60%);
   --color-offline: hsl(220 10% 46%);
 
+  /* Timeline Component Colors */
+  --color-timeline-connector: hsl(220 13% 81%);
+  --color-timeline-dot-follow: hsl(142 71% 45%);
+  --color-timeline-dot-unfollow: hsl(38 92% 50%);
+  --color-timeline-dot-refollow: hsl(217 91% 60%);
+  --color-timeline-dot-block: hsl(0 84% 60%);
+
+  /* Extended Chart Colors */
+  --color-chart-6: hsl(340 75% 55%);
+  --color-chart-7: hsl(195 70% 50%);
+  --color-chart-8: hsl(30 80% 55%);
+  --chart-6: hsl(340 75% 55%);
+  --chart-7: hsl(195 70% 50%);
+  --chart-8: hsl(30 80% 55%);
+
   /* Live Chat Sidebar (dark slate from example) */
   --color-sidebar-bg: hsl(222 47% 11%);
   --color-sidebar-fg: hsl(210 20% 98%);

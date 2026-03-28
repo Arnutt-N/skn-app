@@ -1,6 +1,8 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, UploadFile, File, status
+from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, List, Optional
 from app.api import deps
@@ -9,14 +11,16 @@ from app.schemas.live_chat import (
     ConversationList, ConversationDetail,
     SendMessageRequest, ModeToggleRequest
 )
-from app.models.chat_session import ClosedBy
-from app.models.user import User
+from app.models.chat_session import ChatSession, ClosedBy, SessionStatus
+from app.models.message import Message, MessageDirection
+from app.models.user import ChatMode, User
 from app.core.websocket_manager import ws_manager
 from app.schemas.ws_events import WSEventType
 from app.schemas.ws_events import TransferSessionPayload
 from app.services.analytics_service import analytics_service
 from app.services.friend_service import friend_service
-from datetime import datetime
+from app.services.line_service import line_service
+from datetime import datetime, timezone
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -96,11 +100,14 @@ async def _broadcast_conversation_update(
 @router.get("/conversations", response_model=ConversationList)
 async def list_conversations(
     status: Optional[str] = None,
+    include_archived: bool = Query(False, description="Include archived sessions"),
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_staff),
 ) -> Any:
     """List all conversations for inbox"""
-    return await live_chat_service.get_conversations(status, db, admin_id=current_user.id)
+    return await live_chat_service.get_conversations(
+        status, db, admin_id=current_user.id, include_archived=include_archived,
+    )
 
 @router.get("/conversations/{line_user_id}", response_model=ConversationDetail)
 async def get_conversation(
@@ -411,4 +418,164 @@ async def search_messages(
             limit=limit,
             db=db,
         )
+    }
+
+
+# ---------------------------------------------------------------------------
+# POST /conversations  — Admin-initiated conversation
+# ---------------------------------------------------------------------------
+
+class CreateSessionRequest(BaseModel):
+    line_user_id: str
+    initial_message: Optional[str] = None
+    reason: Optional[str] = None
+
+
+@router.post("/conversations", status_code=status.HTTP_201_CREATED)
+async def create_conversation(
+    data: CreateSessionRequest,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_staff),
+) -> Any:
+    """Admin initiates a new live-chat conversation with a LINE user."""
+    # 1. Find user by line_user_id
+    result = await db.execute(
+        select(User).where(User.line_user_id == data.line_user_id)
+    )
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="LINE user not found",
+        )
+
+    # 2. Check no ACTIVE/WAITING session exists
+    existing = await live_chat_service.get_active_session(data.line_user_id, db)
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"User already has an active session (status={existing.status})",
+        )
+
+    # 3. Set user chat_mode to HUMAN
+    user.chat_mode = ChatMode.HUMAN
+
+    # 4. Create ChatSession as ACTIVE with current operator
+    now = datetime.now(timezone.utc)
+    session = ChatSession(
+        line_user_id=data.line_user_id,
+        status=SessionStatus.ACTIVE,
+        operator_id=current_user.id,
+        started_at=now,
+        claimed_at=now,
+        last_activity_at=now,
+    )
+    db.add(session)
+    await db.flush()
+
+    # 5. If initial_message is provided, create Message and send via LINE
+    if data.initial_message:
+        operator_name = current_user.display_name or "Admin"
+        try:
+            from linebot.v3.messaging import TextMessage
+            await line_service.push_messages(
+                data.line_user_id, [TextMessage(text=data.initial_message)]
+            )
+        except Exception as e:
+            logger.warning("Failed to send initial LINE message: %s", e)
+
+        await line_service.save_message(
+            db=db,
+            line_user_id=data.line_user_id,
+            direction=MessageDirection.OUTGOING,
+            message_type="text",
+            content=data.initial_message,
+            sender_role="ADMIN",
+            operator_name=operator_name,
+            commit=False,
+        )
+        session.message_count = 1
+        session.first_response_at = now
+
+    await db.commit()
+    await db.refresh(session)
+
+    # Broadcast update
+    await ws_manager.broadcast_to_all({
+        "type": WSEventType.SESSION_CLAIMED.value,
+        "payload": {
+            "line_user_id": data.line_user_id,
+            "session_id": session.id,
+            "status": session.status,
+            "operator_id": current_user.id,
+        },
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    try:
+        await analytics_service.emit_live_kpis_update(db)
+    except Exception as e:
+        logger.warning("KPI broadcast failed (non-fatal): %s", e)
+
+    return {
+        "success": True,
+        "session_id": session.id,
+        "line_user_id": data.line_user_id,
+        "status": session.status,
+        "operator_id": current_user.id,
+    }
+
+
+# ---------------------------------------------------------------------------
+# PATCH /conversations/{line_user_id}/archive  — Archive a closed session
+# ---------------------------------------------------------------------------
+
+@router.patch("/conversations/{line_user_id}/archive")
+async def archive_conversation(
+    line_user_id: str,
+    db: AsyncSession = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_staff),
+) -> Any:
+    """Archive a closed conversation. Session must be CLOSED first."""
+    # Find the most recent session for this user
+    result = await db.execute(
+        select(ChatSession)
+        .where(ChatSession.line_user_id == line_user_id)
+        .order_by(ChatSession.started_at.desc())
+        .limit(1)
+    )
+    session = result.scalar_one_or_none()
+
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No session found for this user",
+        )
+
+    if session.status != SessionStatus.CLOSED.value and session.status != SessionStatus.CLOSED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Close the session before archiving",
+        )
+
+    if session.is_archived:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Session is already archived",
+        )
+
+    session.is_archived = True
+    session.archived_at = datetime.now(timezone.utc)
+    session.archived_by = current_user.id
+
+    await db.commit()
+    await db.refresh(session)
+
+    return {
+        "success": True,
+        "session_id": session.id,
+        "line_user_id": line_user_id,
+        "is_archived": session.is_archived,
+        "archived_at": session.archived_at.isoformat() if session.archived_at else None,
+        "archived_by": session.archived_by,
     }

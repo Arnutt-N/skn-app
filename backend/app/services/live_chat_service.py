@@ -436,22 +436,29 @@ class LiveChatService:
         status: Optional[str],
         db: AsyncSession,
         admin_id: Optional[int] = None,
+        include_archived: bool = False,
     ):
         """Get all conversations for inbox with optimized queries (No N+1)"""
         # 1. Latest session per user subquery
-        latest_session_subquery = (
-            select(
-                ChatSession,
-                func.row_number()
-                .over(
-                    partition_by=ChatSession.line_user_id,
-                    order_by=desc(ChatSession.started_at),
-                )
-                .label("rn"),
+        session_status_filter = ChatSession.status.in_([
+            SessionStatus.WAITING, SessionStatus.ACTIVE,
+        ])
+        session_base = select(
+            ChatSession,
+            func.row_number()
+            .over(
+                partition_by=ChatSession.line_user_id,
+                order_by=desc(ChatSession.started_at),
             )
-            .where(ChatSession.status.in_([SessionStatus.WAITING, SessionStatus.ACTIVE]))
-            .subquery()
-        )
+            .label("rn"),
+        ).where(session_status_filter)
+
+        if not include_archived:
+            session_base = session_base.where(
+                (ChatSession.is_archived == False) | (ChatSession.is_archived.is_(None))
+            )
+
+        latest_session_subquery = session_base.subquery()
         latest_session = aliased(ChatSession, latest_session_subquery)
 
         # 2. Latest message per user subquery

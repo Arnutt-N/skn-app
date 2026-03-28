@@ -211,6 +211,32 @@ function StatCard({
   );
 }
 
+function downloadPDF(reportType: string, startDate: string, endDate: string, token: string | null) {
+  const params = new URLSearchParams({
+    report_type: reportType,
+    start_date: startDate,
+    end_date: endDate,
+  });
+  const url = `/api/v1/admin/reports/export/pdf?${params}`;
+  const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
+  fetch(url, { headers })
+    .then((res) => {
+      if (!res.ok) throw new Error('PDF export failed');
+      return res.blob();
+    })
+    .then((blob) => {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `report_${reportType}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    })
+    .catch((err) => {
+      console.error('PDF download error:', err);
+    });
+}
+
 function ExportButton({
   type,
   startDate,
@@ -236,10 +262,21 @@ function ExportButton({
     URL.revokeObjectURL(url);
   };
   return (
-    <Button variant="outline" size="sm" onClick={handleExport} className="gap-1.5">
-      <Download className="w-4 h-4" />
-      ดาวน์โหลด CSV
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" onClick={handleExport} className="gap-1.5">
+        <Download className="w-4 h-4" />
+        CSV
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => downloadPDF(type, startDate, endDate, token)}
+        className="gap-1.5"
+      >
+        <FileText className="w-4 h-4" />
+        PDF
+      </Button>
+    </div>
   );
 }
 

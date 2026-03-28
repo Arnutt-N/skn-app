@@ -1,5 +1,5 @@
 from enum import Enum
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
@@ -32,5 +32,10 @@ class ChatSession(Base):
     transfer_count = Column(Integer, default=0)
     transfer_reason = Column(String(255), nullable=True)
 
-    operator = relationship("User", back_populates="chat_sessions")
+    # Archive fields
+    is_archived = Column(Boolean, default=False, nullable=False)
+    archived_at = Column(DateTime(timezone=True), nullable=True)
+    archived_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    operator = relationship("User", back_populates="chat_sessions", foreign_keys=[operator_id])
     csat_responses = relationship("CsatResponse", back_populates="session")

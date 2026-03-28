@@ -3,6 +3,7 @@ import math
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Response, Query
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func as sa_func
 
@@ -15,6 +16,14 @@ from app.models.user import User
 router = APIRouter()
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
+# ---------------------------------------------------------------------------
+# Pydantic schemas
+# ---------------------------------------------------------------------------
+class MediaMetadataUpdate(BaseModel):
+    filename: Optional[str] = None
+    category: Optional[FileCategory] = None
 
 
 # ---------------------------------------------------------------------------
@@ -216,6 +225,29 @@ async def delete_media(
     await db.delete(media)
     await db.commit()
     return {"ok": True}
+
+
+@router.patch("/admin/media/{media_id}")
+async def update_media_metadata(
+    media_id: uuid.UUID,
+    update_data: MediaMetadataUpdate,
+    db: AsyncSession = Depends(get_db),
+    _admin=Depends(get_current_admin),
+):
+    """Update media file metadata (filename and/or category)."""
+    result = await db.execute(select(MediaFile).where(MediaFile.id == media_id))
+    media = result.scalar_one_or_none()
+    if not media:
+        raise HTTPException(status_code=404, detail="Media not found")
+
+    # อัปเดตเฉพาะฟิลด์ที่ส่งมา (exclude_none)
+    update_fields = update_data.model_dump(exclude_none=True)
+    for field, value in update_fields.items():
+        setattr(media, field, value)
+
+    await db.commit()
+    await db.refresh(media)
+    return _serialise(media)
 
 
 @router.get("/admin/media/{media_id}")

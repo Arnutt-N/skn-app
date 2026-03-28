@@ -12,7 +12,7 @@ import {
   LayoutDashboard, FileText, Bot, MessageCircle,
   Reply, MessageSquareReply, PanelTop, Users,
   UserCog, BarChart3, Megaphone, FolderOpen,
-  Settings, Palette,
+  Settings, Palette, Shield, History,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -156,11 +156,12 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       items: [
         { name: 'Chatbot Overview', href: '/admin/chatbot', icon: Bot, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Live Chat', href: '/admin/live-chat', icon: MessageCircle, openInNewTab: true, allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'AGENT'] },
+        { name: 'Chat Histories', href: '/admin/chat-histories', icon: History, allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'AGENT'] },
         { name: 'Broadcast', href: '/admin/chatbot/broadcast', icon: Megaphone, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Auto-Replies', href: '/admin/auto-replies', icon: Reply, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Reply Objects', href: '/admin/reply-objects', icon: MessageSquareReply, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Rich Menus', href: '/admin/rich-menus', icon: PanelTop, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
-        { name: 'Friends', href: '/admin/friends', icon: Users, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+        { name: 'Friend Histories', href: '/admin/friends', icon: Users, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
       ]
     },
     {
@@ -169,6 +170,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
         { name: 'User Management', href: '/admin/users', icon: UserCog, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'File Management', href: '/admin/files', icon: FolderOpen, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Reports', href: '/admin/reports', icon: BarChart3, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+        { name: 'Audit Log', href: '/admin/audit', icon: Shield, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Settings', href: '/admin/settings', icon: Settings, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Design System', href: '/admin/design-system', icon: Palette, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
       ]

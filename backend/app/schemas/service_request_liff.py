@@ -54,6 +54,7 @@ class ServiceRequestCreate(BaseModel):
 
 class ServiceRequestResponse(BaseModel):
     id: int
+    source: Optional[str] = None
     requester_name: Optional[str] = None
     phone_number: Optional[str] = None
     email: Optional[str] = None

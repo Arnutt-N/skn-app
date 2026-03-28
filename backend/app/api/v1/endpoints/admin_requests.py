@@ -1,3 +1,6 @@
+import enum
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update
@@ -6,7 +9,8 @@ from datetime import datetime
 
 from app.db.session import get_db
 from app.api.deps import get_current_admin
-from app.models.service_request import ServiceRequest, RequestStatus
+from app.models.service_request import ServiceRequest, RequestStatus, RequestPriority
+from app.models.media_file import MediaFile
 from app.schemas.service_request_liff import ServiceRequestResponse
 from pydantic import BaseModel
 from app.models.user import User
@@ -23,6 +27,115 @@ class RequestStats(BaseModel):
 class StatusUpdate(BaseModel):
     status: RequestStatus
     assigned_agent_id: Optional[int] = None
+
+
+# ---------------------------------------------------------------------------
+# แหล่งที่มาของคำร้อง
+# ---------------------------------------------------------------------------
+class RequestSource(str, enum.Enum):
+    LIFF = "LIFF"
+    ADMIN = "ADMIN"
+    PHONE = "PHONE"
+    PAPER = "PAPER"
+    WALK_IN = "WALK_IN"
+
+
+class AdminRequestCreate(BaseModel):
+    """Schema สำหรับสร้างคำร้องโดยแอดมิน"""
+    # ข้อมูลผู้ร้อง
+    prefix: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+
+    # ที่อยู่ / หน่วยงาน
+    agency: Optional[str] = None
+    province: Optional[str] = None
+    district: Optional[str] = None
+    sub_district: Optional[str] = None
+
+    # หัวข้อ
+    topic_category: Optional[str] = None
+    topic_subcategory: Optional[str] = None
+    description: Optional[str] = None
+
+    # ไฟล์แนบ (UUID strings ของ MediaFile)
+    attachment_ids: Optional[list[str]] = None
+
+    # แหล่งที่มาและลำดับความสำคัญ
+    source: RequestSource = RequestSource.ADMIN
+    priority: RequestPriority = RequestPriority.MEDIUM
+
+    # มอบหมายให้เจ้าหน้าที่ (ถ้ามี)
+    assigned_agent_id: Optional[int] = None
+
+
+@router.post("", response_model=ServiceRequestResponse)
+async def create_request(
+    body: AdminRequestCreate,
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin),
+):
+    """สร้างคำร้องใหม่โดยแอดมิน (รองรับหลายช่องทาง)"""
+    # สร้าง attachments JSONB จาก attachment_ids
+    attachments: list[dict] = []
+    if body.attachment_ids:
+        for aid in body.attachment_ids:
+            try:
+                media_uuid = uuid.UUID(aid)
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid attachment UUID: {aid}",
+                )
+            result = await db.execute(
+                select(MediaFile).where(MediaFile.id == media_uuid)
+            )
+            media = result.scalar_one_or_none()
+            if not media:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Attachment not found: {aid}",
+                )
+            attachments.append({
+                "id": str(media.id),
+                "filename": media.filename,
+                "mime_type": media.mime_type,
+                "url": f"/api/v1/media/{media.id}",
+            })
+
+    # สร้าง requester_name จาก prefix + firstname + lastname
+    name_parts = [p for p in [body.prefix, body.firstname, body.lastname] if p]
+    requester_name = " ".join(name_parts) if name_parts else None
+
+    request = ServiceRequest(
+        source=body.source.value,
+        prefix=body.prefix,
+        firstname=body.firstname,
+        lastname=body.lastname,
+        requester_name=requester_name,
+        phone_number=body.phone_number,
+        email=body.email,
+        agency=body.agency,
+        province=body.province,
+        district=body.district,
+        sub_district=body.sub_district,
+        topic_category=body.topic_category,
+        topic_subcategory=body.topic_subcategory,
+        description=body.description,
+        attachments=attachments if attachments else None,
+        status=RequestStatus.PENDING,
+        priority=body.priority,
+        assigned_agent_id=body.assigned_agent_id,
+        assigned_by_id=int(current_admin.id) if body.assigned_agent_id else None,
+    )
+
+    db.add(request)
+    await db.commit()
+    await db.refresh(request)
+    return request
+
 
 @router.get("/stats", response_model=RequestStats)
 async def get_request_stats(db: AsyncSession = Depends(get_db), current_admin: User = Depends(get_current_admin)):

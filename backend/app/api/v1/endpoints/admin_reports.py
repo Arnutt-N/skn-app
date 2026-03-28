@@ -641,3 +641,84 @@ async def export_report(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+# ---------------------------------------------------------------------------
+# GET /export/pdf
+# ---------------------------------------------------------------------------
+
+@router.get("/export/pdf")
+async def export_report_pdf(
+    report_type: str = Query(
+        ...,
+        regex="^(overview|service-requests|messages|operators|followers)$",
+        description="Report type: overview, service-requests, messages, operators, followers",
+    ),
+    period: int = Query(30, ge=1, le=90),
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin),
+):
+    """Export report as PDF with Content-Disposition for direct download."""
+    from app.services.pdf_report_service import PDFReportService
+
+    end_dt = datetime.now(timezone.utc)
+    start_dt = end_dt - timedelta(days=period)
+    start_iso = start_dt.isoformat()
+    end_iso = end_dt.isoformat()
+
+    # Gather data by calling existing report endpoint functions internally
+    if report_type == "overview":
+        report = await report_overview(db=db, current_admin=current_admin)
+        data = report.model_dump()
+
+    elif report_type == "service-requests":
+        report = await report_service_requests(
+            start_date=start_iso,
+            end_date=end_iso,
+            period="daily",
+            db=db,
+            current_admin=current_admin,
+        )
+        data = report.model_dump()
+
+    elif report_type == "messages":
+        report = await report_messages(
+            start_date=start_iso,
+            end_date=end_iso,
+            period="daily",
+            db=db,
+            current_admin=current_admin,
+        )
+        data = report.model_dump()
+
+    elif report_type == "operators":
+        report = await report_operators(
+            start_date=start_iso,
+            end_date=end_iso,
+            db=db,
+            current_admin=current_admin,
+        )
+        data = report.model_dump()
+
+    elif report_type == "followers":
+        report = await report_followers(
+            start_date=start_iso,
+            end_date=end_iso,
+            period="daily",
+            db=db,
+            current_admin=current_admin,
+        )
+        data = report.model_dump()
+
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported report type: {report_type}")
+
+    service = PDFReportService()
+    pdf_buffer = service.generate(report_type, data, period)
+
+    filename = f"report_{report_type}_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

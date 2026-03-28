@@ -30,5 +30,8 @@ class ChatSessionResponse(ChatSessionBase):
     first_response_at: Optional[datetime] = None
     message_count: int = 0
     closed_by: Optional[ClosedBy] = None
+    is_archived: bool = False
+    archived_at: Optional[datetime] = None
+    archived_by: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
