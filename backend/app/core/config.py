@@ -8,6 +8,13 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "JskApp"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
+
+    # Explicit opt-in for dev auth bypass — must set DEV_AUTH_BYPASS=true in .env
+    # Safe by default: missing env var = bypass disabled
+    DEV_AUTH_BYPASS: bool = False
+
+    # Admin URL for Telegram notification links
+    ADMIN_URL: str = "/admin"
     
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []

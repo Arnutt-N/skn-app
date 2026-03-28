@@ -28,20 +28,18 @@ async def get_current_user(
     """
     from app.models.user import User, UserRole
     
-    # Dev mode: allow hardcoded admin if no token
+    # Dev auth bypass: ONLY when explicitly opted-in via DEV_AUTH_BYPASS=true
     if not credentials or not credentials.credentials:
-        if settings.ENVIRONMENT == "development":
-            logger.warning("REST auth bypass used in development mode")
-            # Return mock admin user for dev
+        if settings.DEV_AUTH_BYPASS:
+            logger.warning("DEV AUTH BYPASS: No token provided, returning mock admin")
             result = await db.execute(select(User).where(User.id == 1))
             user = result.scalar_one_or_none()
             if user:
                 return user
-            # Create mock user if doesn't exist
             mock_user = User(
                 id=1,
                 username="admin",
-                display_name="Admin",
+                display_name="Admin (Dev)",
                 role=UserRole.ADMIN
             )
             db.add(mock_user)
@@ -52,7 +50,7 @@ async def get_current_user(
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
+
     token = credentials.credentials
 
     payload = verify_token(token)
@@ -78,17 +76,33 @@ async def get_current_user(
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
-    result = await db.execute(select(User).where(User.id == int(user_id)))
+
+    try:
+        uid = int(user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    result = await db.execute(select(User).where(User.id == uid))
     user = result.scalar_one_or_none()
-    
+
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
     return user
 
 

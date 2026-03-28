@@ -233,9 +233,9 @@ class LineService:
         """Download message content bytes and content-type from LINE Blob API."""
         try:
             if preview:
-                resp = self.blob_api.get_message_content_preview_with_http_info(message_id=message_id)
+                resp = await self.blob_api.get_message_content_preview_with_http_info(message_id=message_id)
             else:
-                resp = self.blob_api.get_message_content_with_http_info(message_id=message_id)
+                resp = await self.blob_api.get_message_content_with_http_info(message_id=message_id)
             data = bytes(resp.data) if resp and resp.data is not None else b""
             content_type = resp.headers.get("Content-Type") if resp and resp.headers else None
             return data, content_type
@@ -274,11 +274,17 @@ class LineService:
         elif media_type == "audio":
             ext = ".m4a"
 
-        safe_name = file_name or f"{media_type}_{uuid4().hex}{ext}"
+        raw_name = file_name or f"{media_type}_{uuid4().hex}{ext}"
+        safe_name = Path(raw_name).name.replace("..", "").strip()
+        if not safe_name:
+            safe_name = f"{media_type}_{uuid4().hex}{ext}"
         if not Path(safe_name).suffix and ext:
             safe_name = f"{safe_name}{ext}"
 
-        full_path = uploads_root / safe_name
+        full_path = (uploads_root / safe_name).resolve()
+        if not str(full_path).startswith(str(uploads_root.resolve())):
+            safe_name = f"{media_type}_{uuid4().hex}{ext}"
+            full_path = uploads_root / safe_name
         full_path.write_bytes(data)
 
         relative_url = f"/uploads/line_media/{safe_name}"

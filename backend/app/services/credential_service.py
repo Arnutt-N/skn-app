@@ -31,7 +31,7 @@ class CredentialService:
                     "ENCRYPTION_KEY is invalid. Generate a Fernet key and update your .env file."
                 ) from exc
 
-        if getattr(settings, "ENVIRONMENT", "production") == "development":
+        if getattr(settings, "DEV_AUTH_BYPASS", False):
             logger.warning(
                 "ENCRYPTION_KEY not set. Using insecure development fallback key. DO NOT use in production."
             )

@@ -69,8 +69,18 @@ export function ChatArea() {
   const [scrollTop, setScrollTop] = React.useState(0);
   const [viewportHeight, setViewportHeight] = React.useState(0);
 
+  // Helper to check if user is near bottom of scroll container
+  const isNearBottom = () => {
+    if (!messagesContainerRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    return scrollHeight - scrollTop - clientHeight < 100;
+  };
+
+  // Only auto-scroll if near bottom (not when user scrolled up to read older messages)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isNearBottom()) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages.length]);
 
   useEffect(() => {

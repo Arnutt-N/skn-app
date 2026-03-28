@@ -229,6 +229,11 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
                 "timestamp": datetime.utcnow().isoformat()
             })
 
+        # Skip all bot processing if user is in HUMAN mode (operator handling)
+        if user.chat_mode and user.chat_mode.value == "HUMAN":
+            logger.info(f"User {line_user_id} in HUMAN mode — skipping bot reply")
+            return
+
         # 2. Show Loading Animation
         await line_service.show_loading_animation(line_user_id)
 
@@ -617,15 +622,27 @@ async def handle_bind_phone(phone_number: str, line_user_id: str, reply_token: s
             await line_service.reply_text(reply_token, f"❌ ไม่พบข้อมูลคำร้องของเบอร์ {phone_number} ครับ")
             return
             
-        # 2. Update line_user_id for these requests
-        # We update ALL requests matching this phone to the new LINE ID
-        from sqlalchemy import update
-        update_stmt = (
-            update(ServiceRequest)
-            .where(ServiceRequest.phone_number == phone_number)
-            .values(line_user_id=line_user_id)
-        )
-        await db.execute(update_stmt)
+        # 2. Guard: Only bind unbound or own requests (prevent history takeover)
+        bindable = [r for r in requests if not r.line_user_id or r.line_user_id == line_user_id]
+        already_bound_to_others = len(requests) - len(bindable)
+
+        if not bindable:
+            await line_service.reply_text(
+                reply_token,
+                f"คำร้องเบอร์ {phone_number} ถูกผูกกับบัญชี LINE อื่นแล้วครับ "
+                "กรุณาติดต่อเจ้าหน้าที่เพื่อดำเนินการ"
+            )
+            return
+
+        for req in bindable:
+            req.line_user_id = line_user_id
+        await db.flush()
+
+        if already_bound_to_others > 0:
+            logger.warning(
+                f"Phone bind: {already_bound_to_others} requests for {phone_number} "
+                f"already bound to other LINE users, skipped"
+            )
         
         # 3. Fetch updated list (Top 5)
         stmt_latest = (

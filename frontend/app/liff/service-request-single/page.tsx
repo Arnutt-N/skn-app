@@ -372,7 +372,7 @@ export default function LiffServiceRequestSingle() {
         <div className="min-h-screen bg-bg pb-24 font-sans text-gray-900">
             <Head>
                 <title>ยื่นคำร้อง - JSK 4.0</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
             </Head>
             <Script src="https://static.line-scdn.net/liff/edge/2/sdk.js" strategy="beforeInteractive" />
 
@@ -408,8 +408,9 @@ export default function LiffServiceRequestSingle() {
                         <CardContent className="p-4 space-y-4 pt-6">
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="col-span-1">
-                                    <label className="label-text">คำนำหน้า <span className="text-red-500">*</span></label>
+                                    <label htmlFor="prefix" className="label-text">คำนำหน้า <span className="text-red-500">*</span></label>
                                     <input
+                                        id="prefix"
                                         type="text"
                                         name="prefix"
                                         value={formData.prefix}
@@ -422,8 +423,9 @@ export default function LiffServiceRequestSingle() {
                                     <p className="text-[9px] text-gray-400 mt-1">*คำนำหน้ายาวให้ย่อ</p>
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="label-text">ชื่อ <span className="text-red-500">*</span></label>
+                                    <label htmlFor="firstname" className="label-text">ชื่อ <span className="text-red-500">*</span></label>
                                     <input
+                                        id="firstname"
                                         type="text"
                                         name="firstname"
                                         value={formData.firstname}
@@ -436,8 +438,9 @@ export default function LiffServiceRequestSingle() {
                                 </div>
                             </div>
                             <div>
-                                <label className="label-text">นามสกุล <span className="text-red-500">*</span></label>
+                                <label htmlFor="lastname" className="label-text">นามสกุล <span className="text-red-500">*</span></label>
                                 <input
+                                    id="lastname"
                                     type="text"
                                     name="lastname"
                                     value={formData.lastname}
@@ -450,8 +453,9 @@ export default function LiffServiceRequestSingle() {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="label-text">หมายเลขโทรศัพท์ <span className="text-red-500">*</span></label>
+                                    <label htmlFor="phone" className="label-text">หมายเลขโทรศัพท์ <span className="text-red-500">*</span></label>
                                     <input
+                                        id="phone"
                                         type="tel"
                                         name="phone"
                                         value={formData.phone}
@@ -464,8 +468,9 @@ export default function LiffServiceRequestSingle() {
                                     {fieldErrors.phone && <p className="text-red-500 text-[10px] mt-1">{fieldErrors.phone}</p>}
                                 </div>
                                 <div>
-                                    <label className="label-text">อีเมล (ถ้ามี)</label>
+                                    <label htmlFor="email" className="label-text">อีเมล (ถ้ามี)</label>
                                     <input
+                                        id="email"
                                         type="email"
                                         name="email"
                                         value={formData.email}
@@ -487,8 +492,9 @@ export default function LiffServiceRequestSingle() {
                         </CardHeader>
                         <CardContent className="p-4 space-y-4 pt-6">
                             <div>
-                                <label className="label-text">หน่วยงาน <span className="text-red-500">*</span></label>
+                                <label htmlFor="agency" className="label-text">หน่วยงาน <span className="text-red-500">*</span></label>
                                 <select
+                                    id="agency"
                                     name="agency"
                                     value={formData.agency}
                                     onChange={handleChange}
@@ -503,8 +509,9 @@ export default function LiffServiceRequestSingle() {
                                 {fieldErrors.agency && <p className="text-red-500 text-[10px] mt-1">{fieldErrors.agency}</p>}
                             </div>
                             <div>
-                                <label className="label-text">จังหวัด <span className="text-red-500">*</span></label>
+                                <label htmlFor="province" className="label-text">จังหวัด <span className="text-red-500">*</span></label>
                                 <select
+                                    id="province"
                                     value={selectedProvinceId || ''}
                                     onChange={handleProvinceChange}
                                     className={`input-field ${fieldErrors.province ? 'border-red-500 ring-1 ring-red-500' : ''}`}
@@ -517,10 +524,11 @@ export default function LiffServiceRequestSingle() {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="label-text flex items-center gap-1">
+                                    <label htmlFor="district" className="label-text flex items-center gap-1">
                                         อำเภอ/เขต <span className="text-red-500">*</span> {loadingDistricts && <div className="w-3 h-3 border-2 border-primary border-t-transparent animate-spin rounded-full"></div>}
                                     </label>
                                     <select
+                                        id="district"
                                         value={selectedDistrictId || ''}
                                         onChange={handleDistrictChange}
                                         disabled={!selectedProvinceId}
@@ -533,10 +541,11 @@ export default function LiffServiceRequestSingle() {
                                     {fieldErrors.district && <p className="text-red-500 text-[10px] mt-1">{fieldErrors.district}</p>}
                                 </div>
                                 <div>
-                                    <label className="label-text flex items-center gap-1">
+                                    <label htmlFor="sub_district" className="label-text flex items-center gap-1">
                                         ตำบล/แขวง <span className="text-red-500">*</span> {loadingSubDistricts && <div className="w-3 h-3 border-2 border-primary border-t-transparent animate-spin rounded-full"></div>}
                                     </label>
                                     <select
+                                        id="sub_district"
                                         name="sub_district"
                                         onChange={handleSubDistrictChange}
                                         value={subDistricts.find(s => s.SUB_DISTRICT_THAI === formData.sub_district)?.SUB_DISTRICT_ID || ''}
@@ -562,8 +571,9 @@ export default function LiffServiceRequestSingle() {
                         </CardHeader>
                         <CardContent className="p-4 space-y-4 pt-6">
                             <div>
-                                <label className="label-text">เรื่องที่ขอรับความช่วยเหลือ <span className="text-red-500">*</span></label>
+                                <label htmlFor="topic_category" className="label-text">เรื่องที่ขอรับความช่วยเหลือ <span className="text-red-500">*</span></label>
                                 <select
+                                    id="topic_category"
                                     name="topic_category"
                                     value={formData.topic_category}
                                     onChange={handleChange}
@@ -577,8 +587,9 @@ export default function LiffServiceRequestSingle() {
                             </div>
                             {formData.topic_category && (
                                 <div className="animate-in slide-in-from-top-2 duration-300">
-                                    <label className="label-text">รายละเอียดเรื่อง <span className="text-red-500">*</span></label>
+                                    <label htmlFor="topic_subcategory" className="label-text">รายละเอียดเรื่อง <span className="text-red-500">*</span></label>
                                     <select
+                                        id="topic_subcategory"
                                         name="topic_subcategory"
                                         value={formData.topic_subcategory}
                                         onChange={handleChange}
@@ -592,8 +603,9 @@ export default function LiffServiceRequestSingle() {
                                 </div>
                             )}
                             <div>
-                                <label className="label-text">รายละเอียดเพิ่มเติม <span className="text-red-500">*</span></label>
+                                <label htmlFor="description" className="label-text">รายละเอียดเพิ่มเติม <span className="text-red-500">*</span></label>
                                 <textarea
+                                    id="description"
                                     name="description"
                                     value={formData.description}
                                     onChange={handleChange}
@@ -666,13 +678,13 @@ export default function LiffServiceRequestSingle() {
 
             {/* Confirmation Dialog */}
             {showConfirm && (
-                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
                     <Card glass className="w-full max-w-sm mb-4 sm:mb-0 shadow-2xl animate-in slide-in-from-bottom-4 duration-500 overflow-hidden">
                         <CardHeader className="text-center pb-2 bg-gray-50/50 pt-8">
                             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Shield className="w-8 h-8 text-primary" />
                             </div>
-                            <CardTitle className="text-xl">ยืนยันการส่งข้อมูล</CardTitle>
+                            <CardTitle id="confirm-dialog-title" className="text-xl">ยืนยันการส่งข้อมูล</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-4">
                             <p className="text-center text-gray-500 text-sm">

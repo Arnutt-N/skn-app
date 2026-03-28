@@ -470,7 +470,7 @@ export default function LiffServiceRequestV2() {
         <div className="min-h-screen bg-bg pb-20 font-sans">
             <Head>
                 <title>ยื่นคำร้อง - JSK 4.0</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
             </Head>
 
             {/* Header */}
@@ -883,13 +883,13 @@ export default function LiffServiceRequestV2() {
 
                 {/* Confirmation Modal */}
                 {showConfirm && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
                         <Card className="w-full max-w-sm shadow-2xl">
                             <CardHeader className="text-center pb-2">
                                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
                                     <MessageSquare className="w-6 h-6" />
                                 </div>
-                                <CardTitle className="text-lg">ยืนยันคำขอรับบริการ</CardTitle>
+                                <CardTitle id="confirm-dialog-title" className="text-lg">ยืนยันคำขอรับบริการ</CardTitle>
                             </CardHeader>
                             <CardContent className="text-center space-y-4">
                                 <p className="text-sm text-gray-500">
