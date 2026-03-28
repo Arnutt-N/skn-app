@@ -298,7 +298,7 @@ class FriendService:
             "refollow_breakdown": refollow_breakdown,
         }
 
-    async def get_user_refollow_counts(self, db: AsyncSession, line_user_ids: Optional[List[str]] = None) -> Dict[str, int]:
+    async def get_user_refollow_counts(self, db: AsyncSession, line_user_ids: list[str] | None = None) -> Dict[str, int]:
         """Get max refollow count per user, optionally scoped to specific IDs."""
         query = select(
             FriendEvent.line_user_id,
