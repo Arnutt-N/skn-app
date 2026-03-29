@@ -55,7 +55,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     footer_about: 'เกี่ยวกับ',
     footer_about_system: 'ระบบ JSK Platform',
-    footer_about_org: 'กรมคุ้มครองสิทธิฯ',
+    footer_about_org: 'สำนักงานยุติธรรมจังหวัด',
     footer_about_policy: 'นโยบายความเป็นส่วนตัว',
     footer_services: 'บริการ',
     footer_services_livechat: 'Live Chat',
@@ -63,11 +63,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     footer_services_chatbot: 'Chatbot',
     footer_services_reports: 'รายงาน',
     footer_links: 'ลิงก์',
-    footer_links_rlpd: 'กรมคุ้มครองสิทธิฯ',
+    footer_links_rlpd: 'สำนักงานยุติธรรมจังหวัด',
     footer_links_moj: 'กระทรวงยุติธรรม',
     footer_links_lineoa: 'LINE Official Account',
     footer_contact: 'ติดต่อ',
-    footer_copyright: '2026 กรมคุ้มครองสิทธิและเสรีภาพ กระทรวงยุติธรรม',
+    footer_copyright: '2026 สำนักงานยุติธรรมจังหวัด กระทรวงยุติธรรม',
   },
   en: {
     nav_features: 'Features',
@@ -123,7 +123,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     footer_about: 'About',
     footer_about_system: 'JSK Platform',
-    footer_about_org: 'Rights & Liberties Dept.',
+    footer_about_org: 'Provincial Justice Office',
     footer_about_policy: 'Privacy Policy',
     footer_services: 'Services',
     footer_services_livechat: 'Live Chat',
@@ -131,11 +131,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     footer_services_chatbot: 'Chatbot',
     footer_services_reports: 'Reports',
     footer_links: 'Links',
-    footer_links_rlpd: 'Rights & Liberties Dept.',
+    footer_links_rlpd: 'Provincial Justice Office',
     footer_links_moj: 'Ministry of Justice',
     footer_links_lineoa: 'LINE Official Account',
     footer_contact: 'Contact',
-    footer_copyright: '2026 Rights and Liberties Protection Department, Ministry of Justice',
+    footer_copyright: '2026 Provincial Justice Office, Ministry of Justice',
   },
 };
 

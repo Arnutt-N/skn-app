@@ -112,13 +112,15 @@ export default function Home() {
             {t(locale, 'cta_subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button asChild size="lg" glow rightIcon={<ArrowRight className="w-4 h-4" />}>
+            <Button asChild size="lg" glow>
               <Link href="/login">
                 {t(locale, 'cta_login')}
+                <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>
-            <Button asChild variant="ghost" size="lg" leftIcon={<MessageCircle className="w-4 h-4" />}>
+            <Button asChild variant="ghost" size="lg">
               <Link href="/liff/service-request">
+                <MessageCircle className="w-4 h-4 mr-1" />
                 {t(locale, 'cta_request')}
               </Link>
             </Button>

@@ -65,14 +65,10 @@ export function LandingNavbar({ locale, onToggleLocale }: LandingNavbarProps) {
           </Button>
 
           {/* Dashboard CTA */}
-          <Button
-            size="sm"
-            rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
-            asChild
-            className="hidden sm:inline-flex"
-          >
+          <Button size="sm" asChild className="hidden sm:inline-flex">
             <Link href="/admin">
               {t(locale, 'nav_dashboard')}
+              <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </Link>
           </Button>
         </div>

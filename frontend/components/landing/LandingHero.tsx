@@ -35,26 +35,21 @@ export function LandingHero({ locale }: LandingHeroProps) {
 
       {/* CTA buttons */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up">
-        <Button
-          size="lg"
-          className="w-full sm:w-auto"
-          leftIcon={<Settings className="w-4 h-4" />}
-          rightIcon={<ArrowRight className="w-4 h-4" />}
-          glow
-          asChild
-        >
+        <Button size="lg" className="w-full sm:w-auto" glow asChild>
           <Link href="/admin">
+            <Settings className="w-4 h-4 mr-1" />
             {t(locale, 'hero_cta_admin')}
+            <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </Button>
         <Button
           size="lg"
           className="w-full sm:w-auto bg-[var(--color-line-green)] hover:bg-[var(--color-line-green-dark)] text-white border-0"
-          leftIcon={<Send className="w-4 h-4" />}
           variant="secondary"
           asChild
         >
           <Link href="/liff/service-request">
+            <Send className="w-4 h-4 mr-1" />
             {t(locale, 'hero_cta_liff')}
           </Link>
         </Button>
