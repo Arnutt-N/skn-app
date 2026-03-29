@@ -26,6 +26,14 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _utcnow_isoformat() -> str:
+    return _utcnow().isoformat()
+
+
 def _message_payload_from_record(message, line_user_id: str, temp_id: Optional[str] = None) -> dict[str, Any]:
     return {
         "id": message.id,
@@ -52,7 +60,7 @@ async def _broadcast_conversation_update(
         {
             "type": WSEventType.NEW_MESSAGE.value,
             "payload": message_payload,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": _utcnow_isoformat(),
         },
     )
 
@@ -62,9 +70,9 @@ async def _broadcast_conversation_update(
     chat_mode = detail["chat_mode"].value if detail and hasattr(detail["chat_mode"], "value") else (detail["chat_mode"] if detail else "BOT")
 
     try:
-        read_marker = datetime.fromisoformat(message_payload["created_at"]) if isinstance(message_payload.get("created_at"), str) else datetime.utcnow()
+        read_marker = datetime.fromisoformat(message_payload["created_at"]) if isinstance(message_payload.get("created_at"), str) else _utcnow()
     except ValueError:
-        read_marker = datetime.utcnow()
+        read_marker = _utcnow()
 
     for admin_id in ws_manager.get_connected_admin_ids():
         if await ws_manager.is_admin_in_room_global(admin_id, room_id):
@@ -94,7 +102,7 @@ async def _broadcast_conversation_update(
                 },
                 "unread_count": unread_count,
             },
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": _utcnow_isoformat(),
         })
 
 @router.get("/conversations", response_model=ConversationList)
@@ -181,13 +189,13 @@ async def send_media(
     )
     await db.commit()
     sent_message = result.get("message", {})
-    created_at = sent_message.get("created_at") or datetime.utcnow().isoformat()
+    created_at = sent_message.get("created_at") or _utcnow_isoformat()
 
     room_id = ws_manager.get_room_id(line_user_id)
     await ws_manager.broadcast_to_room(room_id, {
         "type": WSEventType.NEW_MESSAGE.value,
         "payload": sent_message,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": _utcnow_isoformat(),
     })
 
     detail = await live_chat_service.get_conversation_detail(line_user_id, db)
@@ -196,9 +204,9 @@ async def send_media(
     chat_mode = detail["chat_mode"].value if detail and hasattr(detail["chat_mode"], "value") else (detail["chat_mode"] if detail else "BOT")
 
     try:
-        read_marker = datetime.fromisoformat(created_at) if isinstance(created_at, str) else datetime.utcnow()
+        read_marker = datetime.fromisoformat(created_at) if isinstance(created_at, str) else _utcnow()
     except ValueError:
-        read_marker = datetime.utcnow()
+        read_marker = _utcnow()
 
     for admin_id in ws_manager.get_connected_admin_ids():
         if await ws_manager.is_admin_in_room_global(admin_id, room_id):
@@ -228,7 +236,7 @@ async def send_media(
                 },
                 "unread_count": unread_count,
             },
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": _utcnow_isoformat(),
         })
 
     return result
@@ -254,7 +262,7 @@ async def claim_conversation(
             "status": session.status.value if hasattr(session.status, "value") else session.status,
             "operator_id": current_user.id,
         },
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": _utcnow_isoformat(),
     })
     await analytics_service.emit_live_kpis_update(db)
     return session
@@ -278,7 +286,7 @@ async def close_conversation(
             "line_user_id": line_user_id,
             "session_id": session.id,
         },
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": _utcnow_isoformat(),
     })
     await analytics_service.emit_live_kpis_update(db)
     return session
@@ -320,7 +328,7 @@ async def transfer_conversation(
             "to_operator_id": request.to_operator_id,
             "reason": request.reason,
         },
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": _utcnow_isoformat(),
     })
 
     try:
@@ -509,7 +517,7 @@ async def create_conversation(
             "status": session.status,
             "operator_id": current_user.id,
         },
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": _utcnow_isoformat(),
     })
 
     try:

@@ -1,5 +1,5 @@
 """Security utilities for JWT and authentication."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from typing import Optional, Union
 
@@ -9,6 +9,10 @@ from jose import jwt, JWTError
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -50,16 +54,16 @@ def create_access_token(
         Encoded JWT token
     """
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = _utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = _utcnow() + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     
     to_encode = {
         "exp": expire,
         "sub": str(subject),
-        "iat": datetime.utcnow(),
+        "iat": _utcnow(),
         "type": "access"
     }
     
@@ -84,12 +88,12 @@ def create_refresh_token(subject: Union[str, int]) -> str:
     Returns:
         Encoded JWT refresh token
     """
-    expire = datetime.utcnow() + timedelta(days=7)  # 7 days for refresh token
+    expire = _utcnow() + timedelta(days=7)  # 7 days for refresh token
     
     to_encode = {
         "exp": expire,
         "sub": str(subject),
-        "iat": datetime.utcnow(),
+        "iat": _utcnow(),
         "type": "refresh"
     }
     

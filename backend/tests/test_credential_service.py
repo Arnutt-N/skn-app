@@ -10,6 +10,7 @@ async def test_missing_encryption_key_in_production_raises_on_use():
 
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr("app.services.credential_service.settings.ENVIRONMENT", "production")
+        mp.setattr("app.services.credential_service.settings.DEV_AUTH_BYPASS", False)
         mp.setattr("app.services.credential_service.settings.ENCRYPTION_KEY", "")
 
         with pytest.raises(RuntimeError, match="ENCRYPTION_KEY must be set"):
@@ -21,17 +22,19 @@ def test_validate_configuration_raises_in_production_without_key():
 
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr("app.services.credential_service.settings.ENVIRONMENT", "production")
+        mp.setattr("app.services.credential_service.settings.DEV_AUTH_BYPASS", False)
         mp.setattr("app.services.credential_service.settings.ENCRYPTION_KEY", "")
 
         with pytest.raises(RuntimeError, match="ENCRYPTION_KEY must be set"):
             service.validate_configuration()
 
 
-def test_missing_encryption_key_in_development_uses_fallback_key():
+def test_missing_encryption_key_with_dev_bypass_uses_fallback_key():
     service = CredentialService()
 
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr("app.services.credential_service.settings.ENVIRONMENT", "development")
+        mp.setattr("app.services.credential_service.settings.DEV_AUTH_BYPASS", True)
         mp.setattr("app.services.credential_service.settings.ENCRYPTION_KEY", "")
 
         encrypted = service.encrypt_credentials({"token": "secret"})

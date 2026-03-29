@@ -1,4 +1,6 @@
 """Health check endpoints for monitoring."""
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -70,7 +72,7 @@ async def detailed_health(db: AsyncSession = Depends(get_db)):
     Returns comprehensive health information for all services.
     """
     checks = {
-        "timestamp": __import__('datetime').datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "status": "healthy",
         "services": {}
     }

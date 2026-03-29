@@ -29,7 +29,7 @@ from app.schemas.ws_events import WSEventType
 from app.core.config import settings
 from app.services.handoff_service import handoff_service
 from app.services.live_chat_service import live_chat_service
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 router = APIRouter()
@@ -38,6 +38,14 @@ logger = logging.getLogger(__name__)
 # Webhook event deduplication cache key prefix
 WEBHOOK_EVENT_KEY_PREFIX = "webhook:event:"
 WEBHOOK_EVENT_LOCK_SUFFIX = ":lock"
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _utcnow_isoformat() -> str:
+    return _utcnow().isoformat()
 
 @router.post("/webhook")
 async def line_webhook(request: Request, background_tasks: BackgroundTasks, x_line_signature: str = Header(None)):
@@ -164,7 +172,7 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
     ) or user
 
     # Update last_message_at for conversation sorting
-    user.last_message_at = datetime.utcnow()
+    user.last_message_at = _utcnow()
 
     if isinstance(event.message, TextMessageContent):
         text = event.message.text.strip()
@@ -193,7 +201,7 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
                 "sender_role": "USER",
                 "created_at": saved_message.created_at.isoformat()
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": _utcnow_isoformat()
         })
 
         # Send conversation updates per admin with personalized unread counts.
@@ -203,7 +211,7 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
                 await ws_manager.mark_conversation_read(
                     admin_id,
                     line_user_id,
-                    saved_message.created_at if saved_message.created_at else datetime.utcnow(),
+                    saved_message.created_at if saved_message.created_at else _utcnow(),
                 )
                 unread_count = 0
             else:
@@ -226,7 +234,7 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
                     },
                     "unread_count": unread_count,
                 },
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": _utcnow_isoformat()
             })
 
         # Skip all bot processing if user is in HUMAN mode (operator handling)
@@ -433,7 +441,7 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
                 "sender_role": "USER",
                 "created_at": saved_message.created_at.isoformat()
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": _utcnow_isoformat()
         })
 
         for admin_id in ws_manager.get_connected_admin_ids():
@@ -441,7 +449,7 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
                 await ws_manager.mark_conversation_read(
                     admin_id,
                     line_user_id,
-                    saved_message.created_at if saved_message.created_at else datetime.utcnow(),
+                    saved_message.created_at if saved_message.created_at else _utcnow(),
                 )
                 unread_count = 0
             else:
@@ -464,7 +472,7 @@ async def handle_message_event(event: MessageEvent, db: AsyncSession):
                     },
                     "unread_count": unread_count,
                 },
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": _utcnow_isoformat()
             })
 
 

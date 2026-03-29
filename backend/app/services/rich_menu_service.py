@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Dict, Any, Optional
 import httpx
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.rich_menu import RichMenu, RichMenuStatus
 from app.services.settings_service import SettingsService
 import os
@@ -107,7 +107,7 @@ class RichMenuService:
     ):
         """Update the sync status of a rich menu."""
         rich_menu.sync_status = status
-        rich_menu.last_synced_at = datetime.utcnow()
+        rich_menu.last_synced_at = datetime.now(timezone.utc)
         rich_menu.last_sync_error = error
         await db.commit()
 
