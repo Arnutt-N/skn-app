@@ -15,8 +15,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-    title: 'JskApp - Community Justice Services',
-    description: 'LINE Official Account for Community Justice Center',
+    title: 'JSK Platform | Community Justice Services',
+    description: 'Public service operations platform for LINE Official Account and citizen service workflows.',
 }
 
 export default function RootLayout({

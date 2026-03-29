@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { Mail, Phone } from 'lucide-react';
+import { LandingBrandMark } from './LandingBrandMark';
 import { t, type Locale } from '@/lib/i18n/landing';
 
 interface LandingFooterProps {
@@ -14,14 +16,14 @@ interface FooterLink {
 }
 
 const aboutLinks: FooterLink[] = [
-  { labelKey: 'footer_about_system', href: '#' },
-  { labelKey: 'footer_about_org', href: '#' },
+  { labelKey: 'footer_about_system', href: '#overview' },
+  { labelKey: 'footer_about_scope', href: '#capabilities' },
   { labelKey: 'footer_about_policy', href: '#' },
 ];
 
 const serviceLinks: FooterLink[] = [
   { labelKey: 'footer_services_livechat', href: '/admin/live-chat' },
-  { labelKey: 'footer_services_request', href: '/admin/requests' },
+  { labelKey: 'footer_services_request', href: '/liff/service-request' },
   { labelKey: 'footer_services_chatbot', href: '/admin/chatbot' },
   { labelKey: 'footer_services_reports', href: '/admin/reports' },
 ];
@@ -41,10 +43,10 @@ interface FooterColumnProps {
 function FooterColumn({ locale, titleKey, links }: FooterColumnProps) {
   return (
     <div>
-      <h3 className="text-white font-semibold text-sm uppercase tracking-wider mb-4">
+      <h3 className="mb-4 text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-white/45">
         {t(locale, titleKey)}
       </h3>
-      <ul className="space-y-0">
+      <ul className="space-y-1">
         {links.map(({ labelKey, href, external }) => (
           <li key={labelKey}>
             {external ? (
@@ -52,14 +54,14 @@ function FooterColumn({ locale, titleKey, links }: FooterColumnProps) {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-gray-400 hover:text-white text-sm transition-colors py-1.5"
+                className="block py-1.5 text-sm text-white/70 transition-colors hover:text-white"
               >
                 {t(locale, labelKey)}
               </a>
             ) : (
               <Link
                 href={href}
-                className="block text-gray-400 hover:text-white text-sm transition-colors py-1.5"
+                className="block py-1.5 text-sm text-white/70 transition-colors hover:text-white"
               >
                 {t(locale, labelKey)}
               </Link>
@@ -73,63 +75,53 @@ function FooterColumn({ locale, titleKey, links }: FooterColumnProps) {
 
 export function LandingFooter({ locale }: LandingFooterProps) {
   return (
-    /* Footer uses raw gray-* intentionally — always dark bg regardless of theme */
-    <footer className="bg-gray-900 dark:bg-gray-950 text-gray-300">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Footer Columns */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {/* Column 1 - About */}
-          <FooterColumn locale={locale} titleKey="footer_about" links={aboutLinks} />
+    <footer id="contact" className="bg-[linear-gradient(180deg,hsl(221_47%_12%),hsl(223_48%_8%))] text-white">
+      <div className="mx-auto max-w-7xl px-6 py-14 sm:py-16">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.6fr))]">
+          <div className="max-w-md">
+            <LandingBrandMark tone="dark" />
 
-          {/* Column 2 - Services */}
-          <FooterColumn locale={locale} titleKey="footer_services" links={serviceLinks} />
+            <p className="mt-6 text-sm leading-7 text-white/65 sm:text-[0.95rem]">
+              {t(locale, 'footer_description')}
+            </p>
 
-          {/* Column 3 - Links */}
-          <FooterColumn locale={locale} titleKey="footer_links" links={externalLinks} />
+            <div className="mt-6 space-y-3 text-sm text-white/72">
+              <a
+                href="mailto:contact@rlpd.go.th"
+                className="flex items-start gap-3 transition-colors hover:text-white"
+              >
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(141_80%_72%)]" />
+                <span className="thai-no-break">contact@rlpd.go.th</span>
+              </a>
 
-          {/* Column 4 - Contact */}
-          <div>
-            <h3 className="text-white font-semibold text-sm uppercase tracking-wider mb-4">
-              {t(locale, 'footer_contact')}
-            </h3>
-            <ul className="space-y-0">
-              <li>
-                <a
-                  href="mailto:contact@rlpd.go.th"
-                  className="block text-gray-400 hover:text-white text-sm transition-colors py-1.5"
-                >
-                  contact@rlpd.go.th
-                </a>
-              </li>
-              <li>
-                <a
-                  href="tel:021412500"
-                  className="block text-gray-400 hover:text-white text-sm transition-colors py-1.5"
-                >
-                  0-2141-2500
-                </a>
-              </li>
-              <li>
-                <span className="block text-gray-400 text-sm py-1.5">
-                  120 หมู่ 3 ชั้น 3 ศูนย์ราชการเฉลิมพระเกียรติฯ
-                  ถนนแจ้งวัฒนะ แขวงทุ่งสองห้อง เขตหลักสี่ กรุงเทพฯ 10210
-                </span>
-              </li>
-            </ul>
+              <a
+                href="tel:021412500"
+                className="flex items-start gap-3 transition-colors hover:text-white"
+              >
+                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(141_80%_72%)]" />
+                <span className="thai-no-break">0-2141-2500</span>
+              </a>
+
+              <p className="text-sm leading-7 text-white/58">
+                {t(locale, 'footer_address')}
+              </p>
+            </div>
           </div>
+
+          <FooterColumn locale={locale} titleKey="footer_about" links={aboutLinks} />
+          <FooterColumn locale={locale} titleKey="footer_services" links={serviceLinks} />
+          <FooterColumn locale={locale} titleKey="footer_links" links={externalLinks} />
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-gray-800 mt-10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-line-green)] to-[var(--color-line-green-dark)] flex items-center justify-center">
-              <span className="text-white text-xs font-bold">JSK</span>
-            </div>
-            <span className="text-gray-400 text-sm font-medium">
-              JSK 4.0 Platform
+        <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 text-sm text-white/52">
+            <span className="line-chip rounded-full px-3 py-1 text-[0.72rem] font-semibold">
+              LINE Official Account
             </span>
+            <span className="hidden sm:inline">{t(locale, 'footer_tagline')}</span>
           </div>
-          <p className="text-gray-500 text-sm text-center sm:text-right">
+
+          <p className="text-center text-sm text-white/45 sm:text-right">
             &copy; {t(locale, 'footer_copyright')}
           </p>
         </div>

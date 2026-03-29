@@ -13,25 +13,25 @@ export function LandingLanguageToggle({ locale, onToggle }: LandingLanguageToggl
     <button
       type="button"
       onClick={onToggle}
-      className="relative flex items-center h-8 rounded-full border border-border-default bg-surface p-0.5 text-xs font-medium transition-colors hover:border-brand-500/40"
+      className="relative flex h-10 items-center rounded-full border border-slate-200/70 bg-white/75 p-1 text-[11px] font-semibold tracking-[0.18em] text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white/60 dark:hover:border-white/20 dark:hover:bg-white/10"
       aria-label={locale === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
     >
       <span
         className={cn(
-          'relative z-10 flex items-center justify-center w-9 h-7 rounded-full transition-colors duration-200',
+          'relative z-10 flex h-8 w-10 items-center justify-center rounded-full transition-colors duration-200',
           locale === 'th'
-            ? 'bg-brand-500 text-white shadow-sm'
-            : 'text-text-secondary hover:text-text-primary'
+            ? 'bg-slate-950 text-white shadow-sm dark:bg-white dark:text-slate-950'
+            : 'text-slate-500 hover:text-slate-950 dark:text-white/60 dark:hover:text-white'
         )}
       >
         TH
       </span>
       <span
         className={cn(
-          'relative z-10 flex items-center justify-center w-9 h-7 rounded-full transition-colors duration-200',
+          'relative z-10 flex h-8 w-10 items-center justify-center rounded-full transition-colors duration-200',
           locale === 'en'
-            ? 'bg-brand-500 text-white shadow-sm'
-            : 'text-text-secondary hover:text-text-primary'
+            ? 'bg-slate-950 text-white shadow-sm dark:bg-white dark:text-slate-950'
+            : 'text-slate-500 hover:text-slate-950 dark:text-white/60 dark:hover:text-white'
         )}
       >
         EN

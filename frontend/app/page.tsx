@@ -2,29 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import {
-  MessageCircle, ArrowRight, Bot, BarChart3,
-  Shield, Globe, FileText, Headphones,
-} from 'lucide-react';
+import { ArrowRight, Bot, FileText, Headphones, Shield } from 'lucide-react';
+import { LandingBrandMark } from '@/components/landing/LandingBrandMark';
 import { LandingNavbar } from '@/components/landing/LandingNavbar';
-import { HeroCarousel } from '@/components/landing/HeroCarousel';
 import { LandingHero } from '@/components/landing/LandingHero';
 import { LandingLineSection } from '@/components/landing/LandingLineSection';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { AnimatedCounter } from '@/components/landing/AnimatedCounter';
 import { t, type Locale } from '@/lib/i18n/landing';
 
-const FEATURES_CONFIG = [
-  { icon: Bot, key: 'chatbot', color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-950/30' },
-  { icon: Headphones, key: 'livechat', color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-950/30' },
-  { icon: BarChart3, key: 'analytics', color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-950/30' },
-  { icon: FileText, key: 'request', color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-950/30' },
-  { icon: Shield, key: 'security', color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-950/30' },
-  { icon: Globe, key: 'multiplatform', color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-950/30' },
-];
+const CAPABILITIES = [
+  { icon: Bot, key: 'channels', line: true },
+  { icon: FileText, key: 'request', line: true },
+  { icon: Headphones, key: 'operations', line: false },
+  { icon: Shield, key: 'governance', line: false },
+] as const;
 
 const STATS = [
   { value: '24', key: 'stats_models', suffix: '' },
@@ -49,96 +43,163 @@ export default function Home() {
   const toggleLocale = () => setLocale((prev) => (prev === 'th' ? 'en' : 'th'));
 
   return (
-    <main className="min-h-screen bg-bg thai-text overflow-hidden">
-      {/* Decorative background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-500/5 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-info/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
-        <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-accent/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+    <main className="landing-page thai-text min-h-screen overflow-hidden">
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="landing-grid-overlay absolute inset-x-0 top-0 h-[42rem]" />
+        <div className="absolute left-[-10%] top-24 h-[24rem] w-[24rem] rounded-full bg-[hsl(214_93%_88%_/_0.45)] blur-3xl dark:bg-[hsl(217_91%_60%_/_0.16)]" />
+        <div className="absolute right-[-8%] top-8 h-[20rem] w-[20rem] rounded-full bg-[hsl(141_73%_42%_/_0.14)] blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 h-[18rem] w-[42rem] -translate-x-1/2 rounded-full bg-[hsl(216_70%_96%_/_0.7)] blur-3xl dark:bg-[hsl(217_33%_18%_/_0.65)]" />
       </div>
 
       <LandingNavbar locale={locale} onToggleLocale={toggleLocale} />
-
-      <HeroCarousel locale={locale} />
-
       <LandingHero locale={locale} />
 
-      {/* Stats */}
-      <section id="stats" className="py-16 border-y border-border-subtle bg-surface/50">
-        <div className="max-w-4xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {STATS.map((stat) => (
-            <div key={stat.key}>
-              <div className="text-3xl md:text-4xl font-bold text-text-primary font-mono tracking-tight">
-                <AnimatedCounter end={parseInt(stat.value)} suffix={stat.suffix} />
-              </div>
-              <div className="text-sm text-text-tertiary mt-1">{t(locale, stat.key)}</div>
+      <section id="overview" className="px-6 pb-8 pt-2 sm:pb-12">
+        <div className="mx-auto max-w-7xl landing-surface rounded-[2rem] px-6 py-8 sm:px-8 sm:py-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-end">
+            <div className="max-w-xl">
+              <Badge
+                variant="outline"
+                className="rounded-full border-slate-200/80 bg-white/75 px-4 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-white/65"
+              >
+                {t(locale, 'stats_badge')}
+              </Badge>
+
+              <h2 className="mt-5 text-balance text-3xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+                {t(locale, 'stats_title')}
+              </h2>
+
+              <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300">
+                {t(locale, 'stats_desc')}
+              </p>
             </div>
-          ))}
+
+            <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4">
+              {STATS.map((stat, index) => (
+                <div
+                  key={stat.key}
+                  className={`${
+                    index === 0 ? '' : 'md:border-l md:border-slate-200/70 md:pl-6 dark:border-white/10'
+                  }`}
+                >
+                  <div className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+                    <AnimatedCounter end={parseInt(stat.value, 10)} suffix={stat.suffix} />
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                    {t(locale, stat.key)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="px-6 py-20 max-w-6xl mx-auto">
-        <div className="text-center mb-14">
-          <Badge variant="secondary" className="mb-4">{t(locale, 'feat_badge')}</Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4 tracking-tight">
-            {t(locale, 'feat_title')}
-          </h2>
-          <p className="text-text-secondary max-w-lg mx-auto">
-            {t(locale, 'feat_subtitle')}
-          </p>
-        </div>
+      <section id="capabilities" className="px-6 py-20 sm:py-24">
+        <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <div className="max-w-xl">
+            <Badge
+              variant="outline"
+              className="rounded-full border-slate-200/80 bg-white/75 px-4 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-white/65"
+            >
+              {t(locale, 'capabilities_badge')}
+            </Badge>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {FEATURES_CONFIG.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <Card
-                key={feature.key}
-                variant="default"
-                className="group hover:-translate-y-1 hover:shadow-lg transition-all duration-200"
-              >
-                <CardContent className="p-6">
-                  <div className={`w-11 h-11 rounded-xl ${feature.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
-                    <Icon className={`w-5 h-5 ${feature.color}`} />
+            <h2 className="mt-5 text-balance text-3xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+              {t(locale, 'capabilities_title')}
+            </h2>
+
+            <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300">
+              {t(locale, 'capabilities_desc')}
+            </p>
+          </div>
+
+          <div className="landing-surface rounded-[2rem] px-6 py-4 sm:px-8">
+            <div className="divide-y divide-slate-200/70 dark:divide-white/10">
+              {CAPABILITIES.map((capability, index) => {
+                const Icon = capability.icon;
+
+                return (
+                  <div key={capability.key} className="py-6 first:pt-2 last:pb-2">
+                    <div className="flex items-start gap-5">
+                      <div
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
+                          capability.line
+                            ? 'border-[hsl(141_73%_42%_/_0.18)] bg-[hsl(141_73%_42%_/_0.1)] text-[var(--color-line-green-dark)]'
+                            : 'border-slate-200/80 bg-slate-950 text-white dark:border-white/10 dark:bg-white dark:text-slate-950'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
+                          0{index + 1}
+                        </p>
+                        <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                          {t(locale, `capability_${capability.key}_title`)}
+                        </h3>
+                        <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300 sm:text-[0.95rem]">
+                          {t(locale, `capability_${capability.key}_desc`)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-text-primary mb-2 thai-no-break">
-                    {t(locale, `feat_${feature.key}`)}
-                  </h3>
-                  <p className="text-sm text-text-secondary leading-relaxed">
-                    {t(locale, `feat_${feature.key}_desc`)}
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
       </section>
 
       <LandingLineSection locale={locale} />
 
-      {/* CTA */}
-      <section className="py-20 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-4 tracking-tight">
-            {t(locale, 'cta_title')}
-          </h2>
-          <p className="text-text-secondary mb-8 max-w-md mx-auto">
-            {t(locale, 'cta_subtitle')}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button asChild size="lg" glow>
-              <Link href="/login">
-                {t(locale, 'cta_login')}
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" size="lg">
-              <Link href="/liff/service-request">
-                <MessageCircle className="w-4 h-4 mr-1" />
-                {t(locale, 'cta_request')}
-              </Link>
-            </Button>
+      <section className="px-6 pb-24 pt-6 sm:pb-28">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-[linear-gradient(145deg,hsl(221_47%_13%),hsl(217_44%_18%),hsl(212_48%_22%))] px-6 py-10 shadow-[0_34px_90px_hsl(224_71%_4%_/_0.28)] sm:px-8 sm:py-12">
+          <div className="relative grid gap-8 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
+            <LandingBrandMark tone="dark" compact className="shrink-0" />
+
+            <div className="max-w-2xl">
+              <Badge
+                variant="outline"
+                className="line-chip rounded-full px-4 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em]"
+              >
+                {t(locale, 'cta_badge')}
+              </Badge>
+
+              <h2 className="mt-5 text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                {t(locale, 'cta_title')}
+              </h2>
+
+              <p className="mt-4 text-base leading-7 text-white/72">
+                {t(locale, 'cta_subtitle')}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-4 sm:flex-row lg:flex-col xl:flex-row">
+              <Button
+                asChild
+                size="lg"
+                variant="secondary"
+                className="thai-no-break rounded-full border-white/15 bg-white text-slate-950 hover:bg-slate-100"
+              >
+                <Link href="/login">
+                  {t(locale, 'cta_login')}
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                size="lg"
+                variant="secondary"
+                className="thai-no-break rounded-full border-0 bg-[var(--color-line-green)] text-white hover:bg-[var(--color-line-green-dark)] hover:text-white"
+              >
+                <Link href="/liff/service-request">
+                  {t(locale, 'cta_request')}
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>

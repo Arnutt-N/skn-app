@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { MessageCircle, FileText, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { t, type Locale } from '@/lib/i18n/landing';
 
 interface LandingLineSectionProps {
@@ -17,56 +18,82 @@ const features = [
 
 export function LandingLineSection({ locale }: LandingLineSectionProps) {
   return (
-    <section className="w-full bg-gradient-to-br from-[var(--color-line-green)] to-[var(--color-line-green-dark)] py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto text-center">
-        {/* Header */}
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-          {t(locale, 'line_title')}
-        </h2>
-        <p className="text-lg sm:text-xl text-white/90 mb-12 max-w-2xl mx-auto">
-          {t(locale, 'line_subtitle')}
-        </p>
-
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-          {features.map(({ icon: Icon, titleKey, descKey }) => (
-            <div
-              key={titleKey}
-              className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:bg-white/20"
+    <section id="line" className="px-6 py-20 sm:py-24">
+      <div className="mx-auto max-w-7xl landing-surface rounded-[2rem] px-6 py-8 sm:px-8 sm:py-10">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]">
+          <div className="max-w-xl">
+            <Badge
+              variant="outline"
+              className="line-chip rounded-full px-4 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em]"
             >
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-white/20 mb-4">
-                <Icon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">
-                {t(locale, titleKey)}
-              </h3>
-              <p className="text-sm text-white/80 leading-relaxed">
-                {t(locale, descKey)}
-              </p>
-            </div>
-          ))}
-        </div>
+              {t(locale, 'line_badge')}
+            </Badge>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button
-            asChild
-            size="lg"
-            className="bg-white text-[var(--color-line-green-dark)] font-semibold hover:bg-white/90 hover:shadow-lg shadow-md border-0"
-          >
-            <Link href="#">
-              {t(locale, 'line_add_friend')}
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            className="bg-white text-[var(--color-line-green-dark)] font-semibold hover:bg-white/90 hover:shadow-lg shadow-md border-0"
-          >
-            <Link href="/liff/service-request">
-              {t(locale, 'line_liff_form')}
-            </Link>
-          </Button>
+            <h2 className="mt-6 text-balance text-3xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+              {t(locale, 'line_title_prefix')}{' '}
+              <span className="line-accent md:whitespace-nowrap">
+                {t(locale, 'line_title')}
+              </span>
+            </h2>
+
+            <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
+              {t(locale, 'line_subtitle')}
+            </p>
+
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <Button
+                asChild
+                size="lg"
+                variant="secondary"
+                className="thai-no-break rounded-full border-0 bg-[var(--color-line-green)] px-6 text-white shadow-[0_16px_30px_hsl(141_73%_42%_/_0.22)] hover:bg-[var(--color-line-green-dark)] hover:text-white"
+              >
+                <Link href="#">
+                  {t(locale, 'line_add_friend')}
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                size="lg"
+                variant="secondary"
+                className="thai-no-break rounded-full border border-[hsl(141_73%_42%_/_0.24)] bg-[hsl(141_73%_42%_/_0.08)] px-6 text-[var(--color-line-green-dark)] hover:bg-[hsl(141_73%_42%_/_0.14)]"
+              >
+                <Link href="/liff/service-request">
+                  {t(locale, 'line_request_cta')}
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-200/70 dark:divide-white/10">
+            {features.map(({ icon: Icon, titleKey, descKey }, index) => (
+              <div
+                key={titleKey}
+                className="flex gap-4 py-6 first:pt-0 last:pb-0"
+              >
+                <div className="line-chip flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold">
+                  {String(index + 1).padStart(2, '0')}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-950 dark:text-white">
+                        {t(locale, titleKey)}
+                      </h3>
+                      <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300 sm:text-[0.95rem]">
+                        {t(locale, descKey)}
+                      </p>
+                    </div>
+
+                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white text-slate-700 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/80">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

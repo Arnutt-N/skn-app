@@ -5,6 +5,7 @@ import { Sun, Moon, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/components/providers';
 import { LandingLanguageToggle } from './LandingLanguageToggle';
+import { LandingBrandMark } from './LandingBrandMark';
 import { t, type Locale } from '@/lib/i18n/landing';
 
 interface LandingNavbarProps {
@@ -12,65 +13,76 @@ interface LandingNavbarProps {
   onToggleLocale: () => void;
 }
 
+const NAV_LINKS = [
+  { href: '#overview', key: 'nav_overview' },
+  { href: '#capabilities', key: 'nav_capabilities' },
+  { href: '#line', key: 'nav_line' },
+  { href: '#contact', key: 'nav_contact' },
+] as const;
+
 export function LandingNavbar({ locale, onToggleLocale }: LandingNavbarProps) {
   const { resolvedTheme, toggleTheme } = useTheme();
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-xl bg-bg/80 border-b border-border-subtle">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl gradient-logo flex items-center justify-center text-white font-bold text-sm shadow-md shadow-brand-500/20">
-            JS
+    <nav className="sticky top-0 z-50 px-4 pt-4 sm:px-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="landing-nav-shell flex h-[72px] items-center gap-3 rounded-full px-4 sm:px-6">
+          <Link href="/" className="min-w-0 shrink-0">
+            <LandingBrandMark compact />
+          </Link>
+
+          <div className="hidden xl:flex items-center gap-7 pl-8 text-sm text-slate-600 dark:text-slate-300">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.key}
+                href={link.href}
+                className="thai-no-break transition-colors hover:text-slate-950 dark:hover:text-white"
+              >
+                {t(locale, link.key)}
+              </a>
+            ))}
           </div>
-          <span className="font-semibold text-text-primary tracking-tight hidden sm:inline">
-            JSK Platform
-          </span>
-        </div>
 
-        {/* Desktop nav links */}
-        <div className="hidden md:flex items-center gap-8 text-sm text-text-secondary">
-          <a href="#features" className="hover:text-text-primary transition-colors">
-            {t(locale, 'nav_features')}
-          </a>
-          <a href="#stats" className="hover:text-text-primary transition-colors">
-            {t(locale, 'nav_stats')}
-          </a>
-        </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={toggleTheme}
+              aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="hidden rounded-full border border-slate-200/70 bg-white/75 text-slate-600 shadow-sm hover:bg-white hover:text-slate-950 sm:inline-flex dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              {resolvedTheme === 'dark' ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+            </Button>
 
-        {/* Right controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Theme toggle */}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={toggleTheme}
-            aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {resolvedTheme === 'dark' ? (
-              <Sun className="w-4 h-4" />
-            ) : (
-              <Moon className="w-4 h-4" />
-            )}
-          </Button>
+            <LandingLanguageToggle locale={locale} onToggle={onToggleLocale} />
 
-          {/* Language toggle */}
-          <LandingLanguageToggle locale={locale} onToggle={onToggleLocale} />
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="hidden rounded-full px-4 text-slate-600 hover:bg-white/80 hover:text-slate-950 sm:inline-flex dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              <Link href="/login">
+                {t(locale, 'nav_login')}
+              </Link>
+            </Button>
 
-          {/* Login */}
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/login">
-              {t(locale, 'nav_login')}
-            </Link>
-          </Button>
-
-          {/* Dashboard CTA */}
-          <Button size="sm" asChild className="hidden sm:inline-flex">
-            <Link href="/admin">
-              {t(locale, 'nav_dashboard')}
-              <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            </Link>
-          </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              asChild
+              className="thai-no-break rounded-full border-0 bg-[var(--color-line-green)] px-4 text-white shadow-[0_14px_30px_hsl(141_73%_42%_/_0.28)] hover:bg-[var(--color-line-green-dark)] hover:text-white"
+            >
+              <Link href="/liff/service-request">
+                {t(locale, 'nav_request')}
+                <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </nav>
