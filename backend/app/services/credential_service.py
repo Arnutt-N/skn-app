@@ -18,6 +18,11 @@ class CredentialService:
     def __init__(self):
         self.cipher: Optional[Fernet] = None
 
+    def _allows_fallback_key(self) -> bool:
+        """Allow the insecure fallback for development-only configurations."""
+        environment = str(getattr(settings, "ENVIRONMENT", "development") or "development")
+        return environment.strip().lower() != "production"
+
     def validate_configuration(self) -> None:
         """Validate encryption settings before serving traffic."""
         key = getattr(settings, "ENCRYPTION_KEY", "")
@@ -31,7 +36,7 @@ class CredentialService:
                     "ENCRYPTION_KEY is invalid. Generate a Fernet key and update your .env file."
                 ) from exc
 
-        if getattr(settings, "ENVIRONMENT", "production") == "development":
+        if self._allows_fallback_key():
             logger.warning(
                 "ENCRYPTION_KEY not set. Using insecure development fallback key. DO NOT use in production."
             )

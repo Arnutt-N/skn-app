@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Slot } from '@radix-ui/react-slot';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -95,6 +96,7 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
   isLoading?: boolean;
   loadingText?: string;
   leftIcon?: React.ReactNode;
@@ -109,6 +111,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className,
       variant = 'primary',
       size = 'md',
+      asChild = false,
       isLoading = false,
       loadingText,
       leftIcon,
@@ -121,8 +124,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
+    const Comp = asChild ? Slot : 'button';
     return (
-      <button
+      <Comp
         ref={ref}
         className={cn(
           buttonVariants({ variant, size }),
@@ -164,7 +168,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           <span>{children}</span>
           {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
         </span>
-      </button>
+      </Comp>
     );
   }
 );

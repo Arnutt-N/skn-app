@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { Archive, Home, Inbox, MessageSquarePlus, Search, Users } from 'lucide-react';
 
@@ -40,8 +40,18 @@ export function ConversationList() {
   const { formatTime, selectConversation, jumpToMessage, fetchConversations } = useLiveChatContext();
 
   const { filtered, waitingCount, activeCount } = useConversations(conversations, searchQuery);
-  const selectedIndex = filtered.findIndex((c) => c.line_user_id === selectedId);
-  const selectedConversation = selectedIndex >= 0 ? filtered[selectedIndex] : null;
+
+  // Apply filter chip selection to the search-filtered list
+  const filteredConversations = useMemo(() => {
+    if (!filterStatus) return filtered;
+    return filtered.filter((c) => {
+      const status = c.session?.status || 'CLOSED';
+      return status === filterStatus;
+    });
+  }, [filtered, filterStatus]);
+
+  const selectedIndex = filteredConversations.findIndex((c) => c.line_user_id === selectedId);
+  const selectedConversation = selectedIndex >= 0 ? filteredConversations[selectedIndex] : null;
   const [searchResults, setSearchResults] = React.useState<SearchMessageResult[]>([]);
   const [searching, setSearching] = React.useState(false);
   const [showCreateChat, setShowCreateChat] = React.useState(false);
@@ -54,7 +64,7 @@ export function ConversationList() {
     setArchiving(lineUserId);
     try {
       const res = await fetch(`/api/v1/admin/live-chat/conversations/${encodeURIComponent(lineUserId)}/archive`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -172,18 +182,18 @@ export function ConversationList() {
         aria-activedescendant={selectedConversation ? `conversation-option-${selectedConversation.line_user_id}` : undefined}
         tabIndex={0}
         onKeyDown={(event) => {
-          if (!filtered.length) return;
+          if (!filteredConversations.length) return;
           if (event.key === 'ArrowDown') {
             event.preventDefault();
-            const next = Math.min((selectedIndex < 0 ? -1 : selectedIndex) + 1, filtered.length - 1);
-            selectConversation(filtered[next].line_user_id);
+            const next = Math.min((selectedIndex < 0 ? -1 : selectedIndex) + 1, filteredConversations.length - 1);
+            selectConversation(filteredConversations[next].line_user_id);
           } else if (event.key === 'ArrowUp') {
             event.preventDefault();
             const next = Math.max((selectedIndex < 0 ? 0 : selectedIndex) - 1, 0);
-            selectConversation(filtered[next].line_user_id);
+            selectConversation(filteredConversations[next].line_user_id);
           } else if (event.key === 'Enter' && selectedIndex >= 0) {
             event.preventDefault();
-            selectConversation(filtered[selectedIndex].line_user_id);
+            selectConversation(filteredConversations[selectedIndex].line_user_id);
           }
         }}
       >
@@ -229,14 +239,14 @@ export function ConversationList() {
               </div>
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : filteredConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6 opacity-60">
             <Inbox className="w-10 h-10 text-sidebar-text-muted mb-3" />
             <span className="text-sidebar-text-muted text-sm">No conversations</span>
           </div>
         ) : (
           <div className="space-y-1 py-2">
-            {filtered.map((conversation) => {
+            {filteredConversations.map((conversation) => {
               const isClosed = !conversation.session || conversation.session.status === 'CLOSED';
               const isArchiving = archiving === conversation.line_user_id;
 

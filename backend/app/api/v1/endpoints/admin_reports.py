@@ -252,7 +252,7 @@ async def report_overview(
 async def report_service_requests(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    period: str = Query("daily", regex="^(daily|weekly|monthly)$"),
+    period: str = Query("daily", pattern="^(daily|weekly|monthly)$"),
     db: AsyncSession = Depends(get_db),
     current_admin: User = Depends(get_current_admin),
 ):
@@ -334,7 +334,7 @@ async def report_service_requests(
 async def report_messages(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    period: str = Query("daily", regex="^(daily|weekly|monthly)$"),
+    period: str = Query("daily", pattern="^(daily|weekly|monthly)$"),
     db: AsyncSession = Depends(get_db),
     current_admin: User = Depends(get_current_admin),
 ):
@@ -481,7 +481,7 @@ async def report_operators(
 async def report_followers(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    period: str = Query("daily", regex="^(daily|weekly|monthly)$"),
+    period: str = Query("daily", pattern="^(daily|weekly|monthly)$"),
     db: AsyncSession = Depends(get_db),
     current_admin: User = Depends(get_current_admin),
 ):
@@ -567,7 +567,7 @@ async def report_followers(
 
 @router.get("/export")
 async def export_report(
-    type: str = Query(..., regex="^(service-requests|messages|operators|followers)$"),
+    type: str = Query(..., pattern="^(service-requests|messages|operators|followers)$"),
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
@@ -651,7 +651,7 @@ async def export_report(
 async def export_report_pdf(
     report_type: str = Query(
         ...,
-        regex="^(overview|service-requests|messages|operators|followers)$",
+        pattern="^(overview|service-requests|messages|operators|followers)$",
         description="Report type: overview, service-requests, messages, operators, followers",
     ),
     period: int = Query(30, ge=1, le=90),
@@ -716,7 +716,7 @@ async def export_report_pdf(
     service = PDFReportService()
     pdf_buffer = service.generate(report_type, data, period)
 
-    filename = f"report_{report_type}_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
+    filename = f"report_{report_type}_{datetime.now(timezone.utc).strftime('%Y%m%d')}.pdf"
     return StreamingResponse(
         pdf_buffer,
         media_type="application/pdf",

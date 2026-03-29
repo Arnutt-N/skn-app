@@ -10,6 +10,7 @@ from app.main import app
 def test_startup_fails_without_encryption_key_in_production():
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr("app.services.credential_service.settings.ENVIRONMENT", "production")
+        mp.setattr("app.services.credential_service.settings.DEV_AUTH_BYPASS", False)
         mp.setattr("app.services.credential_service.settings.ENCRYPTION_KEY", "")
         mp.setattr("app.main.redis_client.connect", AsyncMock())
         mp.setattr("app.main.ws_manager.initialize", AsyncMock())

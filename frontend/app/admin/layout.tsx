@@ -156,7 +156,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       items: [
         { name: 'Chatbot Overview', href: '/admin/chatbot', icon: Bot, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Live Chat', href: '/admin/live-chat', icon: MessageCircle, openInNewTab: true, allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'AGENT'] },
-        { name: 'Chat Histories', href: '/admin/chat-histories', icon: History, allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'AGENT'] },
+        { name: 'Chat Histories', href: '/admin/chat-histories', icon: History, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Broadcast', href: '/admin/chatbot/broadcast', icon: Megaphone, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Auto-Replies', href: '/admin/auto-replies', icon: Reply, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
         { name: 'Reply Objects', href: '/admin/reply-objects', icon: MessageSquareReply, allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },

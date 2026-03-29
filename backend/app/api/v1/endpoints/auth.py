@@ -52,6 +52,12 @@ async def login(
             detail="Invalid username or password",
         )
 
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+
     access_token = create_access_token(
         subject=user.id,
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
@@ -107,7 +113,7 @@ async def refresh(
         )
     )
     user = result.scalar_one_or_none()
-    if not user:
+    if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",

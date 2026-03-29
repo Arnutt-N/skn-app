@@ -318,7 +318,7 @@ export default function LiffServiceRequestV2() {
         <div className="min-h-screen bg-gray-50 pb-safe">
             <Head>
                 <title>ยื่นคำร้องขอรับความช่วยเหลือ</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
             </Head>
             <Script src="https://static.line-scdn.net/liff/edge/2/sdk.js" strategy="beforeInteractive" />
 
@@ -343,8 +343,9 @@ export default function LiffServiceRequestV2() {
 
                     <div className="grid grid-cols-3 gap-3">
                         <div className="col-span-1">
-                            <label className="block text-xs font-medium text-gray-700 mb-1">คำนำหน้า</label>
+                            <label htmlFor="prefix" className="block text-xs font-medium text-gray-700 mb-1">คำนำหน้า</label>
                             <select
+                                id="prefix"
                                 name="prefix"
                                 value={formData.prefix}
                                 onChange={handleChange}
@@ -358,8 +359,9 @@ export default function LiffServiceRequestV2() {
                             </select>
                         </div>
                         <div className="col-span-2">
-                            <label className="block text-xs font-medium text-gray-700 mb-1">ชื่อ</label>
+                            <label htmlFor="firstname" className="block text-xs font-medium text-gray-700 mb-1">ชื่อ</label>
                             <input
+                                id="firstname"
                                 type="text"
                                 name="firstname"
                                 value={formData.firstname}
@@ -372,8 +374,9 @@ export default function LiffServiceRequestV2() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">นามสกุล</label>
+                        <label htmlFor="lastname" className="block text-xs font-medium text-gray-700 mb-1">นามสกุล</label>
                         <input
+                            id="lastname"
                             type="text"
                             name="lastname"
                             value={formData.lastname}
@@ -386,8 +389,9 @@ export default function LiffServiceRequestV2() {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
+                            <label htmlFor="phone" className="block text-xs font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
                             <input
+                                id="phone"
                                 type="tel"
                                 name="phone"
                                 value={formData.phone}
@@ -399,8 +403,9 @@ export default function LiffServiceRequestV2() {
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">อีเมล (ถ้ามี)</label>
+                            <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-1">อีเมล (ถ้ามี)</label>
                             <input
+                                id="email"
                                 type="email"
                                 name="email"
                                 value={formData.email}
@@ -422,8 +427,9 @@ export default function LiffServiceRequestV2() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">หน่วยงานเจ้าของเรื่อง</label>
+                        <label htmlFor="agency" className="block text-xs font-medium text-gray-700 mb-1">หน่วยงานเจ้าของเรื่อง</label>
                         <select
+                            id="agency"
                             name="agency"
                             value={formData.agency}
                             onChange={handleChange}
@@ -441,8 +447,9 @@ export default function LiffServiceRequestV2() {
 
                     {/* Cascading Location: Province -> District -> SubDistrict */}
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">จังหวัด</label>
+                        <label htmlFor="province" className="block text-xs font-medium text-gray-700 mb-1">จังหวัด</label>
                         <select
+                            id="province"
                             value={selectedProvinceId || ''}
                             onChange={handleProvinceChange}
                             className="w-full p-2.5 rounded-xl border-gray-200 bg-white text-sm"
@@ -459,10 +466,11 @@ export default function LiffServiceRequestV2() {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                            <label htmlFor="district" className="block text-xs font-medium text-gray-700 mb-1">
                                 อำเภอ/เขต {loadingDistricts && "..."}
                             </label>
                             <select
+                                id="district"
                                 value={selectedDistrictId || ''}
                                 onChange={handleDistrictChange}
                                 disabled={!selectedProvinceId}
@@ -478,10 +486,11 @@ export default function LiffServiceRequestV2() {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                            <label htmlFor="sub_district" className="block text-xs font-medium text-gray-700 mb-1">
                                 ตำบล/แขวง {loadingSubDistricts && "..."}
                             </label>
                             <select
+                                id="sub_district"
                                 name="sub_district"
                                 onChange={handleSubDistrictChange}
                                 value={subDistricts.find(s => s.SUB_DISTRICT_THAI === formData.sub_district)?.SUB_DISTRICT_ID || ''}
@@ -509,8 +518,9 @@ export default function LiffServiceRequestV2() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">เรื่องที่ขอรับความช่วยเหลือ</label>
+                        <label htmlFor="topic_category" className="block text-xs font-medium text-gray-700 mb-1">เรื่องที่ขอรับความช่วยเหลือ</label>
                         <select
+                            id="topic_category"
                             name="topic_category"
                             value={formData.topic_category}
                             onChange={handleChange}
@@ -526,8 +536,9 @@ export default function LiffServiceRequestV2() {
 
                     {formData.topic_category && TOPIC_OPTIONS[formData.topic_category] && (
                         <div className="animate-fade-in-up">
-                            <label className="block text-xs font-medium text-gray-700 mb-1">รายละเอียดเรื่อง</label>
+                            <label htmlFor="topic_subcategory" className="block text-xs font-medium text-gray-700 mb-1">รายละเอียดเรื่อง</label>
                             <select
+                                id="topic_subcategory"
                                 name="topic_subcategory"
                                 value={formData.topic_subcategory}
                                 onChange={handleChange}
@@ -543,8 +554,9 @@ export default function LiffServiceRequestV2() {
                     )}
 
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">รายละเอียดเพิ่มเติม</label>
+                        <label htmlFor="description" className="block text-xs font-medium text-gray-700 mb-1">รายละเอียดเพิ่มเติม</label>
                         <textarea
+                            id="description"
                             name="description"
                             value={formData.description}
                             onChange={handleChange}

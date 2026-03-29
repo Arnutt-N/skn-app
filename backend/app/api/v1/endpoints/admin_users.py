@@ -10,7 +10,7 @@ from app.api.deps import get_current_admin
 from app.models.user import User, UserRole
 from app.models.service_request import ServiceRequest, RequestStatus
 from app.core.security import get_password_hash, verify_password
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 import math
 
 router = APIRouter()
@@ -20,6 +20,8 @@ router = APIRouter()
 
 
 class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     username: Optional[str] = None
     email: Optional[str] = None
@@ -30,10 +32,6 @@ class UserOut(BaseModel):
     line_user_id: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
 
 class UserListResponse(BaseModel):
     users: List[UserOut]

@@ -1,7 +1,7 @@
 """PDF report generation service using reportlab."""
 
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timezone
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -61,7 +61,7 @@ class PDFReportService:
         title = title_map.get(report_type, 'Report')
         elements.append(Paragraph(title, self.styles['ReportTitle']))
         elements.append(Paragraph(
-            f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')} | Period: {period} days",
+            f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} | Period: {period} days",
             self.styles['ReportSubtitle'],
         ))
 

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.api.deps import get_db, get_current_admin
 from app.models.audit_log import AuditLog
@@ -32,7 +32,7 @@ async def get_audit_logs(
         - limit: Applied limit
         - offset: Applied offset
     """
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     
     # Build query
     query = select(AuditLog).where(AuditLog.created_at > cutoff)
@@ -101,7 +101,7 @@ async def get_audit_stats(
         - action_breakdown: Counts by action type
         - resource_breakdown: Counts by resource type
     """
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     
     # Total actions
     total = await db.scalar(
