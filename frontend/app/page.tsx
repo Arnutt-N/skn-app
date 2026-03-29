@@ -13,6 +13,7 @@ import { LandingNavbar } from '@/components/landing/LandingNavbar';
 import { LandingHero } from '@/components/landing/LandingHero';
 import { LandingLineSection } from '@/components/landing/LandingLineSection';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { AnimatedCounter } from '@/components/landing/AnimatedCounter';
 import { t, type Locale } from '@/lib/i18n/landing';
 
 const FEATURES_CONFIG = [
@@ -54,7 +55,7 @@ export default function Home() {
           {STATS.map((stat) => (
             <div key={stat.key}>
               <div className="text-3xl md:text-4xl font-bold text-text-primary font-mono tracking-tight">
-                {stat.value}{stat.suffix}
+                <AnimatedCounter end={parseInt(stat.value)} suffix={stat.suffix} />
               </div>
               <div className="text-sm text-text-tertiary mt-1">{t(locale, stat.key)}</div>
             </div>
