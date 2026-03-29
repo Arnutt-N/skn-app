@@ -113,6 +113,11 @@
   --chart-7: hsl(195 70% 50%);
   --chart-8: hsl(30 80% 55%);
 
+  /* LINE Brand Colors */
+  --color-line-green: hsl(141 73% 42%);
+  --color-line-green-dark: hsl(141 73% 35%);
+  --color-line-green-light: hsl(141 60% 90%);
+
   /* Live Chat Sidebar (dark slate from example) */
   --color-sidebar-bg: hsl(222 47% 11%);
   --color-sidebar-fg: hsl(210 20% 98%);
