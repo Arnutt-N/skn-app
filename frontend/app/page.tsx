@@ -54,7 +54,7 @@ export default function Home() {
       <LandingNavbar locale={locale} onToggleLocale={toggleLocale} />
       <LandingHero locale={locale} />
 
-      <section id="overview" className="px-6 pb-8 pt-2 sm:pb-12">
+      <section id="overview" className="scroll-mt-28 px-6 pb-8 pt-2 sm:pb-12">
         <div className="mx-auto max-w-7xl landing-surface rounded-[2rem] px-6 py-8 sm:px-8 sm:py-10">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-end">
             <div className="max-w-xl">
@@ -95,7 +95,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="capabilities" className="px-6 py-20 sm:py-24">
+      <section id="capabilities" className="scroll-mt-28 px-6 py-20 sm:py-24">
         <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
           <div className="max-w-xl">
             <Badge

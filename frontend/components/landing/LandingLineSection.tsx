@@ -5,6 +5,7 @@ import { MessageCircle, FileText, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { t, type Locale } from '@/lib/i18n/landing';
+import { landingPublicLinks } from '@/lib/public-links';
 
 interface LandingLineSectionProps {
   locale: Locale;
@@ -17,8 +18,11 @@ const features = [
 ] as const;
 
 export function LandingLineSection({ locale }: LandingLineSectionProps) {
+  const lineOfficialAccountUrl = landingPublicLinks.lineOfficialAccount;
+  const primaryLineLabel = lineOfficialAccountUrl ? t(locale, 'line_add_friend') : t(locale, 'line_contact_cta');
+
   return (
-    <section id="line" className="px-6 py-20 sm:py-24">
+    <section id="line" className="scroll-mt-28 px-6 py-20 sm:py-24">
       <div className="mx-auto max-w-7xl landing-surface rounded-[2rem] px-6 py-8 sm:px-8 sm:py-10">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]">
           <div className="max-w-xl">
@@ -47,9 +51,15 @@ export function LandingLineSection({ locale }: LandingLineSectionProps) {
                 variant="secondary"
                 className="thai-no-break rounded-full border-0 bg-[var(--color-line-green)] px-6 text-white shadow-[0_16px_30px_hsl(141_73%_42%_/_0.22)] hover:bg-[var(--color-line-green-dark)] hover:text-white"
               >
-                <Link href="#">
-                  {t(locale, 'line_add_friend')}
-                </Link>
+                {lineOfficialAccountUrl ? (
+                  <a href={lineOfficialAccountUrl} target="_blank" rel="noopener noreferrer">
+                    {primaryLineLabel}
+                  </a>
+                ) : (
+                  <Link href="#contact">
+                    {primaryLineLabel}
+                  </Link>
+                )}
               </Button>
 
               <Button

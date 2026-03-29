@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Mail, Phone } from 'lucide-react';
 import { LandingBrandMark } from './LandingBrandMark';
 import { t, type Locale } from '@/lib/i18n/landing';
+import { landingPublicLinks } from '@/lib/public-links';
 
 interface LandingFooterProps {
   locale: Locale;
@@ -11,14 +12,14 @@ interface LandingFooterProps {
 
 interface FooterLink {
   labelKey: string;
-  href: string;
+  href?: string;
   external?: boolean;
 }
 
 const aboutLinks: FooterLink[] = [
   { labelKey: 'footer_about_system', href: '#overview' },
   { labelKey: 'footer_about_scope', href: '#capabilities' },
-  { labelKey: 'footer_about_policy', href: '#' },
+  { labelKey: 'footer_about_policy', href: landingPublicLinks.privacyPolicy, external: true },
 ];
 
 const serviceLinks: FooterLink[] = [
@@ -31,7 +32,11 @@ const serviceLinks: FooterLink[] = [
 const externalLinks: FooterLink[] = [
   { labelKey: 'footer_links_rlpd', href: 'https://www.rlpd.go.th', external: true },
   { labelKey: 'footer_links_moj', href: 'https://www.moj.go.th', external: true },
-  { labelKey: 'footer_links_lineoa', href: '#' },
+  {
+    labelKey: 'footer_links_lineoa',
+    href: landingPublicLinks.lineOfficialAccount ?? '#line',
+    external: Boolean(landingPublicLinks.lineOfficialAccount),
+  },
 ];
 
 interface FooterColumnProps {
@@ -49,7 +54,11 @@ function FooterColumn({ locale, titleKey, links }: FooterColumnProps) {
       <ul className="space-y-1">
         {links.map(({ labelKey, href, external }) => (
           <li key={labelKey}>
-            {external ? (
+            {!href ? (
+              <span className="block py-1.5 text-sm text-white/40">
+                {t(locale, labelKey)}
+              </span>
+            ) : external ? (
               <a
                 href={href}
                 target="_blank"
@@ -75,7 +84,7 @@ function FooterColumn({ locale, titleKey, links }: FooterColumnProps) {
 
 export function LandingFooter({ locale }: LandingFooterProps) {
   return (
-    <footer id="contact" className="bg-[linear-gradient(180deg,hsl(221_47%_12%),hsl(223_48%_8%))] text-white">
+    <footer id="contact" className="scroll-mt-28 bg-[linear-gradient(180deg,hsl(221_47%_12%),hsl(223_48%_8%))] text-white">
       <div className="mx-auto max-w-7xl px-6 py-14 sm:py-16">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.6fr))]">
           <div className="max-w-md">

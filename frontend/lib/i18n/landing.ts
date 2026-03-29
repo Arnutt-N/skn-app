@@ -78,6 +78,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     line_track: 'ติดตามสถานะ',
     line_track_desc: 'ประชาชนตรวจสอบความคืบหน้าได้ต่อเนื่อง โดยไม่ต้องเปลี่ยนช่องทาง',
     line_add_friend: 'เพิ่มเพื่อน LINE',
+    line_contact_cta: 'ติดต่อหน่วยงาน',
     line_request_cta: 'คำขอรับบริการ',
 
     cta_badge: 'Next Step',
@@ -182,6 +183,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     line_track: 'Track Status',
     line_track_desc: 'Let citizens follow progress without leaving the same channel.',
     line_add_friend: 'Add LINE Friend',
+    line_contact_cta: 'Contact Office',
     line_request_cta: 'Service Request',
 
     cta_badge: 'Next Step',
